@@ -1,0 +1,6 @@
+* text=auto
+
+*.java text eol=lf
+*.gradle text eol=lf
+*.py text eol=lf
+FJERNSYN* text eol=lf

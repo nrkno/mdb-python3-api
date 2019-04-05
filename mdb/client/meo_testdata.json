@@ -1,0 +1,96 @@
+{
+  "resId": "http://id.nrk.no/2016/mdb/masterEO/1a0018db-6557-4299-8018-db65572299f8",
+  "created": "2019-02-28T10:57:44.045153900Z",
+  "lastUpdated": "2019-02-28T10:57:44.045153900Z",
+  "deleted": false,
+  "versionGroup": {
+    "resId": "http://id.nrk.no/2016/mdb/versionGroup/734e344a-0723-47ba-8e34-4a0723d7bae3",
+    "links": [
+      {
+        "rel": "self",
+        "type": "application/json",
+        "href": "http://localhost:22338/api/versionGroup/734e344a-0723-47ba-8e34-4a0723d7bae3"
+      }
+    ],
+    "type": "http://id.nrk.no/2016/mdb/types/VersionGroup"
+  },
+  "isMetadataMeo": true,
+  "timelines": [
+    {
+      "resId": "http://id.nrk.no/2017/mdb/timeline/966ccc52-a53f-4ef5-accc-52a53fbef5e6",
+      "links": [
+        {
+          "rel": "self",
+          "type": "application/json",
+          "href": "http://localhost:22338/api/timeline/966ccc52-a53f-4ef5-accc-52a53fbef5e6"
+        }
+      ],
+      "type": "http://id.nrk.no/2017/mdb/types/Timeline",
+      "subType": "http://id.nrk.no/2017/mdb/timelinetype/IndexPoints"
+    },
+    {
+      "resId": "http://id.nrk.no/2017/mdb/timeline/966ccc52-a53f-4ef5-accc-52a53fbef777",
+      "links": [
+        {
+          "rel": "self",
+          "type": "application/json",
+          "href": "http://localhost:22338/api/timeline/966ccc52-a53f-4ef5-accc-52a53fbef777"
+        }
+      ],
+      "type": "http://id.nrk.no/2017/mdb/types/Timeline",
+      "subType": "http://id.nrk.no/2017/mdb/timelinetype/Rights"
+    }
+  ],
+  "appliedRights": {
+    "marking": "UNKNOWN",
+    "sensitive": false
+  },
+  "type": "http://id.nrk.no/2016/mdb/types/MasterEditorialObject",
+  "links": [
+    {
+      "rel": "self",
+      "type": "application/json",
+      "href": "http://localhost:22338/api/masterEO/1a0018db-6557-4299-8018-db65572299f8"
+    },
+    {
+      "rel": "http://id.nrk.no/2016/mdb/relation/subjects",
+      "type": "application/json",
+      "href": "http://localhost:22338/api/masterEO/1a0018db-6557-4299-8018-db65572299f8/subjects"
+    },
+    {
+      "rel": "http://id.nrk.no/2016/mdb/relation/categories",
+      "type": "application/json",
+      "href": "http://localhost:22338/api/masterEO/1a0018db-6557-4299-8018-db65572299f8/categories"
+    },
+    {
+      "rel": "http://id.nrk.no/2016/mdb/relation/locations",
+      "type": "application/json",
+      "href": "http://localhost:22338/api/masterEO/1a0018db-6557-4299-8018-db65572299f8/spatials"
+    },
+    {
+      "rel": "http://id.nrk.no/2016/mdb/relation/spatials",
+      "type": "application/json",
+      "href": "http://localhost:22338/api/masterEO/1a0018db-6557-4299-8018-db65572299f8/spatials"
+    },
+    {
+      "rel": "http://id.nrk.no/2016/mdb/relation/contributors",
+      "type": "application/json",
+      "href": "http://localhost:22338/api/masterEO/1a0018db-6557-4299-8018-db65572299f8/contributors"
+    },
+    {
+      "rel": "http://id.nrk.no/2016/mdb/relation/references",
+      "type": "application/json",
+      "href": "http://localhost:22338/api/masterEO/1a0018db-6557-4299-8018-db65572299f8/references"
+    },
+    {
+      "rel": "http://id.nrk.no/2016/mdb/relation/changes",
+      "type": "application/json",
+      "href": "http://localhost:22338/api/masterEO/1a0018db-6557-4299-8018-db65572299f8/changes"
+    },
+    {
+      "rel": "http://id.nrk.no/2016/mdb/relation/model",
+      "type": "text/turtle",
+      "href": "http://localhost:22338/api/masterEO/1a0018db-6557-4299-8018-db65572299f8/model"
+    }
+  ]
+}
