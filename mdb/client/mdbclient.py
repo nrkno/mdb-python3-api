@@ -152,12 +152,15 @@ class MdbJsonApi(object):
     This class is unaware of the url of the remote system since it's all in the hyperlinked payloads.
     """
 
-    def __init__(self, correlation_id, user_id, source_system=None, response_unpacker=ApiResponseParser.unpack_json,
+    def __init__(self, user_id, correlation_id, source_system=None, response_unpacker=ApiResponseParser.unpack_json,
                  force_host=None, force_scheme=None):
-        self._headers = {"X-transactionId": correlation_id,
-                         "X-userId": user_id}
+        self._headers = {}
         if source_system:
             self._headers["X-Source-System"] = source_system
+        if user_id:
+            self._headers["userId"] = user_id
+        if correlation_id:
+            self._headers["X-transactionId"] = correlation_id
         self.json_response_unpacker = response_unpacker
         self.force_host = force_host
         self.force_scheme = force_scheme
@@ -206,14 +209,27 @@ class MdbJsonApi(object):
 
 
 class MdbClient(MdbJsonApi):
-    def __init__(self, api_base, correlation_id):
-        super().__init__(correlation_id, "sift-migrator", "http://authority.nrk.no/system/SIFT")
-        self.api_base = api_base.rstrip('/')
+    def __init__(self, api_base, user_id, correlation_id=None, source_system=None):
+        super().__init__(correlation_id, user_id, source_system)
+        parsed = urllib.parse.urlparse(api_base)
+        self.api_base = parsed.scheme + "//" + parsed.netloc + "/api"
 
     @staticmethod
-    def default():
-        #  return MdbClient("http://malxsigmadev01:22338/api", "sift-migrator")
-        return MdbClient("http://localhost:22338/api", "sift-migrator")
+    def localhost(user_id, correlation_id=None):
+        return MdbClient("http://localhost:22338", user_id, correlation_id)
+
+    @staticmethod
+    def dev(user_id, correlation_id=None):
+        return MdbClient("http://mdbklippdev.felles.ds.nrk.no", user_id, correlation_id)
+
+    @staticmethod
+    def stage(user_id, correlation_id=None):
+        return MdbClient("http://mdbklippstage.felles.ds.nrk.no", user_id, correlation_id)
+
+    @staticmethod
+    def prod(user_id, correlation_id=None):
+        return MdbClient("http://mdbklipp.felles.ds.nrk.no", user_id, correlation_id)
+
 
     def api_method(self, sub_path):
         return self.api_base + "/" + sub_path
