@@ -213,7 +213,7 @@ class Diff:
     def explain_field_change(self, name):
         res = ""
         for x in self.Added.get(name, []):
-            res += "{name} added: " + print_it(x)
+            res += f"{name} added: " + print_it(x)
         for x in self.Modified.get(name, []):
             res += f"{name} modified: " + print_it(x)
         for x in self.Removed.get(name, []):
@@ -291,7 +291,7 @@ class Differ:
         if self.diff.has_field_diff(name):
             ex = [print_it(x) for x in self.existing.get(name, [])]
             if len(ex) >0:
-                res += f"Existing {name}:" + ", ".join(ex)
+                res += f"Existing {name}:" + ", ".join(ex) + "\n"
             res += self.diff.explain_field_change(name)
         return res
 
