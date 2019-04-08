@@ -98,7 +98,7 @@ class Diff:
         return self.Modified or self.Added
 
     def has_field_diff(self, field):
-        return field in self.Modified or field in self.Added or field.in self.Removed
+        return field in self.Modified or field in self.Added or field in self.Removed
 
     def changed_v23(self):
         return self.__added_v3() and self.__removed_v3()
