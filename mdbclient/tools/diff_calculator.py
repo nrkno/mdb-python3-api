@@ -283,7 +283,7 @@ class Differ:
         res += self.explain_collection("contributors")
         res += self.explain_collection("spatials")
         if res:
-            res + ApiResponseParser.self_link(self.existing) + "modified:\n" + res
+            res = "\n" + ApiResponseParser.self_link(self.existing) + "modified:\n" + res
         return res
 
     def explain_collection(self, name):
