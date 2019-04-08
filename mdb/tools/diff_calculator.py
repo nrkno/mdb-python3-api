@@ -1,5 +1,34 @@
 import json
 import math
+from typing import Mapping
+
+
+class DiffResult(Mapping):
+    def __init__(self, *args, **kw):
+        self._storage = dict(*args, **kw)
+
+    def __getitem__(self, key):
+        return self._storage.__getitem__(key)
+
+    def __iter__(self):
+        return iter(self._storage)
+
+    def __len__(self):
+        return len(self._storage)
+
+    def __delitem__(self, key):
+        del self._storage[key]
+
+    def __setitem__(self, key, value):
+        self._storage[key] = value
+
+    def __str__(self):
+        return str(self._storage)
+
+    async def if_present(self, key, async_func):
+        item = self.get(key)
+        if item:
+            await async_func(item)
 
 
 class Diff:
@@ -8,16 +37,26 @@ class Diff:
         """
         Items that have been added in modified
         """
-        self.Added = {}
+        self.Added = DiffResult()
         """
         Removed elements contain the key and their original value.
         """
-        self.Removed = {}
+        self.Removed = DiffResult()
         """
         Lists in Modified have the same amount of elements as the source collection, where unchanged elements are
         None. Modified elements will contain the full modified payload 
         """
-        self.Modified = {}
+        self.Modified = DiffResult()
+
+    def remove_key(self, key):
+        if key in self.Added:
+            del self.Added[key]
+        if key in self.Modified:
+            del self.Modified[key]
+        if key in self.Removed:
+            del self.Removed[key]
+
+
 
     def add_to_added(self, name, elements):
         for element in elements:
@@ -49,7 +88,7 @@ class Diff:
     def changed_v23(self):
         return self.__added_v3() and self.__removed_v3()
 
-    def eliminiate_changed_categories(self):
+    def eliminate_changed_categories(self):
         if "categories" in self.Added:
             del self.Added["categories"]
         if "modified" in self.Modified:
