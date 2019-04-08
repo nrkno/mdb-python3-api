@@ -42,6 +42,10 @@ class DiffResult(Mapping):
 
 
 def print_it(item):
+    if "name" in item:
+        text = item.get("name", str(item))
+        return text
+
     if "title" in item:
         text = item.get("title", str(item))
         return text
