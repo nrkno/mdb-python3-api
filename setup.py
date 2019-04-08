@@ -2,7 +2,7 @@
 
 from setuptools import setup, find_packages
 
-setup(name='client',
+setup(name='mdbclient',
       author='Kristian Rosenvold',
       author_email='kristian.rosenvold@nrk.no',
       description='Client library for MDB',
