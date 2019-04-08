@@ -26,7 +26,7 @@ class DiffResult(Mapping):
         return str(self._storage)
 
     def __bool__(self):
-        return self._storage
+        return self._storage is True
 
     async def with_change(self, key, async_func):
         if key in self._storage:
