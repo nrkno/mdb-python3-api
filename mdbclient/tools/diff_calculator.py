@@ -213,11 +213,11 @@ class Diff:
     def explain_field_change(self, name):
         res = ""
         for x in self.Added.get(name, []):
-            res += f"{name} added: " + print_it(x)
+            res += f"{name} added: " + print_it(x) + "\n"
         for x in self.Modified.get(name, []):
-            res += f"{name} modified: " + print_it(x)
+            res += f"{name} modified: " + print_it(x) + "\n"
         for x in self.Removed.get(name, []):
-            res += f"{name} modified: " + print_it(x)
+            res += f"{name} modified: " + print_it(x) + "\n"
         return res
 
     @staticmethod
