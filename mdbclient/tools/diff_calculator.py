@@ -218,8 +218,8 @@ class Diff:
         res = ""
         for x in self.Added.get(name, []):
             res += f"{name} added: " + print_it(x) + "\n"
-        for x in self.Modified.get(name, []):
-            res += f"{name} modified: " + print_it(x) + "\n"
+        for x in [print_it(x) for x in self.Modified.get(name, []) if x]:
+            res += f"{name} modified: " + x + "\n"
         for x in [print_it(x) for x in self.Removed.get(name, []) if x]:
             res += f"{name} modified: " + x + "\n"
         return res
