@@ -41,18 +41,18 @@ class DiffResult(Mapping):
             await async_func(item)
 
 
-def print_it(item, role=None):
+def print_it(item):
     if "title" in item:
         text = item.get("title", str(item))
-        return role + text +"\n"
+        return text
     contact = item.get("contact", {})
-    role = item.get("role", {})
+    role_obj = item.get("role", {})
     title = contact.get("title", "")
-    role = role.get("title", role.get("capacity", ""))
+    role_str = role_obj.get("title", role_obj.get("capacity", ""))
     if title:
         text = title
-        if role:
-            text += " as " + role + "\n"
+        if role_str:
+            text += " as " + role_str
         return text
     return str(item)
 
@@ -213,11 +213,11 @@ class Diff:
     def explain_field_change(self, name):
         res = ""
         for x in self.Added.get(name, []):
-            res += print_it(x, f"{name} added: ")
+            res += "{name} added: " + print_it(x)
         for x in self.Modified.get(name, []):
-            res += print_it(x, f"{name} modified: ")
+            res += f"{name} modified: " + print_it(x)
         for x in self.Removed.get(name, []):
-            res += print_it(x, f"{name} removed: ")
+            res += f"{name} modified: " + print_it(x)
         return res
 
     @staticmethod
@@ -283,14 +283,15 @@ class Differ:
         res += self.explain_collection("contributors")
         res += self.explain_collection("spatials")
         if res:
-            res = "\n" + ApiResponseParser.self_link(self.existing) + "modified:\n" + res
+            res = "\n" + ApiResponseParser.self_link(self.existing) + " modified:\n" + res
         return res
 
     def explain_collection(self, name):
         res = ""
         if self.diff.has_field_diff(name):
-            for x in self.existing.get(name, []):
-                res += print_it(x, f"{name} existing")
+            ex = [print_it(x) for x in self.existing.get(name, [])]
+            if len(ex) >0:
+                res += f"Existing {name}:" + ", ".join(ex)
             res += self.diff.explain_field_change(name)
         return res
 
