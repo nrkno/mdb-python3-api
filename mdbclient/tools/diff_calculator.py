@@ -40,8 +40,15 @@ class DiffResult(Mapping):
 
 
 def print_it(item, role=None):
-    text = item.get("title", str(item))
-    return role + text +"\n"
+    if "title" in item:
+        text = item.get("title", str(item))
+        return role + text +"\n"
+    contact = item.get("contact", {})
+    role = item.get("role", {})
+    title = contact.get("title", "")
+    role = role.get("title", role.get("capacity", ""))
+    if title:
+        text = title + " as " + role
 
 
 class Diff:
