@@ -1,5 +1,6 @@
 import json
 import math
+from functools import partial
 from typing import Mapping
 
 
@@ -95,6 +96,9 @@ class Diff:
 
     def has_add_modify_diff(self):
         return self.Modified or self.Added
+
+    def has_field_diff(self, field):
+        return field in self.Modified or field in self.Added or field.in self.Removed
 
     def changed_v23(self):
         return self.__added_v3() and self.__removed_v3()
@@ -243,6 +247,32 @@ class Differ:
         self.spatials_identity_comparator = self.__spatial_value_identity_comparator
         self.spatials_value_comparator = self.__spatial_value_equals
         self.ignorables = {"title", "shortDescription", "published", "embeddingAllowed", "duration"}
+
+
+    def explain_diff(self):
+        res = self.explain_collection("subjects")
+        res += self.explain_collection("categories")
+        res += self.explain_collection("contributors")
+        res += self.explain_collection("spatials")
+        return res
+
+    def explain_collection(self, name):
+        res = ""
+        if self.diff.has_field_diff(name):
+            for x in self.existing.get(name, []):
+                res+=Differ.print_it(x, f"{name} existing")
+            for x in self.diff.Added.get(name, []):
+                res+=Differ.print_it(x, f"{name} added")
+            for x in self.diff.Modified.get(name, []):
+                res+=Differ.print_it(x, f"{name} modified")
+            for x in self.diff.Removed.get(name, []):
+                res+=Differ.print_it(x, f"{name} removed")
+        return res
+
+
+    @staticmethod
+    def print_it(item, role = None):
+        return role + str(item)
 
     @staticmethod
     def are_same_coordinate(existing, coord):
