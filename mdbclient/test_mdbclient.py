@@ -1,6 +1,6 @@
 import pytest
 
-from client.mdbclient import MdbClient
+from mdbclient.mdbclient import MdbClient
 
 
 def create_mdb_client():
@@ -46,7 +46,7 @@ async def test_create_update_publication_media_object():
         pe = await client.create_publication_event(meo, {"subType": "http://authority.nrk.no/datadictionary/onDemand",
                                                          "title": "en kald vårdag"})
         pmo = await client.create_publication_media_object(pe, mo, {})
-        assert pmo['type'] == 'http://id.nrk.no/2016/client/types/PublicationMediaObject'
+        assert pmo['type'] == 'http://id.nrk.no/2016/mdbclient/types/PublicationMediaObject'
 
 
 @pytest.mark.asyncio
@@ -59,7 +59,7 @@ async def test_create_essence():
                                                          "title": "en kald vårdag"})
         pmo = await client.create_publication_media_object(pe, mo, {})
         essence = await client.create_essence(pmo, mr, {})
-        assert essence['type'] == 'http://id.nrk.no/2016/client/types/Essence'
+        assert essence['type'] == 'http://id.nrk.no/2016/mdbclient/types/Essence'
 
 
 @pytest.mark.asyncio

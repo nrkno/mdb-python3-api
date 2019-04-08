@@ -358,10 +358,10 @@ class Differ:
     def references(sift_publication_event, g4id, clip_id):
         result = []
         if g4id:
-            result.append({'type': 'http://id.nrk.no/2016/client/reference/psAPI', 'reference': g4id})
+            result.append({'type': 'http://id.nrk.no/2016/mdbclient/reference/psAPI', 'reference': g4id})
 
         if clip_id:
-            result.append({'type': 'http://id.nrk.no/2018/client/reference/guri', 'reference': clip_id})
+            result.append({'type': 'http://id.nrk.no/2018/mdbclient/reference/guri', 'reference': clip_id})
 
         if sift_publication_event.get("references"):
             result.extend(sift_publication_event["references"])
