@@ -41,7 +41,7 @@ class DiffResult(Mapping):
 
 def print_it(item, role=None):
     text = item.get("title", str(item))
-    return role + text
+    return role + text +"\n"
 
 
 class Diff:
