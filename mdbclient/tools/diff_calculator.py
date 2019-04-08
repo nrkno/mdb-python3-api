@@ -49,6 +49,7 @@ def print_it(item, role=None):
     role = role.get("title", role.get("capacity", ""))
     if title:
         text = title + " as " + role
+        return text
     return str(item)
 
 
