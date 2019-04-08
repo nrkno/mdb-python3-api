@@ -25,6 +25,9 @@ class DiffResult(Mapping):
     def __str__(self):
         return str(self._storage)
 
+    def __bool__(self):
+        return self._storage
+
     async def with_change(self, key, async_func):
         if key in self._storage:
             await async_func({key: self._storage[key]})
