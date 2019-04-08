@@ -1,4 +1,4 @@
-from tools.diff_calculator import Differ
+from mdb.tools.diff_calculator import Differ
 
 
 def test_diff_edited_value():
@@ -26,7 +26,7 @@ def test_diff_removed():
 
 
 def test_diff_added_updated():
-    original = {'title': 'foo', 'baz': 'bazt'}
+    original = {'titttle': 'foo', 'baz': 'bazt'}
     modified = {'baz': 'bazz', 'fizz': 'buzz'}
     changes = Differ(original, modified).calculate()
     assert len(changes.Modified) == 1
@@ -34,7 +34,7 @@ def test_diff_added_updated():
     assert len(changes.Added) == 1
     assert changes.Added['fizz'] == 'buzz'
     assert len(changes.Removed) == 1
-    assert "title" in changes.Removed
+    assert "titttle" in changes.Removed
 
 
 def test_added_categories():
@@ -179,7 +179,9 @@ def test_subjects_removed():
 def test_subjects_modified_identity():
     original = {'subjects': [{'resId': 'http://s1', 'title': 'sub1'}, {'resId': 'http://sx', 'title': 'sub2'}]}
     modified = {'subjects': [{'resId': 'http://s1', 'title': 'sub1'}, {'resId': 'http://sx', 'title': 'subX'}]}
-    changes = Differ(original, modified).calculate()
+    differ = Differ(original, modified)
+    differ.subjects_identity_comparator = Differ.subject_mixed_identity_comparator
+    changes = differ.calculate()
     assert len(changes.Modified) == 1
     assert changes.Modified['subjects'] == [None, {'resId': 'http://sx', 'title': 'subX'}]
 
@@ -208,7 +210,7 @@ def test_spatials_added():
          'latitude': 7.123, 'longitude': -1.456}
     ]}
     modified = {'spatials': [
-        {'resId': 'http://xx.nrk.no/a/b/z2', 'stadnamn': {'resId': 'http://stadnamn.nrk.no/a/b/c'}, 'name': 'Oslo',
+        {'resId': 'http://xx.nrk.no/a/b/z2', 'stadnamn': {'resId': 'http://stadnamn.nrk.no/a/b/c'}, 'name': 'Oslo2',
          'latitude': 7.123, 'longitude': -1.456}
     ]}
     differ = Differ(original, modified)

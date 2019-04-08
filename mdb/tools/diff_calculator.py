@@ -174,6 +174,11 @@ class Diff:
 
 
 class Differ:
+    """
+    Diffs to EOs. Please note that some behaviour is defined in the constructor of this class.
+    Currently clients wishing different bevhaviour need to construct the differ and set
+    these attributes themselves.
+    """
 
     def __init__(self, existing, modified):
         self.existing = existing
@@ -187,6 +192,7 @@ class Differ:
         self.subjects_value_comparator = self.__subject_value_equals
         self.spatials_identity_comparator = self.__spatial_value_identity_comparator
         self.spatials_value_comparator = self.__spatial_value_equals
+        self.ignorables = {"title", "shortDescription", "published", "embeddingAllowed", "duration"}
 
     @staticmethod
     def are_same_coordinate(existing, coord):
@@ -206,6 +212,8 @@ class Differ:
         c_name = coord_.get("name")
         if e_name and e_name == c_name:
             return True
+        if e_name and e_name != c_name:
+            return False
         return Differ.are_same_lat_lon(existing, coord_)
 
     @staticmethod
@@ -257,7 +265,7 @@ class Differ:
         return [cat for cat in existing.get("subjects", []) if cat.get("title") == subject.get("title")]
 
     @staticmethod
-    def __subject_mixed_identity_comparator(original, modified):
+    def subject_mixed_identity_comparator(original, modified):
         if original.get("resId"):
             return original.get("resId") == modified.get("resId")
         return Differ.__subject_value_equals(original, modified)
@@ -323,26 +331,9 @@ class Differ:
         lat = spatial.get("longitude")
         return spatial.get("name") or (lat and lon and not math.isnan(lat) and not math.isnan(lon))
 
-    ignorables = {"title", "shortDescription", "published", "embeddingAllowed", "duration"}
-
     def attribute_changes(self):
         original = self.existing
         modified = self.modified
-
-        '''
-        Tittel
-        Rubrikk shortDescription
-        Bilde
-        Kategori
-
-Er unikt - Nettpublisering
-    Publiseringsinnstillinger
-    Publisert dato
-    Landingsside (?)
-    SmartURL (?)
-    Ark URL (?)
-
-'''
 
         def is_ignorable(attr_name):
             return attr_name in self.ignorables
@@ -407,9 +398,9 @@ Er unikt - Nettpublisering
             if has_valued_element(removed_items):
                 self.diff.add_to_removed(field, removed_items)
 
-        # handle_collections("contributors", self.contributors_identity_comparator, self.contributors_value_comparator)
+        handle_collections("contributors", self.contributors_identity_comparator, self.contributors_value_comparator)
         handle_collections("categories", self.category_identity_comparator, self.category_value_comparator)
-        # handle_collections("subjects", self.subjects_identity_comparator, self.subjects_value_comparator)
+        handle_collections("subjects", self.subjects_identity_comparator, self.subjects_value_comparator)
         handle_collections("spatials", self.spatials_identity_comparator, self.spatials_value_comparator)
 
     def calculate(self):
