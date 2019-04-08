@@ -15,6 +15,9 @@ def test_diff_added():
     changes = Differ(original, modified).calculate()
     assert len(changes.Added) == 1
     assert changes.Added['fizz'] == 'buzz'
+    json_obj = changes.Added.as_change("fizz")
+    assert json_obj["fizz"] == "buzz"
+
 
 
 def test_diff_removed():

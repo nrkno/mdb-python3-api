@@ -25,6 +25,10 @@ class DiffResult(Mapping):
     def __str__(self):
         return str(self._storage)
 
+    def as_change(self, key):
+        if key in self._storage:
+            return {key: self._storage[key]}
+
     async def if_present(self, key, async_func):
         item = self.get(key)
         if item:
