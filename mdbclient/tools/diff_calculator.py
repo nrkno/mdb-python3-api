@@ -3,6 +3,8 @@ import math
 from functools import partial
 from typing import Mapping
 
+from mdbclient.mdbclient import ApiResponseParser
+
 
 class DiffResult(Mapping):
     def __init__(self, *args, **kw):
@@ -208,7 +210,6 @@ class Diff:
             res += "Removed\n" + json.dumps(self.Removed, indent=4)
         return res
 
-
     def explain_field_change(self, name):
         res = ""
         for x in self.Added.get(name, []):
@@ -281,6 +282,8 @@ class Differ:
         res += self.explain_collection("categories")
         res += self.explain_collection("contributors")
         res += self.explain_collection("spatials")
+        if res:
+            res + ApiResponseParser.self_link(self.existing) + "modified:\n" + res
         return res
 
     def explain_collection(self, name):
