@@ -1,3 +1,5 @@
+import pytest
+
 from mdb.tools.diff_calculator import Differ
 
 
@@ -15,9 +17,30 @@ def test_diff_added():
     changes = Differ(original, modified).calculate()
     assert len(changes.Added) == 1
     assert changes.Added['fizz'] == 'buzz'
-    json_obj = changes.Added.as_change("fizz")
-    assert json_obj["fizz"] == "buzz"
 
+
+@pytest.mark.asyncio
+async def test_with_change():
+    original = {'title': 'foo', 'baz': 'bazt'}
+    modified = {'title': 'foo', 'baz': 'bazt', 'fizz': 'buzz'}
+    changes = Differ(original, modified).calculate()
+    assert len(changes.Added) == 1
+    assert changes.Added['fizz'] == 'buzz'
+    async def check_it(xz):
+        assert xz["fizz"] == "buzz"
+    await changes.Added.with_change("fizz", check_it)
+
+
+@pytest.mark.asyncio
+async def test_if_present():
+    original = {'title': 'foo', 'baz': 'bazt'}
+    modified = {'title': 'foo', 'baz': 'bazt', 'fizz': 'buzz'}
+    changes = Differ(original, modified).calculate()
+    assert len(changes.Added) == 1
+    assert changes.Added['fizz'] == 'buzz'
+    async def check_it(xz):
+        assert xz == "buzz"
+    await changes.Added.if_present("fizz", check_it)
 
 
 def test_diff_removed():
