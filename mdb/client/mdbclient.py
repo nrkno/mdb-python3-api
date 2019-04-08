@@ -112,10 +112,11 @@ class RestApiUtil(object):
     # @backoff.on_exception(backoff.expo, requests.exceptions.RequestException, max_tries=8)
     def post(self, uri, responsefunc, headers=None):
         async def do_post(json_payload):
-            self.traffic.append(f"POST TO {uri} {json.dumps(json_payload, indent=4, sort_keys=True)}")
+            log_msg = f"POST TO {uri}\n{json.dumps(json_payload, indent=4, sort_keys=True)}"
+            self.traffic.append(log_msg)
             async with self.session.post(uri, json=json_payload, headers=headers) as response:
                 if "Location" not in response.headers:
-                    raise Exception(f"No location in response {await response.text()}")
+                    raise Exception(f"No location in response {await response.text()} for {log_msg}")
                 response_payload = await self.follow(response, responsefunc)
                 self.traffic.append(response_payload)
                 return response_payload
