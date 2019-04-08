@@ -1,6 +1,6 @@
 import pytest
 
-from mdbclient.tools.diff_calculator import Differ
+from tools import Differ
 
 
 def test_diff_edited_value():
