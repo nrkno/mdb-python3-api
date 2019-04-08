@@ -63,6 +63,10 @@ class Diff:
         if key in self.Removed:
             del self.Removed[key]
 
+    def remove_keys(self, keys):
+        for key in keys:
+            self.remove_key(key)
+
 
 
     def add_to_added(self, name, elements):
