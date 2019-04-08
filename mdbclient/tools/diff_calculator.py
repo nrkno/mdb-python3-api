@@ -221,7 +221,7 @@ class Diff:
         for x in [print_it(x) for x in self.Modified.get(name, []) if x]:
             res += f"{name} modified: " + x + "\n"
         for x in [print_it(x) for x in self.Removed.get(name, []) if x]:
-            res += f"{name} modified: " + x + "\n"
+            res += f"{name} removed: " + x + "\n"
         return res
 
     @staticmethod
