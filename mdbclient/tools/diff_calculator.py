@@ -39,6 +39,11 @@ class DiffResult(Mapping):
             await async_func(item)
 
 
+def print_it(item, role=None):
+    text = item.get("title", str(item))
+    return role + text
+
+
 class Diff:
     def __init__(self):
 
@@ -192,6 +197,17 @@ class Diff:
             res += "Removed\n" + json.dumps(self.Removed, indent=4)
         return res
 
+
+    def explain_field_change(self, name):
+        res = ""
+        for x in self.Added.get(name, []):
+            res += print_it(x, f"{name} added: ")
+        for x in self.Modified.get(name, []):
+            res += print_it(x, f"{name} modified: ")
+        for x in self.Removed.get(name, []):
+            res += print_it(x, f"{name} removed: ")
+        return res
+
     @staticmethod
     def explain_contributor_change(contributor):
         if contributor:
@@ -260,13 +276,8 @@ class Differ:
         res = ""
         if self.diff.has_field_diff(name):
             for x in self.existing.get(name, []):
-                res+=Differ.print_it(x, f"{name} existing")
-            for x in self.diff.Added.get(name, []):
-                res+=Differ.print_it(x, f"{name} added")
-            for x in self.diff.Modified.get(name, []):
-                res+=Differ.print_it(x, f"{name} modified")
-            for x in self.diff.Removed.get(name, []):
-                res+=Differ.print_it(x, f"{name} removed")
+                res += print_it(x, f"{name} existing")
+            res += self.diff.explain_field_change(name)
         return res
 
 
