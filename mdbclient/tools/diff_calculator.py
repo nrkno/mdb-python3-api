@@ -48,7 +48,9 @@ def print_it(item, role=None):
     title = contact.get("title", "")
     role = role.get("title", role.get("capacity", ""))
     if title:
-        text = title + " as " + role + "\n"
+        text = title
+        if role:
+            text += " as " + role + "\n"
         return text
     return str(item)
 
