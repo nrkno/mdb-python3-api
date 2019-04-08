@@ -1,0 +1,6 @@
+EO_SUBJECTS = "http://id.nrk.no/2016/mdbclient/relation/subjects"
+EO_CATEGORIES = "http://id.nrk.no/2016/mdbclient/relation/categories"
+EO_LOCATIONS= "http://id.nrk.no/2016/mdbclient/relation/locations"
+EO_SPATIALS = "http://id.nrk.no/2016/mdbclient/relation/spatials"
+EO_CONTRIBUTORS = "http://id.nrk.no/2016/mdbclient/relation/contributors"
+REFERENCES = "http://id.nrk.no/2016/mdbclient/relation/references"

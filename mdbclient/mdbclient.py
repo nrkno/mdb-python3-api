@@ -47,7 +47,7 @@ class ApiResponseParser:
     @staticmethod
     def timeline_of_sub_type(master_eo, sub_type):
         rel_ = [l for l in master_eo["timelines"] if
-                l.get("type") == "http://id.nrk.no/2017/mdb/types/Timeline" and l.get("subType") == sub_type]
+                l.get("type") == "http://id.nrk.no/2017/mdbclient/types/Timeline" and l.get("subType") == sub_type]
         return next(iter(rel_), None)
 
     @staticmethod
@@ -140,7 +140,7 @@ def _res_id(mdb_object):
 
 class MdbJsonApi(object):
     """
-    Knows how to work with mdb-format hyperlinked json objects. Calls mdb in a responsible manner with
+    Knows how to work with mdbclient-format hyperlinked json objects. Calls mdbclient in a responsible manner with
     all the correct headers.
 
     Knows how to rewrite all urls to use a host different from the one in the supplied url, using param force_host

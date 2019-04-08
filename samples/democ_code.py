@@ -1,5 +1,5 @@
 from client.mdbclient import MdbJsonApi
-from mdb import MdbClient
+from mdbclient import MdbClient
 
 
 async def create_publication():
@@ -14,7 +14,7 @@ async def resolve_mmeo_and_create_subject(uri):
         vg = await client.open(meo["versionGroup"])
         metadata_meo = await client.open(vg["metadataMeo"])
         # add a tag (subject)
-        await client.add_on_rel(meo, "http://id.nrk.no/2016/mdb/relation/subjects", {"title" : "min TestTagg"})
+        await client.add_on_rel(meo, "http://id.nrk.no/2016/mdbclient/relation/subjects", {"title" : "min TestTagg"})
 
 
 

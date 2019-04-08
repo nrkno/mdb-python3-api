@@ -2,12 +2,12 @@
 
 from setuptools import setup, find_packages
 
-setup(name='mdb-python3-api',
+setup(name='mdbclient',
       author='Kristian Rosenvold',
       author_email='kristian.rosenvold@nrk.no',
       description='Client library for MDB',
       version='1.0',
-      url='https://github.com/nrkno/mdb-python3-api',
+      url='https://github.com/nrkno/mdbclient-python3-api',
       packages=find_packages(),
       install_requires=[
           'aiohttp>=3.5.4',
