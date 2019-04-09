@@ -90,7 +90,19 @@ class Diff:
         for key in keys:
             self.remove_key(key)
 
-
+    def recursive_apply(self, modification, target):
+        for key,value in modification.items():
+            if isinstance(value, (list,)):
+                for index,list_value in enumerate(value):
+                    new_target = target[key][index]
+                    if isinstance(list_value, (str,)) or isinstance(new_target, (str,)):
+                        if list_value:
+                            target[key][index] = list_value
+                    else:
+                        if new_target:
+                            self.recursive_apply(list_value, new_target)
+            else:
+                target[key] = value
 
     def add_to_added(self, name, elements):
         for element in elements:

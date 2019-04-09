@@ -1,6 +1,6 @@
 import pytest
 
-from mdbclient.tools.diff_calculator import Differ
+from mdbclient.tools.diff_calculator import Differ, Diff
 
 
 def test_diff_edited_value():
@@ -18,6 +18,36 @@ def test_diff_added():
     assert len(changes.Added) == 1
     assert changes.Added['fizz'] == 'buzz'
 
+def test_apply_attribute_diff():
+    diff = Diff()
+    diff.Modified["cat"] = "fido"
+    sut = {"cat" : "knut"}
+    diff.recursive_apply(diff.Modified, sut)
+    assert sut["cat"] == "fido"
+
+
+def test_apply_collection_diff():
+    diff = Diff()
+    diff.Modified["cat"] = ["fido", None, "Brutus"]
+    sut = {"cat" : ["fzz", "ape", "rtrt"]}
+    diff.recursive_apply(diff.Modified, sut)
+    assert sut["cat"] == ["fido", "ape", "Brutus"]
+
+
+def test_recursive_apply():
+    diff = Diff()
+    sut = {"house": "big", "rooms": [{"room1": "big"}, {"room2": "small"}]}
+    diff.Modified["cat"] = {"house": "big1", "rooms": [{"room1": "big1"}, {"room2": "small1"}]}
+    diff.recursive_apply(diff.Modified, sut)
+    assert sut["cat"] == {"house": "big1", "rooms": [{"room1": "big1"}, {"room2": "small1"}]}
+
+
+def test_recursive_apply_more_complex():
+    diff = Diff()
+    sut = {"house": "big", "rooms": [{"room1": [{"foo": "bar"}, {"baz": {"bazt": "fizz"}}]}, {"room2": "small"}]}
+    diff.Modified["cat"] = {"house": "big1", "rooms": [{"room1": [{"foo": "bar1"}, {"baz": {"bazt": "fizz1"}}]}, {"room2": "small1"}]}
+    diff.recursive_apply(diff.Modified, sut)
+    assert sut["cat"] == {"house": "big1", "rooms": [{"room1": [{"foo": "bar1"}, {"baz": {"bazt": "fizz1"}}]}, {"room2": "small1"}]}
 
 @pytest.mark.asyncio
 async def test_with_change():
