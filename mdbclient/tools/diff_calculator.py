@@ -58,7 +58,7 @@ def print_it(item):
     contact = item.get("contact", {})
     role_obj = item.get("role", {})
     title = contact.get("title", "")
-    role_str = role_obj.get("title", role_obj.get("capacity", ""))
+    role_str = role_obj.get("title", role_obj.get("resId", ""))
     if title:
         text = title
         if role_str:
