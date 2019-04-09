@@ -126,6 +126,8 @@ class Diff:
             if self.is_direct_value(value):
                 target[key] = value
             elif isinstance(value, list):
+                if not key in target:
+                    target[key] = []
                 target[key].extend(value)
             else:
                 raise Exception(f"Do not know to handle add field {key} of type {type(value)}")
