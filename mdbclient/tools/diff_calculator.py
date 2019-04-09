@@ -118,6 +118,27 @@ class Diff:
         self.__treat_collection(modification.get("spatials", []))
 
     @staticmethod
+    def is_direct_value(v):
+            return isinstance(v, str) or isinstance(v, int) or isinstance(v, float)
+
+    def apply_adds(self, target):
+        for key, value in self.Added.items():
+            if self.is_direct_value(value):
+                target[key] = value
+            elif isinstance(value, list):
+                target[key].extend(value)
+            else:
+                raise Exception(f"Do not know to handle add field {key} of type {type(value)}")
+
+
+
+
+
+
+
+
+
+    @staticmethod
     def __treat_collection(c0llection):
         for item in c0llection:
             if "rest-client" in item.get("resId"):

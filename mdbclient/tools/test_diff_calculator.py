@@ -80,6 +80,16 @@ def test_diff_removed():
     assert len(changes.Removed) == 1
     assert "baz" in changes.Removed
 
+def test_adds():
+    diff = Diff()
+    sut = {"rooms": [{"room3": {"room3": "small"}}]}
+    diff.Added["cat"] = "fritz"
+    diff.Added["rooms"] = [{"room1": [{"foo": "bar1"}, {"baz": {"bazt": "fizz1"}}]}, {"room2": "small1"}]
+
+    diff.apply_adds(sut)
+    assert sut["cat"] == "fritz"
+    assert sut["rooms"] == [{"room3": {"room3": "small"}},{"room1": [{"foo": "bar1"}, {"baz": {"bazt": "fizz1"}}]}, {"room2": "small1"}]
+
 
 def test_diff_added_updated():
     original = {'titttle': 'foo', 'baz': 'bazt'}
