@@ -1,6 +1,5 @@
 import json
 import math
-from functools import partial
 from typing import Mapping
 
 from mdbclient.mdbclient import ApiResponseParser
@@ -101,9 +100,9 @@ class Diff:
         self.__recursive_apply(self.Modified, target)
 
     def __recursive_apply(self, modification, target):
-        for key,value in modification.items():
+        for key, value in modification.items():
             if isinstance(value, (list,)):
-                for index,list_value in enumerate(value):
+                for index, list_value in enumerate(value):
                     new_target = target[key][index]
                     if isinstance(list_value, (str,)) or isinstance(new_target, (str,)):
                         if list_value:
@@ -135,7 +134,7 @@ class Diff:
 
     @staticmethod
     def is_direct_value(v):
-            return isinstance(v, str) or isinstance(v, int) or isinstance(v, float)
+        return isinstance(v, str) or isinstance(v, int) or isinstance(v, float)
 
     def apply_adds(self, target):
         for key, value in self.Added.items():
@@ -148,14 +147,6 @@ class Diff:
             else:
                 raise Exception(f"Do not know to handle add field {key} of type {type(value)}")
 
-
-
-
-
-
-
-
-
     @staticmethod
     def __treat_collection(c0llection):
         for item in c0llection:
@@ -164,7 +155,6 @@ class Diff:
                     del item["resId"]
                 if "links" in item:
                     del item["links"]
-
 
     def add_to_added(self, name, elements):
         for element in elements:
@@ -354,7 +344,6 @@ class Differ:
         self.spatials_value_comparator = self.__spatial_value_equals
         self.ignorables = {"title", "shortDescription", "published", "embeddingAllowed", "duration"}
 
-
     def explain_diff(self):
         res = self.explain_collection("subjects")
         res += self.explain_collection("categories")
@@ -368,14 +357,13 @@ class Differ:
         res = ""
         if self.diff.has_field_diff(name):
             ex = [print_it(x) for x in self.existing.get(name, [])]
-            if len(ex) >0:
+            if len(ex) > 0:
                 res += f"Existing {name}:" + ", ".join(ex) + "\n"
             res += self.diff.explain_field_change(name)
         return res
 
-
     @staticmethod
-    def print_it(item, role = None):
+    def print_it(item, role=None):
         return role + str(item)
 
     @staticmethod
