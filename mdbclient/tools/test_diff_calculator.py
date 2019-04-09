@@ -22,7 +22,7 @@ def test_apply_attribute_diff():
     diff = Diff()
     diff.Modified["cat"] = "fido"
     sut = {"cat" : "knut"}
-    diff.recursive_apply(diff.Modified, sut)
+    diff.recursive_apply_modifications(sut)
     assert sut["cat"] == "fido"
 
 
@@ -30,7 +30,7 @@ def test_apply_collection_diff():
     diff = Diff()
     diff.Modified["cat"] = ["fido", None, "Brutus"]
     sut = {"cat" : ["fzz", "ape", "rtrt"]}
-    diff.recursive_apply(diff.Modified, sut)
+    diff.recursive_apply_modifications(sut)
     assert sut["cat"] == ["fido", "ape", "Brutus"]
 
 
@@ -38,7 +38,7 @@ def test_recursive_apply():
     diff = Diff()
     sut = {"house": "big", "rooms": [{"room1": "big"}, {"room2": "small"}]}
     diff.Modified["cat"] = {"house": "big1", "rooms": [{"room1": "big1"}, {"room2": "small1"}]}
-    diff.recursive_apply(diff.Modified, sut)
+    diff.recursive_apply_modifications(sut)
     assert sut["cat"] == {"house": "big1", "rooms": [{"room1": "big1"}, {"room2": "small1"}]}
 
 

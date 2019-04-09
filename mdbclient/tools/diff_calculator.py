@@ -90,7 +90,10 @@ class Diff:
         for key in keys:
             self.remove_key(key)
 
-    def recursive_apply(self, modification, target):
+    def recursive_apply_modifications(self, target):
+        self.__recursive_apply(self.Modified, target)
+
+    def __recursive_apply(self, modification, target):
         for key,value in modification.items():
             if isinstance(value, (list,)):
                 for index,list_value in enumerate(value):
@@ -100,7 +103,7 @@ class Diff:
                             target[key][index] = list_value
                     else:
                         if new_target:
-                            self.recursive_apply(list_value, new_target)
+                            self.__recursive_apply(list_value, new_target)
             else:
                 target[key] = value
 
