@@ -159,8 +159,11 @@ class Diff:
     @staticmethod
     def __treat_collection(c0llection):
         for item in c0llection:
-            if item and "rest-client" in item.get("resId", ""):
-                del item["resId"]
+            if item:
+                if "rest-client" in item.get("resId", ""):
+                    del item["resId"]
+                if "links" in item:
+                    del item["links"]
 
 
     def add_to_added(self, name, elements):
