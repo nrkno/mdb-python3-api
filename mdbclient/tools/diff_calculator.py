@@ -156,7 +156,7 @@ class Diff:
     @staticmethod
     def __treat_collection(c0llection):
         for item in c0llection:
-            if "rest-client" in item.get("resId"):
+            if "rest-client" in item.get("resId", ""):
                 del item["resId"]
 
 
