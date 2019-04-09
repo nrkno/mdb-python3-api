@@ -108,7 +108,7 @@ class Diff:
                         if list_value:
                             target[key][index] = list_value
                     else:
-                        if new_target:
+                        if new_target and list_value:
                             self.__recursive_apply(list_value, new_target)
             else:
                 target[key] = value

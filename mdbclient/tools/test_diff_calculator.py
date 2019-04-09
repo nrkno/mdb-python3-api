@@ -46,7 +46,7 @@ def test_recursive_apply_more_complex():
     diff = Diff()
     sut = {"house": "big", "rooms": [{"room1": [{"foo": "bar"}, {"baz": {"bazt": "fizz"}}]}, {"room2": "small"}]}
     diff.Modified["cat"] = {"house": "big1", "rooms": [{"room1": [{"foo": "bar1"}, {"baz": {"bazt": "fizz1"}}]}, {"room2": "small1"}]}
-    diff.recursive_apply(diff.Modified, sut)
+    diff.recursive_apply_modifications(sut)
     assert sut["cat"] == {"house": "big1", "rooms": [{"room1": [{"foo": "bar1"}, {"baz": {"bazt": "fizz1"}}]}, {"room2": "small1"}]}
 
 @pytest.mark.asyncio
