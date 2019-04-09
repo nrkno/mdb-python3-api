@@ -40,6 +40,13 @@ class DiffResult(Mapping):
         if item:
             await async_func(item)
 
+    @staticmethod
+    def __is_direct_value(v):
+        return isinstance(v, str) or isinstance(v, int) or isinstance(v, float)
+
+    def primitive_valued_fields(self):
+        return [k for k,v in self._storage.items() if self.__is_direct_value(v)]
+
 
 def print_it(item):
     if "name" in item:

@@ -90,6 +90,7 @@ def test_adds():
     assert sut["cat"] == "fritz"
     assert sut["rooms"] == [{"room3": {"room3": "small"}},{"room1": [{"foo": "bar1"}, {"baz": {"bazt": "fizz1"}}]}, {"room2": "small1"}]
 
+
 def test_adds_to_empty():
     diff = Diff()
     sut = {}
@@ -99,6 +100,16 @@ def test_adds_to_empty():
     diff.apply_adds(sut)
     assert sut["cat"] == "fritz"
     assert sut["rooms"] == [{"room1": [{"foo": "bar1"}, {"baz": {"bazt": "fizz1"}}]}, {"room2": "small1"}]
+
+def test_primitive_valued_fields():
+    diff = Diff()
+    sut = {}
+    diff.Added["cat"] = "fritz"
+    diff.Added["rooms"] = [{"room1": [{"foo": "bar1"}, {"baz": {"bazt": "fizz1"}}]}, {"room2": "small1"}]
+
+    actual = diff.Added.primitive_valued_fields()
+    assert len(actual) == 1
+    assert actual == ["cat"]
 
 
 def test_diff_added_updated():
