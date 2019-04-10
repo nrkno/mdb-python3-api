@@ -1,3 +1,4 @@
+import copy
 import json
 import math
 from typing import Mapping
@@ -160,19 +161,19 @@ class Diff:
         for element in elements:
             if name not in self.Added:
                 self.Added[name] = []
-            self.Added[name].append(element)
+            self.Added[name].append(copy.deepcopy(element))
 
     def add_to_removed(self, name, elements):
         for element in elements:
             if name not in self.Removed:
                 self.Removed[name] = []
-            self.Removed[name].append(element)
+            self.Removed[name].append(copy.deepcopy(element))
 
     def add_to_modified(self, name, elements):
         for element in elements:
             if name not in self.Modified:
                 self.Modified[name] = []
-            self.Modified[name].append(element)
+            self.Modified[name].append(copy.deepcopy(element))
 
     def has_removals_only(self):
         return (not self.Modified and not self.Added) and self.Removed
