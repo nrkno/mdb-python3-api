@@ -343,7 +343,7 @@ class Differ:
         self.subjects_value_comparator = self.__subject_value_equals
         self.spatials_identity_comparator = self.__spatial_value_identity_comparator
         self.spatials_value_comparator = self.__spatial_value_equals
-        self.ignorables = {"title", "shortDescription", "published", "embeddingAllowed", "duration"}
+        self.ignorables = {}
 
     def explain_diff(self):
         res = self.explain_collection("subjects")
