@@ -196,11 +196,13 @@ class MdbJsonApi(object):
     async def open(self, owner):
         link = self.rewritten_link(ApiResponseParser.self_link(owner))
         get_method = self.rest_api_util.get(link, self.json_response_unpacker, self._headers)
-        return await get_method()
+        response = await get_method()
+        return response
 
     async def get_json(self, url):
         get_method = self.rest_api_util.get(self.rewritten_link(url), self.json_response_unpacker, self._headers)
-        return await get_method({})
+        response = await get_method({})
+        return response
 
     async def update(self, owner, payload):
         link = self.rewritten_link(ApiResponseParser.self_link(owner))
