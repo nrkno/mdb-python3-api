@@ -18,6 +18,14 @@ def test_diff_added():
     assert len(changes.Added) == 1
     assert changes.Added['fizz'] == 'buzz'
 
+def test_retain_only():
+    original = {'title': 'foo', 'title2': 'foo'}
+    modified = {'title': 'foo', 'baz': 'bazt', 'fizz': 'buzz'}
+    changes = Differ(original, modified).calculate()
+    changes.retain_only(["title", "baz"])
+    assert len(changes.Added) == 1
+    assert len(changes.AddeRemoved) == 0
+
 def test_apply_attribute_diff():
     diff = Diff()
     diff.Modified["cat"] = "fido"

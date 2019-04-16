@@ -97,6 +97,17 @@ class Diff:
         for key in keys:
             self.remove_key(key)
 
+    def all_keys(self):
+        all_keys = set()
+        all_keys.update(list(self.Added.keys()))
+        all_keys.update(self.Removed.keys())
+        all_keys.update(self.Modified.keys())
+        return all_keys
+
+    def retain_only(self, keys):
+        all_ = [ x for x in self.all_keys() if x not in keys]
+        self.remove_keys(all_)
+
     def recursive_apply_modifications(self, target):
         self.__recursive_apply(self.Modified, target)
 
