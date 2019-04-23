@@ -159,7 +159,7 @@ class MdbJsonApi(object):
         if source_system:
             self._headers["X-Source-System"] = source_system
         if user_id:
-            self._headers["userId"] = user_id
+            self._headers["X-userId"] = user_id
         if correlation_id:
             self._headers["X-transactionId"] = correlation_id
         self.json_response_unpacker = response_unpacker
