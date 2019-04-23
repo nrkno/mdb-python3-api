@@ -395,6 +395,38 @@ def test_illustration_modified():
     assert len(changes.Modified) == 1
 
 
+geo_verden = {"geoAvailability"
+: {
+        "resId": "http://id.nrk.no/2015/clip/IPRights/geoavailability/VERDEN",
+        "title": "VERDEN"
+    }}
+
+geo_nrk = {"geoAvailability"
+: {
+        "resId": "http://id.nrk.no/2015/clip/IPRights/geoavailability/NRK",
+        "title": "NRK"
+    }}
+
+
+def test_geo_availability_added():
+    differ = Differ({}, geo_verden)
+    changes = differ.calculate()
+    assert len(changes.Added) == 1
+
+
+def test_geo_availability_removed():
+    differ = Differ(geo_verden, {})
+    changes = differ.calculate()
+    assert len(changes.Removed) == 1
+
+
+def test_geo_availability_modified():
+    differ = Differ(geo_verden, geo_nrk)
+    changes = differ.calculate()
+    assert len(changes.Modified) == 1
+
+
+
 test_illustration_modified()
 '''
 test_diff_edited_value()

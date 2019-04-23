@@ -559,6 +559,20 @@ class Differ:
         if existing_image.get("identifier") != modified_image.get("identifier"):
             self.diff.Modified[_ILLU] = modified_image
 
+    def _apply_changes_geoavail(self):
+        _GEOAVAIL = "geoAvailability"
+        existing_geo = self.existing.get(_GEOAVAIL, {})
+        modified_geo = self.modified.get(_GEOAVAIL, {})
+
+        if not existing_geo and modified_geo:
+            self.diff.Added[_GEOAVAIL] = modified_geo
+            return
+        if existing_geo and not modified_geo:
+            self.diff.Removed[_GEOAVAIL] = existing_geo
+            return
+        if existing_geo.get("resId") != modified_geo.get("resId"):
+            self.diff.Modified[_GEOAVAIL] = modified_geo
+
     def _apply_changes_editorial_object_collections(self):
 
         def find(collection, comparator, modified_):
@@ -608,6 +622,7 @@ class Differ:
         self.attribute_changes()
         self._apply_changes_editorial_object_collections()
         self._apply_changes_images()
+        self._apply_changes_geoavail()
         return self.diff
 
 
