@@ -44,8 +44,15 @@ class DiffResult(Mapping):
     def __is_direct_value(v):
         return isinstance(v, str) or isinstance(v, int) or isinstance(v, float)
 
+    @staticmethod
+    def __is_postable_composite(k):
+        return k == "illustration" or k == "geoAvailability"
+
     def primitive_valued_fields(self):
         return [k for k,v in self._storage.items() if self.__is_direct_value(v)]
+
+    def postable_fields(self):
+        return [k for k,v in self._storage.items() if self.__is_direct_value(v) or self.__is_postable_composite(k)]
 
 
 def print_it(item):
