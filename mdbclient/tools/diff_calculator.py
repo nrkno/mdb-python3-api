@@ -357,15 +357,18 @@ class Differ:
         self.ignorables = {}
 
     def explain_diff(self):
-        res = self.explain_collection("subjects")
-        res += self.explain_collection("categories")
-        res += self.explain_collection("contributors")
-        res += self.explain_collection("spatials")
+        res = self.__explain_collection("subjects")
+        res += self.__explain_collection("categories")
+        res += self.__explain_collection("contributors")
+        res += self.__explain_collection("spatials")
+        fields =[k for k in self.diff.added_or_modified_primitive_valued_fields()]
+        if fields:
+            res += "Fields: " + ",".join(fields)
         if res:
             res = "\n" + ApiResponseParser.self_link(self.existing) + " modified:\n" + res
         return res
 
-    def explain_collection(self, name):
+    def __explain_collection(self, name):
         res = ""
         if self.diff.has_field_diff(name):
             ex = [print_it(x) for x in self.existing.get(name, [])]
