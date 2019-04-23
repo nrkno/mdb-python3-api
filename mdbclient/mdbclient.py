@@ -110,8 +110,14 @@ class RestApiUtil(object):
             return await responsefunc(response)
 
     # @backoff.on_exception(backoff.expo, requests.exceptions.RequestException, max_tries=8)
-    def post(self, uri, responsefunc, headers=None):
+    def post_to_static_uri(self, uri, responsefunc, headers=None):
         async def do_post(json_payload):
+            pm = self.post(responsefunc, headers)
+            return await pm(json_payload, uri)
+        return do_post
+
+    def post(self, responsefunc, headers=None):
+        async def do_post(json_payload, uri):
             log_msg = f"POST TO {uri}\n{json.dumps(json_payload, indent=4, sort_keys=True)}"
             self.traffic.append(log_msg)
             async with self.session.post(uri, json=json_payload, headers=headers) as response:
@@ -165,15 +171,18 @@ class MdbJsonApi(object):
         self.json_response_unpacker = response_unpacker
         self.force_host = force_host
         self.force_scheme = force_scheme
+        self.parsed_json_post = None
 
     async def __aenter__(self):
         self.rest_api_util = RestApiUtil()
+        self.parsed_json_post = self.rest_api_util.post(self.json_response_unpacker, self._headers)
         await self.rest_api_util.__aenter__()
         return self
 
     async def __aexit__(self, *err):
         await self.rest_api_util.__aexit__()
         self.rest_api_util = None
+        self.parsed_json_post = None
 
     def rewritten_link(self, link):
         if not self.force_host:
@@ -185,8 +194,7 @@ class MdbJsonApi(object):
 
     async def add_on_rel(self, owner, rel, payload):
         link = self.rewritten_link(ApiResponseParser.link(owner, rel))
-        post_method = self.rest_api_util.post(link, self.json_response_unpacker, self._headers)
-        resp = await post_method(payload)
+        resp = await self.parsed_json_post(payload, link)
         return resp
 
     async def delete(self, owner):
@@ -206,8 +214,7 @@ class MdbJsonApi(object):
 
     async def update(self, owner, payload):
         link = self.rewritten_link(ApiResponseParser.self_link(owner))
-        post_handler = self.rest_api_util.post(link, self.json_response_unpacker, self._headers)
-        resp = await post_handler(payload)
+        resp = await self.parsed_json_post(payload, link)
         return resp
 
 
@@ -233,7 +240,6 @@ class MdbClient(MdbJsonApi):
     def prod(user_id, correlation_id=None):
         return MdbClient("http://mdbklipp.felles.ds.nrk.no", user_id, correlation_id)
 
-
     def api_method(self, sub_path):
         return self.api_base + "/" + sub_path
 
@@ -243,7 +249,7 @@ class MdbClient(MdbJsonApi):
 
         def std_json_post(method_name):
             real_method = self.api_method(method_name)
-            return self.rest_api_util.post(real_method, ApiResponseParser.unpack_json, self._headers)
+            return self.rest_api_util.post_to_static_uri(real_method, ApiResponseParser.unpack_json, self._headers)
 
         def std_json_get(method_name):
             real_method = self.api_method(method_name)
@@ -352,6 +358,5 @@ class MdbClient(MdbJsonApi):
 
     async def create_episode(self, season_id, episode):
         real_method = self.api_method(f"serie/{season_id}/episode")
-        http_verb = self.rest_api_util.post(real_method, ApiResponseParser.unpack_json, self._headers)
-        serie = await http_verb(episode)
+        serie = await self.parsed_json_post(episode, real_method)
         return serie
