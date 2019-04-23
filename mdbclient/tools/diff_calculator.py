@@ -151,6 +151,12 @@ class Diff:
         res.extend(self.Modified.primitive_valued_fields())
         return res
 
+    def added_or_modified_postable_fields(self):
+        res = []
+        res.extend(self.Added.postable_fields())
+        res.extend(self.Modified.postable_fields())
+        return res
+
     @staticmethod
     def is_direct_value(v):
         return isinstance(v, str) or isinstance(v, int) or isinstance(v, float)
@@ -368,7 +374,7 @@ class Differ:
         res += self.__explain_collection("categories")
         res += self.__explain_collection("contributors")
         res += self.__explain_collection("spatials")
-        fields =[k for k in self.diff.added_or_modified_primitive_valued_fields()]
+        fields =[k for k in self.diff.added_or_modified_postable_fields()]
         if fields:
             res += "Fields: " + ",".join(fields)
         if res:
