@@ -121,6 +121,8 @@ class RestApiUtil(object):
             log_msg = f"POST TO {uri}\n{json.dumps(json_payload, indent=4, sort_keys=True)}"
             self.traffic.append(log_msg)
             async with self.session.post(uri, json=json_payload, headers=headers) as response:
+                if response.status >= 400:
+                    raise Exception(f"Status was {response.status}: {await response.text()}")
                 if "Location" not in response.headers:
                     raise Exception(f"No location in response {await response.text()} for {log_msg}")
                 response_payload = await self.follow(response, responsefunc)
