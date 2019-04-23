@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 import pytest
 
 from mdbclient.tools.diff_calculator import Differ, Diff
@@ -18,18 +20,20 @@ def test_diff_added():
     assert len(changes.Added) == 1
     assert changes.Added['fizz'] == 'buzz'
 
+
 def test_retain_only():
     original = {'title': 'foo', 'title2': 'foo'}
     modified = {'title': 'foo', 'baz': 'bazt', 'fizz': 'buzz'}
     changes = Differ(original, modified).calculate()
     changes.retain_only(["title", "baz"])
     assert len(changes.Added) == 1
-    assert len(changes.AddeRemoved) == 0
+    assert len(changes.Removed) == 0
+
 
 def test_apply_attribute_diff():
     diff = Diff()
     diff.Modified["cat"] = "fido"
-    sut = {"cat" : "knut"}
+    sut = {"cat": "knut"}
     diff.recursive_apply_modifications(sut)
     assert sut["cat"] == "fido"
 
@@ -37,7 +41,7 @@ def test_apply_attribute_diff():
 def test_apply_collection_diff():
     diff = Diff()
     diff.Modified["cat"] = ["fido", None, "Brutus"]
-    sut = {"cat" : ["fzz", "ape", "rtrt"]}
+    sut = {"cat": ["fzz", "ape", "rtrt"]}
     diff.recursive_apply_modifications(sut)
     assert sut["cat"] == ["fido", "ape", "Brutus"]
 
@@ -53,9 +57,12 @@ def test_recursive_apply():
 def test_recursive_apply_more_complex():
     diff = Diff()
     sut = {"house": "big", "rooms": [{"room1": [{"foo": "bar"}, {"baz": {"bazt": "fizz"}}]}, {"room2": "small"}]}
-    diff.Modified["cat"] = {"house": "big1", "rooms": [{"room1": [{"foo": "bar1"}, {"baz": {"bazt": "fizz1"}}]}, {"room2": "small1"}]}
+    diff.Modified["cat"] = {"house": "big1",
+                            "rooms": [{"room1": [{"foo": "bar1"}, {"baz": {"bazt": "fizz1"}}]}, {"room2": "small1"}]}
     diff.recursive_apply_modifications(sut)
-    assert sut["cat"] == {"house": "big1", "rooms": [{"room1": [{"foo": "bar1"}, {"baz": {"bazt": "fizz1"}}]}, {"room2": "small1"}]}
+    assert sut["cat"] == {"house": "big1",
+                          "rooms": [{"room1": [{"foo": "bar1"}, {"baz": {"bazt": "fizz1"}}]}, {"room2": "small1"}]}
+
 
 @pytest.mark.asyncio
 async def test_with_change():
@@ -64,8 +71,10 @@ async def test_with_change():
     changes = Differ(original, modified).calculate()
     assert len(changes.Added) == 1
     assert changes.Added['fizz'] == 'buzz'
+
     async def check_it(xz):
         assert xz["fizz"] == "buzz"
+
     await changes.Added.with_change("fizz", check_it)
 
 
@@ -76,8 +85,10 @@ async def test_if_present():
     changes = Differ(original, modified).calculate()
     assert len(changes.Added) == 1
     assert changes.Added['fizz'] == 'buzz'
+
     async def check_it(xz):
         assert xz == "buzz"
+
     await changes.Added.if_present("fizz", check_it)
 
 
@@ -88,6 +99,7 @@ def test_diff_removed():
     assert len(changes.Removed) == 1
     assert "baz" in changes.Removed
 
+
 def test_adds():
     diff = Diff()
     sut = {"rooms": [{"room3": {"room3": "small"}}]}
@@ -96,7 +108,8 @@ def test_adds():
 
     diff.apply_adds(sut)
     assert sut["cat"] == "fritz"
-    assert sut["rooms"] == [{"room3": {"room3": "small"}},{"room1": [{"foo": "bar1"}, {"baz": {"bazt": "fizz1"}}]}, {"room2": "small1"}]
+    assert sut["rooms"] == [{"room3": {"room3": "small"}}, {"room1": [{"foo": "bar1"}, {"baz": {"bazt": "fizz1"}}]},
+                            {"room2": "small1"}]
 
 
 def test_adds_to_empty():
@@ -108,6 +121,7 @@ def test_adds_to_empty():
     diff.apply_adds(sut)
     assert sut["cat"] == "fritz"
     assert sut["rooms"] == [{"room1": [{"foo": "bar1"}, {"baz": {"bazt": "fizz1"}}]}, {"room2": "small1"}]
+
 
 def test_primitive_valued_fields():
     diff = Diff()
@@ -348,7 +362,40 @@ def test_spatials_modification():
     assert changes.has_diff()
 
 
-test_subjects_modified_value()
+without_illustration = {}
+
+with_illustration = {"illustration": {
+    "identifier": "_iXhb8d-6JPD4srMv4-rSA",
+    "storageType": {
+        "resId": "http://id.nrk.no/2015/kaleido/image",
+        "label": "Kaleido",
+        "isSuppressed": False
+    },
+    "resId": "https://kaleido.nrk.no/service/api/1.0/data/_iXhb8d-6JPD4srMv4-rSA"
+}}
+
+
+def test_illustration_added():
+    differ = Differ(without_illustration, with_illustration)
+    changes = differ.calculate()
+    assert len(changes.Added) == 1
+
+
+def test_illustration_removed():
+    differ = Differ(with_illustration, without_illustration)
+    changes = differ.calculate()
+    assert len(changes.Removed) == 1
+
+
+def test_illustration_modified():
+    different_ill = deepcopy(with_illustration)
+    different_ill["illustration"]["identifier"] = "badsk8ter"
+    differ = Differ(with_illustration, different_ill)
+    changes = differ.calculate()
+    assert len(changes.Modified) == 1
+
+
+test_illustration_modified()
 '''
 test_diff_edited_value()
 test_diff_added()
