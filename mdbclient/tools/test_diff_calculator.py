@@ -125,7 +125,6 @@ def test_adds_to_empty():
 
 def test_primitive_valued_fields():
     diff = Diff()
-    sut = {}
     diff.Added["cat"] = "fritz"
     diff.Added["rooms"] = [{"room1": [{"foo": "bar1"}, {"baz": {"bazt": "fizz1"}}]}, {"room2": "small1"}]
 
@@ -191,6 +190,27 @@ def test_add_contributor():
     assert len(changes.Added) == 1
     assert changes.Added['contributors'] == [contr]
 
+def test_eliminate_v23():
+    contr = {'contact': {'title': 'ole olsen', 'characterName': 'abc', 'comment': 'aContactComment',
+                         'capacity': 'Contactcapacity'}, 'role' : {"resId": 'http://authority.nrk.no/role/V23'}}
+    contr2 = {'contact': {'title': 'ole olsen2', 'characterName': 'abc', 'comment': 'aContactComment',
+                         'capacity': 'Contactcapacity'}, 'role' : {"resId": 'http://authority.nrk.no/role/V23'}}
+    contr3 = {'contact': {'title': 'ole olsen3', 'characterName': 'abc', 'comment': 'aContactComment',
+                         'capacity': 'Contactcapacity'}, 'role' : {"resId": 'http://authority.nrk.no/role/V23'}}
+    contr3_mod = {'contact': {'title': 'ole olsen3', 'characterName': 'abc2', 'comment': 'aContactComment',
+                         'capacity': 'Contactcapacity'}, 'role' : {"resId": 'http://authority.nrk.no/role/V23'}}
+    original = {'title': 'foo', 'contributors': [contr, contr3]}
+    modified = {'title': 'foo', 'contributors': [contr2, contr3_mod]}
+    changes = Differ(original, modified).calculate()
+    assert len(changes.Added) == 1
+    assert len(changes.Removed) == 1
+    assert len(changes.Modified) == 1
+    assert changes.Added['contributors'] == [contr2]
+    changes.eliminate_changed_v23()
+    assert len(changes.Added) == 0
+    assert len(changes.Removed) == 0
+    assert len(changes.Modified) == 0
+
 
 def test_add_contributor_with_existing():
     org_contr = {'contact': {'title': 'ole2 olsen', 'characterName': 'abc', 'comment': 'aContactComment',
@@ -219,7 +239,7 @@ def test_modify_existing_contributor():
     assert changes.Modified['contributors'] == [contr]
 
 
-def test_modify_existing_contributor_with_resId():
+def test_modify_existing_contributor_with_resid():
     org_contr = {'contact': {'title': 'ole olsen', 'characterName': 'abc_org', 'comment': 'aContactComment',
                              'capacity': 'Contactcapacity'}}
     original = {'resId': 'http://org1', 'title': 'foo', 'contributors': [org_contr]}
@@ -235,7 +255,7 @@ def test_modify_existing_contributor_with_resId():
     assert changes.Modified['contributors'] == [contr]
 
 
-def test_modify_existing_contributor_with_ignored_resId():
+def test_modify_existing_contributor_with_ignored_resid():
     innocent_bystander = {'contact': {'title': 'fredf', 'characterName': 'abc', 'comment': 'aContactComment',
                                       'capacity': 'Contactcapacity'}}
     org_contr = {'contact': {'title': 'ole olsen', 'characterName': 'abc_org', 'comment': 'aContactComment',
@@ -261,8 +281,6 @@ def test_removed_contributor():
                              'capacity': 'Contactcapacity'}}
     original = {'title': 'foo', 'contributors': [innocent_bystander, org_contr]}
 
-    contr = {'contact': {'title': 'ole olsen', 'characterName': 'abc_mod', 'comment': 'aContactComment',
-                         'capacity': 'Contactcapacity'}}
     modified = {'title': 'foo', 'contributors': [innocent_bystander]}
     changes = Differ(original, modified).calculate()
     assert len(changes.Removed) == 1
@@ -395,17 +413,15 @@ def test_illustration_modified():
     assert len(changes.Modified) == 1
 
 
-geo_verden = {"geoAvailability"
-: {
-        "resId": "http://id.nrk.no/2015/clip/IPRights/geoavailability/VERDEN",
-        "title": "VERDEN"
-    }}
+geo_verden = {"geoAvailability": {
+    "resId": "http://id.nrk.no/2015/clip/IPRights/geoavailability/VERDEN",
+    "title": "VERDEN"
+}}
 
-geo_nrk = {"geoAvailability"
-: {
-        "resId": "http://id.nrk.no/2015/clip/IPRights/geoavailability/NRK",
-        "title": "NRK"
-    }}
+geo_nrk = {"geoAvailability": {
+    "resId": "http://id.nrk.no/2015/clip/IPRights/geoavailability/NRK",
+    "title": "NRK"
+}}
 
 
 def test_geo_availability_added():
@@ -424,7 +440,6 @@ def test_geo_availability_modified():
     differ = Differ(geo_verden, geo_nrk)
     changes = differ.calculate()
     assert len(changes.Modified) == 1
-
 
 
 test_illustration_modified()

@@ -226,25 +226,24 @@ class Diff:
         return self.__added_n58() or self.__removed_n58()
 
     def eliminate_changed_v23(self):
-        added = self.__indices_of_contributor_v23(self.Added)
-        added.reverse()
-        for c in added:
-            del self.Added['contributors'][c]
-        removed = self.__indices_of_contributor_v23(self.Removed)
-        removed.reverse()
-        for c in removed:
-            del self.Removed['contributors'][c]
-        self.pack()
+        self.eliminate_in_changeset('contributors', self.__indices_of_contributor_v23)
 
     def eliminate_changed_n58(self):
-        added = self.__indices_of_contributor_n58(self.Added)
+        self.eliminate_in_changeset('contributors', self.__indices_of_contributor_n58)
+
+    def eliminate_in_changeset(self, field_name, indices_func):
+        added = indices_func(self.Added)
         added.reverse()
         for c in added:
-            del self.Added['contributors'][c]
-        removed = self.__indices_of_contributor_n58(self.Removed)
+            del self.Added[field_name][c]
+        removed = indices_func(self.Removed)
         removed.reverse()
         for c in removed:
-            del self.Removed['contributors'][c]
+            del self.Removed[field_name][c]
+        modified = indices_func(self.Modified)
+        modified.reverse()
+        for c in modified:
+            del self.Modified[field_name][c]
         self.pack()
 
     def pack(self):
