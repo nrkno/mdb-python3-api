@@ -76,11 +76,13 @@ def print_it(item):
 
 
 class Diff:
-    def __init__(self):
+    def __init__(self, existing, modified):
 
         """
         Items that have been added in modified
         """
+        self.modified = modified
+        self.existing = existing
         self.Added = DiffResult()
         """
         Removed elements contain the key and their original value.
@@ -180,6 +182,37 @@ class Diff:
                     del item["resId"]
                 if "links" in item:
                     del item["links"]
+
+    def explain_field_change(self, name):
+        res = ""
+        for x in self.Added.get(name, []):
+            res += f"{name} added: " + print_it(x) + "\n"
+        for x in [print_it(x) for x in self.Modified.get(name, []) if x]:
+            res += f"{name} modified: " + x + "\n"
+        for x in [print_it(x) for x in self.Removed.get(name, []) if x]:
+            res += f"{name} removed: " + x + "\n"
+        return res
+
+    def __explain_collection(self, name):
+        res = ""
+        if self.has_field_diff(name):
+            ex = [print_it(x) for x in self.existing.get(name, [])]
+            if len(ex) > 0:
+                res += f"Existing {name}:" + ", ".join(ex) + "\n"
+            res += self.explain_field_change(name)
+        return res
+
+    def explain(self):
+        res = self.__explain_collection("subjects")
+        res += self.__explain_collection("categories")
+        res += self.__explain_collection("contributors")
+        res += self.__explain_collection("spatials")
+        fields =[k for k in self.added_or_modified_postable_fields()]
+        if fields:
+            res += "Fields: " + ",".join(fields)
+        if res:
+            res = "\n" + ApiResponseParser.self_link(self.existing) + " modified:\n" + res
+        return res
 
     def add_to_added(self, name, elements):
         for element in elements:
@@ -357,7 +390,7 @@ class Differ:
     def __init__(self, existing, modified):
         self.existing = existing
         self.modified = modified
-        self.diff = Diff()
+        self.diff = Diff(existing, modified)
         self.category_identity_comparator = self.__category_reference_equals
         self.category_value_comparator = self.__category_value_equals
         self.contributors_identity_comparator = self.__contributor_value_based_identity
@@ -367,27 +400,6 @@ class Differ:
         self.spatials_identity_comparator = self.__spatial_value_identity_comparator
         self.spatials_value_comparator = self.__spatial_value_equals
         self.ignorables = {}
-
-    def explain_diff(self):
-        res = self.__explain_collection("subjects")
-        res += self.__explain_collection("categories")
-        res += self.__explain_collection("contributors")
-        res += self.__explain_collection("spatials")
-        fields =[k for k in self.diff.added_or_modified_postable_fields()]
-        if fields:
-            res += "Fields: " + ",".join(fields)
-        if res:
-            res = "\n" + ApiResponseParser.self_link(self.existing) + " modified:\n" + res
-        return res
-
-    def __explain_collection(self, name):
-        res = ""
-        if self.diff.has_field_diff(name):
-            ex = [print_it(x) for x in self.existing.get(name, [])]
-            if len(ex) > 0:
-                res += f"Existing {name}:" + ", ".join(ex) + "\n"
-            res += self.diff.explain_field_change(name)
-        return res
 
     @staticmethod
     def print_it(item, role=None):
@@ -531,8 +543,8 @@ class Differ:
         return spatial.get("name") or (lat and lon and not math.isnan(lat) and not math.isnan(lon))
 
     def attribute_changes(self):
-        original = self.existing
-        modified = self.modified
+        original = self.diff.existing
+        modified = self.diff.modified
 
         def is_ignorable(attr_name):
             return attr_name in self.ignorables
@@ -573,8 +585,8 @@ class Differ:
 
     def _apply_changes_geoavail(self):
         _GEOAVAIL = "geoAvailability"
-        existing_geo = self.existing.get(_GEOAVAIL, {})
-        modified_geo = self.modified.get(_GEOAVAIL, {})
+        existing_geo = self.diff.existing.get(_GEOAVAIL, {})
+        modified_geo = self.diff.modified.get(_GEOAVAIL, {})
 
         if not existing_geo and modified_geo:
             self.diff.Added[_GEOAVAIL] = modified_geo

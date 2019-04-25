@@ -31,7 +31,7 @@ def test_retain_only():
 
 
 def test_apply_attribute_diff():
-    diff = Diff()
+    diff = Diff({}, {})
     diff.Modified["cat"] = "fido"
     sut = {"cat": "knut"}
     diff.recursive_apply_modifications(sut)
@@ -39,7 +39,7 @@ def test_apply_attribute_diff():
 
 
 def test_apply_collection_diff():
-    diff = Diff()
+    diff = Diff({}, {})
     diff.Modified["cat"] = ["fido", None, "Brutus"]
     sut = {"cat": ["fzz", "ape", "rtrt"]}
     diff.recursive_apply_modifications(sut)
@@ -47,7 +47,7 @@ def test_apply_collection_diff():
 
 
 def test_recursive_apply():
-    diff = Diff()
+    diff = Diff({}, {})
     sut = {"house": "big", "rooms": [{"room1": "big"}, {"room2": "small"}]}
     diff.Modified["cat"] = {"house": "big1", "rooms": [{"room1": "big1"}, {"room2": "small1"}]}
     diff.recursive_apply_modifications(sut)
@@ -55,7 +55,7 @@ def test_recursive_apply():
 
 
 def test_recursive_apply_more_complex():
-    diff = Diff()
+    diff = Diff({}, {})
     sut = {"house": "big", "rooms": [{"room1": [{"foo": "bar"}, {"baz": {"bazt": "fizz"}}]}, {"room2": "small"}]}
     diff.Modified["cat"] = {"house": "big1",
                             "rooms": [{"room1": [{"foo": "bar1"}, {"baz": {"bazt": "fizz1"}}]}, {"room2": "small1"}]}
@@ -101,7 +101,7 @@ def test_diff_removed():
 
 
 def test_adds():
-    diff = Diff()
+    diff = Diff({}, {})
     sut = {"rooms": [{"room3": {"room3": "small"}}]}
     diff.Added["cat"] = "fritz"
     diff.Added["rooms"] = [{"room1": [{"foo": "bar1"}, {"baz": {"bazt": "fizz1"}}]}, {"room2": "small1"}]
@@ -113,7 +113,7 @@ def test_adds():
 
 
 def test_adds_to_empty():
-    diff = Diff()
+    diff = Diff({}, {})
     sut = {}
     diff.Added["cat"] = "fritz"
     diff.Added["rooms"] = [{"room1": [{"foo": "bar1"}, {"baz": {"bazt": "fizz1"}}]}, {"room2": "small1"}]
@@ -124,7 +124,7 @@ def test_adds_to_empty():
 
 
 def test_primitive_valued_fields():
-    diff = Diff()
+    diff = Diff({}, {})
     diff.Added["cat"] = "fritz"
     diff.Added["rooms"] = [{"room1": [{"foo": "bar1"}, {"baz": {"bazt": "fizz1"}}]}, {"room2": "small1"}]
 
@@ -190,15 +190,16 @@ def test_add_contributor():
     assert len(changes.Added) == 1
     assert changes.Added['contributors'] == [contr]
 
+
 def test_eliminate_v23():
     contr = {'contact': {'title': 'ole olsen', 'characterName': 'abc', 'comment': 'aContactComment',
-                         'capacity': 'Contactcapacity'}, 'role' : {"resId": 'http://authority.nrk.no/role/V23'}}
+                         'capacity': 'Contactcapacity'}, 'role': {"resId": 'http://authority.nrk.no/role/V23'}}
     contr2 = {'contact': {'title': 'ole olsen2', 'characterName': 'abc', 'comment': 'aContactComment',
-                         'capacity': 'Contactcapacity'}, 'role' : {"resId": 'http://authority.nrk.no/role/V23'}}
+                          'capacity': 'Contactcapacity'}, 'role': {"resId": 'http://authority.nrk.no/role/V23'}}
     contr3 = {'contact': {'title': 'ole olsen3', 'characterName': 'abc', 'comment': 'aContactComment',
-                         'capacity': 'Contactcapacity'}, 'role' : {"resId": 'http://authority.nrk.no/role/V23'}}
+                          'capacity': 'Contactcapacity'}, 'role': {"resId": 'http://authority.nrk.no/role/V23'}}
     contr3_mod = {'contact': {'title': 'ole olsen3', 'characterName': 'abc2', 'comment': 'aContactComment',
-                         'capacity': 'Contactcapacity'}, 'role' : {"resId": 'http://authority.nrk.no/role/V23'}}
+                              'capacity': 'Contactcapacity'}, 'role': {"resId": 'http://authority.nrk.no/role/V23'}}
     original = {'title': 'foo', 'contributors': [contr, contr3]}
     modified = {'title': 'foo', 'contributors': [contr2, contr3_mod]}
     changes = Differ(original, modified).calculate()
