@@ -230,6 +230,7 @@ class Diff:
         res += self.__explain_collection("categories")
         res += self.__explain_collection("contributors")
         res += self.__explain_collection("spatials")
+        res += self.__explain_collection("references")
         fields = [k for k in self.added_or_modified_postable_fields()]
         if fields:
             res += "Fields: " + ",".join(fields)
