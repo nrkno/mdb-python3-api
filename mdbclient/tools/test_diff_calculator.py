@@ -177,6 +177,14 @@ g3external_2 = {
 }
 
 
+def test_remove_reference_type():
+    changes = Differ({}, {'references': [reference_1, g3external_1]}).calculate()
+    changes.remove_references_of_type("http://id.nrk.no/2016/mdb/reference/g3external")
+    assert len(changes.Added) == 1
+    assert changes.Added['references'] == [reference_1]
+
+
+
 def test_added_reference():
     changes = Differ({}, {'references': [reference_1]}).calculate()
     assert len(changes.Added) == 1
