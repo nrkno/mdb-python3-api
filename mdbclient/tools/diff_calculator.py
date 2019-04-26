@@ -151,6 +151,7 @@ class Diff:
         item = self.Modified.get(key)
         if item:
             func(item)
+        self.pack()
 
     def remove_references_of_type(self, reference_type):
         self.__for_all_diff_collections("references", lambda coll: self.__remove_references(coll, reference_type))
