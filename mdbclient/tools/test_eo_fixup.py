@@ -19,12 +19,18 @@ c1 = {'contact': contact_to1, 'role': role_to1, 'characterName': 'abc', 'comment
 c2 = {'contact': contact_to2, 'role': role_to1, 'characterName': 'abc', 'comment': 'aContactComment',
       'capacity': 'Contactcapacity'}
 
+s1 = {"name": "Porsgrunn", "latiude" : 59.138557, "longitude": 9.655515}
+s2 = {"name": "Skien", "latiude" : 59.128557, "longitude": 9.655515}
 
 def test_collapse_to_single():
     pe = {"contributors": [c1, c1]}
     remove_duplicates(pe)
     assert len(pe["contributors"]) == 1
 
+def test_collapse_spatials():
+    pe = {"spatials": [s1, s2]}
+    remove_duplicates(pe)
+    assert len(pe["spatials"]) == 1
 
 def test_diff_edited_value():
     pe = {"contributors": [c1, c1, c2]}
