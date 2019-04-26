@@ -49,10 +49,10 @@ class DiffResult(Mapping):
         return k == "illustration" or k == "geoAvailability"
 
     def primitive_valued_fields(self):
-        return [k for k,v in self._storage.items() if self.__is_direct_value(v)]
+        return [k for k, v in self._storage.items() if self.__is_direct_value(v)]
 
     def postable_fields(self):
-        return [k for k,v in self._storage.items() if self.__is_direct_value(v) or self.__is_postable_composite(k)]
+        return [k for k, v in self._storage.items() if self.__is_direct_value(v) or self.__is_postable_composite(k)]
 
 
 def print_it(item):
@@ -114,7 +114,7 @@ class Diff:
         return all_keys
 
     def retain_only(self, keys):
-        all_ = [ x for x in self.all_keys() if x not in keys]
+        all_ = [x for x in self.all_keys() if x not in keys]
         self.remove_keys(all_)
 
     def recursive_apply_modifications(self, target):
@@ -207,7 +207,7 @@ class Diff:
         res += self.__explain_collection("categories")
         res += self.__explain_collection("contributors")
         res += self.__explain_collection("spatials")
-        fields =[k for k in self.added_or_modified_postable_fields()]
+        fields = [k for k in self.added_or_modified_postable_fields()]
         if fields:
             res += "Fields: " + ",".join(fields)
         if res:
@@ -335,16 +335,6 @@ class Diff:
             res += "Removed\n" + json.dumps(self.Removed, indent=4)
         return res
 
-    def explain_field_change(self, name):
-        res = ""
-        for x in self.Added.get(name, []):
-            res += f"{name} added: " + print_it(x) + "\n"
-        for x in [print_it(x) for x in self.Modified.get(name, []) if x]:
-            res += f"{name} modified: " + x + "\n"
-        for x in [print_it(x) for x in self.Removed.get(name, []) if x]:
-            res += f"{name} removed: " + x + "\n"
-        return res
-
     @staticmethod
     def explain_contributor_change(contributor):
         if contributor:
@@ -399,6 +389,9 @@ class Differ:
         self.subjects_value_comparator = self.__subject_value_equals
         self.spatials_identity_comparator = self.__spatial_value_identity_comparator
         self.spatials_value_comparator = self.__spatial_value_equals
+
+        self.reference_identity_comparator = self.__reference_typeaware_value_equals
+        self.reference_value_comparator = self.__reference_value_equals
         self.ignorables = {}
 
     @staticmethod
@@ -453,6 +446,27 @@ class Differ:
     def __spatial_value_equals(existing, s):
         return Differ.is_spatial(s) and not Differ.has_same_spatial(existing, s) and existing.get("stadnamn", {}).get(
             "resId") == s.get("stadnamn", {}).get("resId")
+
+    @staticmethod
+    def __reference_value_identity_comparator(original, modified):
+        return original.get("resource") == modified.get("resource")
+
+    UNIQUE_REFS = {'http://id.nrk.no/2016/mdb/reference/psAPI', 'http://id.nrk.no/2016/mdb/reference/g3clipKey'}
+
+    @staticmethod
+    def __reference_typeaware_value_equals(existing, s):
+        # references may also be compared by "type" when we know they are of unique type, we'd need to know this then
+        # but if we want this diff to be value neutral we'd need a different implementation
+        type_of_a = existing.get("type", {})
+        if type_of_a in Differ.UNIQUE_REFS:
+            return type_of_a == s.get("type", {})
+        else:
+            return type_of_a == s.get("type", {}) and existing.get("reference", {}) == s.get("reference", {})
+
+
+    @staticmethod
+    def __reference_value_equals(existing, s):
+        return existing.get("type", {}) == s.get("type", {}) and existing.get("reference", {}) == s.get("reference", {})
 
     @staticmethod
     def has_spatial(existing, spatial):
@@ -641,6 +655,7 @@ class Differ:
         handle_collections("categories", self.category_identity_comparator, self.category_value_comparator)
         handle_collections("subjects", self.subjects_identity_comparator, self.subjects_value_comparator)
         handle_collections("spatials", self.spatials_identity_comparator, self.spatials_value_comparator)
+        handle_collections("references", self.reference_identity_comparator, self.reference_value_comparator)
 
     def calculate(self):
         self.attribute_changes()

@@ -152,6 +152,67 @@ def test_added_categories():
     assert len(changes.Added) == 1
     assert changes.Added['categories'] == [{"resource": "c3"}]
 
+reference_1 = {
+    "resId": "http://id.nrk.no/2016/mdb/publicationEvent/rest-client/object/07790398-f6a7-419e-b903-98f6a7819e64",
+    "type": "http://id.nrk.no/2016/mdb/reference/psAPI",
+    "reference": "8045e01d-bf8d-478f-8e3b-bbe6640f9c3f"
+}
+
+reference_2 = {
+    "resId": "http://id.nrk.no/2016/mdb/publicationEvent/rest-client/object/07790398-f6a7-419e-b903-98f6a7819e65",
+    "type": "http://id.nrk.no/2016/mdb/reference/psAPI",
+    "reference": "8045e01d-bf8d-478f-8e3b-bbe6640f9c3f"
+}
+
+g3external_1 = {
+    "resId": "http://id.nrk.no/2016/mdb/publicationEvent/rest-client/object/07790398-f6a7-419e-b903-98f6a7819e65",
+    "type": "http://id.nrk.no/2016/mdb/reference/g3external",
+    "reference": "8045e01d-bf8d-478f-8e3b-bbe6640f9c21"
+}
+
+g3external_2 = {
+    "resId": "http://id.nrk.no/2016/mdb/publicationEvent/rest-client/object/07790398-f6a7-419e-b903-98f6a7819e65",
+    "type": "http://id.nrk.no/2016/mdb/reference/g3external",
+    "reference": "8045e01d-bf8d-478f-8e3b-bbe6640f9c2"
+}
+
+
+def test_added_reference():
+    changes = Differ({}, {'references': [reference_1]}).calculate()
+    assert len(changes.Added) == 1
+    assert changes.Added['references'] == [reference_1]
+
+
+def test_added_equal_unique_reference():
+    changes = Differ({'references': [reference_1]}, {'references': [reference_1]}).calculate()
+    assert len(changes.Added) == 0
+    assert len(changes.Modified) == 0
+    assert len(changes.Removed) == 0
+
+
+def test_added_equal_non_unique_reference():
+    changes = Differ({'references': [g3external_1]}, {'references': [g3external_1, g3external_2]}).calculate()
+    assert len(changes.Added) == 1
+    assert changes.Added['references'] == [reference_1]
+
+
+def test_added_equal_non_unique_reference():
+    changes = Differ({'references': [g3external_1]}, {'references': [g3external_1, g3external_2]}).calculate()
+    assert len(changes.Added) == 1
+    assert changes.Added['references'] == [g3external_2]
+
+
+def test_removed_non_unique_reference():
+    changes = Differ({'references': [g3external_1]}, {}).calculate()
+    assert len(changes.Removed) == 1
+    assert changes.Removed['references'] == [g3external_1]
+
+
+def test_removed_unique_reference():
+    changes = Differ({'references': [reference_1]}, {}).calculate()
+    assert len(changes.Removed) == 1
+    assert changes.Removed['references'] == [reference_1]
+
 
 def test_modified_categories():
     original = {'title': 'foo', 'categories': [{"resource": "c1"}, {"resource": "c2"}]}
