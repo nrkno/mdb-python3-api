@@ -158,7 +158,7 @@ class Diff:
 
 
     def __remove_references(self, collection, reference_type):
-        idx_to_remove = [idx for idx, x in enumerate(collection) if reference_type == x.get("type")]
+        idx_to_remove = [idx for idx, x in enumerate(collection) if x and reference_type == x.get("type")]
         for idx in reversed(idx_to_remove):
             del collection[idx]
         
