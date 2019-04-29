@@ -498,7 +498,7 @@ class Differ:
 
     @staticmethod
     def __category_reference_equals(existing, modified):
-        return existing.get("resource") == modified.get("resource")
+        return existing.get("resId") == modified.get("resId")
 
     @staticmethod
     def __category_value_equals(existing, modified):

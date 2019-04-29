@@ -146,11 +146,11 @@ def test_diff_added_updated():
 
 
 def test_added_categories():
-    original = {'title': 'foo', 'categories': [{"resource": "c1"}, {"resource": "c2"}]}
-    modified = {'title': 'foo', 'categories': [{"resource": "c1"}, {"resource": "c2"}, {"resource": "c3"}]}
+    original = {'title': 'foo', 'categories': [{"resId": "c1"}, {"resId": "c2"}]}
+    modified = {'title': 'foo', 'categories': [{"resId": "c1"}, {"resId": "c2"}, {"resId": "c3"}]}
     changes = Differ(original, modified).calculate()
     assert len(changes.Added) == 1
-    assert changes.Added['categories'] == [{"resource": "c3"}]
+    assert changes.Added['categories'] == [{"resId": "c3"}]
 
 reference_1 = {
     "resId": "http://id.nrk.no/2016/mdb/publicationEvent/rest-client/object/07790398-f6a7-419e-b903-98f6a7819e64",
@@ -223,31 +223,31 @@ def test_removed_unique_reference():
 
 
 def test_modified_categories():
-    original = {'title': 'foo', 'categories': [{"resource": "c1"}, {"resource": "c2"}]}
-    modified = {'title': 'foo', 'categories': [{"resource": "c1"}, {"resource": "c2", "title": "øl"}]}
+    original = {'title': 'foo', 'categories': [{"resId": "c1"}, {"resId": "c2"}]}
+    modified = {'title': 'foo', 'categories': [{"resId": "c1"}, {"resId": "c2", "title": "øl"}]}
     changes = Differ(original, modified).calculate()
     assert len(changes.Modified) == 1
-    assert changes.Modified['categories'] == [None, {"resource": "c2", "title": "øl"}]
+    assert changes.Modified['categories'] == [None, {"resId": "c2", "title": "øl"}]
 
 
 def test_modified_multiple_categories():
     original = {'title': 'foo',
-                'categories': [{"resource": "c1"}, {"resource": "c2"}, {"resource": "c3"}, {"resource": "c4"}]}
+                'categories': [{"resId": "c1"}, {"resId": "c2"}, {"resId": "c3"}, {"resId": "c4"}]}
     modified = {'title': 'foo',
-                'categories': [{"resource": "c1"}, {"resource": "c2", "title": "øl"}, {"resource": "c3"},
-                               {"resource": "c4", "title": "vold"}]}
+                'categories': [{"resId": "c1"}, {"resId": "c2", "title": "øl"}, {"resId": "c3"},
+                               {"resId": "c4", "title": "vold"}]}
     changes = Differ(original, modified).calculate()
     assert len(changes.Modified) == 1
-    assert changes.Modified['categories'] == [None, {"resource": "c2", "title": "øl"}, None,
-                                              {"resource": "c4", "title": "vold"}]
+    assert changes.Modified['categories'] == [None, {"resId": "c2", "title": "øl"}, None,
+                                              {"resId": "c4", "title": "vold"}]
 
 
 def test_removed_categories():
-    original = {'title': 'foo', 'categories': [{"resource": "c1"}, {"resource": "c2"}, {"resource": "c3"}]}
-    modified = {'title': 'foo', 'categories': [{"resource": "c1"}, {"resource": "c2"}]}
+    original = {'title': 'foo', 'categories': [{"resId": "c1"}, {"resId": "c2"}, {"resId": "c3"}]}
+    modified = {'title': 'foo', 'categories': [{"resId": "c1"}, {"resId": "c2"}]}
     changes = Differ(original, modified).calculate()
     assert len(changes.Removed) == 1
-    assert changes.Removed['categories'] == [None, None, {"resource": "c3"}]
+    assert changes.Removed['categories'] == [None, None, {"resId": "c3"}]
 
 
 def test_add_contributor():
