@@ -186,6 +186,9 @@ class MdbJsonApi(object):
         self.rest_api_util = None
         self.parsed_json_post = None
 
+    def add_header(self, key, value):
+        self._headers[key] = value
+
     def rewritten_link(self, link):
         if not self.force_host:
             return link
