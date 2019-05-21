@@ -79,3 +79,12 @@ async def test_resolve_reference():
         assert result['title'] == 'fozz'
         resolved = await client.reference("x-test:reference-type", "123")
         assert resolved is not None
+
+@pytest.mark.asyncio
+async def test_add_on_rel():
+    async with create_mdb_client() as client:
+        result = await client.create_master_eo({"title": "fozz"})
+        subj, status = await client.add_on_rel(result, "http://id.nrk.no/2016/mdb/relation/subjects", {"title": 'sub2'})
+        assert status == 200
+        assert subj['subjects'][0]["title"] == 'sub2'
+

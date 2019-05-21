@@ -21,7 +21,7 @@ If you are receiving a url from an external source (like a rabbitMQ queue), you 
             vg = await client.open(meo["versionGroup"])
             metadata_meo = await client.open(vg["metadataMeo"])
             # add a tag (subject)
-            await client.add_on_rel(meo, "http://id.nrk.no/2016/mdb/relation/subjects", {"title" : "min TestTagg"})
+            subj, status = await client.add_on_rel(meo, "http://id.nrk.no/2016/mdb/relation/subjects", {"title" : "min TestTagg"})
 
 
 
