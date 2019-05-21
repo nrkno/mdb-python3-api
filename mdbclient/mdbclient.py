@@ -60,6 +60,8 @@ class ApiResponseParser:
             return None, 404
         if response.status == 410:
             return None, 410
+        if response.status >= 500:
+            return response.text(), response.status
         try:
             json_ = await response.json()
             return json_, response.status
