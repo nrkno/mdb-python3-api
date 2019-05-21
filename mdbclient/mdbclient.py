@@ -47,7 +47,7 @@ class ApiResponseParser:
     @staticmethod
     def timeline_of_sub_type(master_eo, sub_type):
         rel_ = [l for l in master_eo["timelines"] if
-                l.get("type") == "http://id.nrk.no/2017/mdbclient/types/Timeline" and l.get("subType") == sub_type]
+                l.get("type") == "http://id.nrk.no/2017/mdb/types/Timeline" and l.get("subType") == sub_type]
         return next(iter(rel_), None)
 
     @staticmethod
@@ -55,10 +55,14 @@ class ApiResponseParser:
         return ApiResponseParser.link(owner, "self")
 
     @staticmethod
-    async def unpack_json(res):
+    async def unpack_json_response(response):
+        if response.status == 404:
+            return None, 404
+        if response.status == 410:
+            return None, 410
         try:
-            json_ = await res.json()
-            return json_
+            json_ = await response.json()
+            return json_, response.status
         except Exception as e:
             print(e)
             raise e
@@ -93,39 +97,37 @@ class RestApiUtil(object):
             self.session = None
 
     # @backoff.on_exception(backoff.expo, requests.exceptions.RequestException, max_tries=8)
-    def get(self, uri, responsefunc, headers=None):
+    def get(self, uri, response_unpacker, headers=None):
         async def do_get(uri_params=None):
             async with self.session.get(uri, params=uri_params, headers=headers) as response:
-                if response.status == 404:
-                    return None
-                if response.status == 410:
-                    return None
-                result = await responsefunc(response)
+                result = await response_unpacker(response)
                 return result
 
         return do_get
 
-    async def delete(self, uri, headers, responsefunc):
+    async def delete(self, uri, headers, response_unpacker):
         async with self.session.delete(uri, headers=headers) as response:
-            return await responsefunc(response)
+            return await response_unpacker(response)
 
     # @backoff.on_exception(backoff.expo, requests.exceptions.RequestException, max_tries=8)
-    def post_to_static_uri(self, uri, responsefunc, headers=None):
+    def post_to_static_uri(self, uri, response_unpacker, headers=None):
         async def do_post(json_payload):
-            pm = self.post(responsefunc, headers)
+            pm = self.post(response_unpacker, headers)
             return await pm(json_payload, uri)
+
         return do_post
 
-    def post(self, responsefunc, headers=None):
+    def post(self, response_unpacker, headers=None):
         async def do_post(json_payload, uri):
             log_msg = f"POST TO {uri}\n{json.dumps(json_payload, indent=4, sort_keys=True)}"
             self.traffic.append(log_msg)
             async with self.session.post(uri, json=json_payload, headers=headers) as response:
                 if response.status >= 400:
-                    raise Exception(f"Status was {response.status}: {await response.text()}, request to {uri} was {json_payload}")
+                    raise Exception(
+                        f"Status was {response.status}: {await response.text()}, request to {uri} was {json_payload}")
                 if "Location" not in response.headers:
                     raise Exception(f"No location in response {await response.text()} for {log_msg}")
-                response_payload = await self.follow(response, responsefunc)
+                response_payload = await self.follow(response, response_unpacker)
                 self.traffic.append(response_payload)
                 return response_payload
 
@@ -161,7 +163,8 @@ class MdbJsonApi(object):
     This class is unaware of the url of the remote system since it's all in the hyperlinked payloads.
     """
 
-    def __init__(self, user_id, correlation_id, source_system=None, response_unpacker=ApiResponseParser.unpack_json,
+    def __init__(self, user_id, correlation_id, source_system=None,
+                 response_unpacker=ApiResponseParser.unpack_json_response,
                  force_host=None, force_scheme=None):
         self._headers = {}
         if source_system:
@@ -204,22 +207,23 @@ class MdbJsonApi(object):
 
     async def delete(self, owner):
         link = self.rewritten_link(ApiResponseParser.self_link(owner))
-        return await self.rest_api_util.delete(link, self._headers, ApiResponseParser.text_response)
+        resp, status = await self.rest_api_util.delete(link, self._headers, ApiResponseParser.text_response)
+        return resp, status
 
     async def open(self, owner):
         link = self.rewritten_link(ApiResponseParser.self_link(owner))
         get_method = self.rest_api_util.get(link, self.json_response_unpacker, self._headers)
-        response = await get_method()
+        response, status = await get_method()
         return response
 
     async def get_json(self, url):
         get_method = self.rest_api_util.get(self.rewritten_link(url), self.json_response_unpacker, self._headers)
-        response = await get_method({})
+        response, status = await get_method({})
         return response
 
     async def update(self, owner, payload):
         link = self.rewritten_link(ApiResponseParser.self_link(owner))
-        resp = await self.parsed_json_post(payload, link)
+        resp, status = await self.parsed_json_post(payload, link)
         return resp
 
 
@@ -227,7 +231,7 @@ class MdbClient(MdbJsonApi):
     def __init__(self, api_base, user_id, correlation_id=None, source_system=None):
         super().__init__(correlation_id, user_id, source_system)
         parsed = urllib.parse.urlparse(api_base)
-        self.api_base = parsed.scheme + "//" + parsed.netloc + "/api"
+        self.api_base = parsed.scheme + "://" + parsed.netloc + "/api"
 
     @staticmethod
     def localhost(user_id, correlation_id=None):
@@ -254,11 +258,12 @@ class MdbClient(MdbJsonApi):
 
         def std_json_post(method_name):
             real_method = self.api_method(method_name)
-            return self.rest_api_util.post_to_static_uri(real_method, ApiResponseParser.unpack_json, self._headers)
+            return self.rest_api_util.post_to_static_uri(real_method, ApiResponseParser.unpack_json_response,
+                                                         self._headers)
 
         def std_json_get(method_name):
             real_method = self.api_method(method_name)
-            return self.rest_api_util.get(real_method, ApiResponseParser.unpack_json, self._headers)
+            return self.rest_api_util.get(real_method, ApiResponseParser.unpack_json_response, self._headers)
 
         self.meo_create = std_json_post("masterEO")
         self.pe_create = std_json_post("publicationEvent")
@@ -275,50 +280,56 @@ class MdbClient(MdbJsonApi):
         return self
 
     async def create_master_eo(self, master_eo):
-        return await self.meo_create(master_eo)
+        eo_, status = await self.meo_create(master_eo)
+        return eo_
 
     async def create_media_object(self, master_eo, media_object):
         media_object["masterEO"] = _res_id(master_eo)
-        return await self.mo_create(media_object)
+        mo, status = await self.mo_create(media_object)
+        return mo
 
     async def create_media_resource(self, media_object, media_resource):
         media_resource["mediaObject"] = _res_id(media_object)
-        return await self.mr_create(media_resource)
+        mr, status = await self.mr_create(media_resource)
+        return mr
 
     async def create_essence(self, publication_media_object, media_resource, essence):
         essence["composedOf"] = _res_id(media_resource)
         essence["playoutOf"] = _res_id(publication_media_object)
-        essence_ = await self.essence_create(essence)
+        essence_, status = await self.essence_create(essence)
         return essence_
 
     async def create_timeline(self, master_eo, timeline):
         timeline["masterEO"] = _res_id(master_eo)
-        return await self.timeline_create(timeline)
+        timeline_, status = await self.timeline_create(timeline)
+        return timeline_
 
     async def create_publication_event(self, master_eo, publication_event):
         if not publication_event:
             raise Exception("Cannot create an empty publication event")
         publication_event["publishes"] = _res_id(master_eo)
         publication_event["subType"] = "http://authority.nrk.no/datadictionary/broadcast"
-        return await self.pe_create(publication_event)
+        pe, status = await self.pe_create(publication_event)
+        return pe
 
     async def create_publication_media_object(self, publication_event, media_object, publication_media_object):
         publication_media_object["publicationEvent"] = _res_id(publication_event)
         publication_media_object["publishedVersionOf"] = _res_id(media_object)
-        return await self.pmo_create(publication_media_object)
+        pmo, status = await self.pmo_create(publication_media_object)
+        return pmo
 
     async def resolve(self, res_id):
         if not res_id:
             return
-        resp = await self.resolve_resid({'resId': res_id})
+        resp, status = await self.resolve_resid({'resId': res_id})
         return resp
 
     async def reference(self, ref_type, value):
-        resp = await self.resolve_reference({'type': ref_type, 'reference': value})
+        resp, status = await self.resolve_reference({'type': ref_type, 'reference': value})
         return resp
 
     async def reference_single(self, ref_type, value):
-        resp = await self.resolve_reference({'type': ref_type, 'reference': value})
+        resp, status = await self.resolve_reference({'type': ref_type, 'reference': value})
         if resp:
             if len(resp) > 1:
                 raise Exception(f"Multiple elements found when resolving {ref_type}={value}:{resp}")
@@ -326,13 +337,13 @@ class MdbClient(MdbJsonApi):
         return resp
 
     @staticmethod
-    async def _timelines_of_subtype(master_eo, sub_type):
+    def _timelines_of_subtype(master_eo, sub_type):
         item = (tl for tl in master_eo["timelines"] if tl["subType"] == sub_type)
         return next(item, None)
 
     async def create_or_replace_timeline(self, master_eo, timeline):
         type_of_timeline = timeline["Type"]
-        existing_timeline_of_same_type = await self._timelines_of_subtype(master_eo, type_of_timeline)
+        existing_timeline_of_same_type = self._timelines_of_subtype(master_eo, type_of_timeline)
         if existing_timeline_of_same_type:
             return await self.replace_timeline(master_eo, existing_timeline_of_same_type, timeline)
         else:
@@ -341,24 +352,25 @@ class MdbClient(MdbJsonApi):
     async def replace_timeline(self, master_eo, existing_timeline, timeline):
         timeline.MasterEO = {'ResId': master_eo.ResId}
         self_link = ApiResponseParser.self_link(existing_timeline)
-        resp = await self.rest_api_util.put(self_link, timeline, self._headers, ApiResponseParser.verbatim_response)
+        resp, status = await self.rest_api_util.put(self_link, timeline, self._headers,
+                                                    ApiResponseParser.verbatim_response)
         return resp
 
     async def find_serie(self, title, master_system):
-        serie = await self.get_serie({'title': title, 'masterSystem': master_system})
+        serie, status = await self.get_serie({'title': title, 'masterSystem': master_system})
         return serie[0] if serie else None
 
     async def create_serie(self, title, master_system):
         payload = {"title": title, "masterSystem": master_system}
-        serie = await self.serie_create(payload)
+        serie, status = await self.serie_create(payload)
         return serie
 
     async def create_serie_2(self, payload):
-        serie = await self.serie_create(payload)
+        serie, status = await self.serie_create(payload)
         return serie
 
     async def create_season(self, season):
-        season = await self.season_create(season)
+        season, status = await self.season_create(season)
         return season
 
     async def create_episode(self, season_id, episode):
