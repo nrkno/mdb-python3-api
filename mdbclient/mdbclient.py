@@ -5,6 +5,10 @@ import aiohttp
 
 class ApiResponseParser:
     @staticmethod
+    def is_successful(http_status):
+        return http_status < 400
+
+    @staticmethod
     def reference_value(meo, ref_type):
         found = ApiResponseParser.reference_values(meo, ref_type)
         if not found:
@@ -221,6 +225,8 @@ class MdbJsonApi(object):
     async def get_json(self, url):
         get_method = self.rest_api_util.get(self.rewritten_link(url), self.json_response_unpacker, self._headers)
         response, status = await get_method({})
+        if not ApiResponseParser.is_successful(status):
+            raise Exception(f"Http {status}:\n{response}")
         return response
 
     async def update(self, owner, payload):
