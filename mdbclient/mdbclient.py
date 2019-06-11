@@ -219,13 +219,13 @@ class MdbJsonApi(object):
     async def open(self, owner, additional_headers=None):
         link = self.rewritten_link(ApiResponseParser.self_link(owner))
         headers_to_use = {**self._headers, **additional_headers} if additional_headers else self._headers
-        get_method = self.rest_api_util.get(link, self.json_response_unpacker, headers_to_use)
+        get_method = self.rest_api_util.create_get(link, self.json_response_unpacker, headers_to_use)
         response, status = await get_method()
         return response
 
     async def get_json(self, url, additional_headers=None):
         headers_to_use = {**self._headers, **additional_headers} if additional_headers else self._headers
-        get_method = self.rest_api_util.get(self.rewritten_link(url), self.json_response_unpacker, headers_to_use)
+        get_method = self.rest_api_util.create_get(self.rewritten_link(url), self.json_response_unpacker, headers_to_use)
         response, status = await get_method({})
         if not ApiResponseParser.is_successful(status):
             raise Exception(f"Http {status}:\n{response}")
