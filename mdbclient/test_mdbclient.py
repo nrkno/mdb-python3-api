@@ -69,6 +69,8 @@ async def test_resolve_meo():
         assert result['title'] == 'fozz'
         resolved = await client.resolve(result['resId'])
         assert resolved is not None
+        test_open = await client.open(result)
+        assert test_open is not None
 
 
 @pytest.mark.asyncio
