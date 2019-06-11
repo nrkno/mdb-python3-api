@@ -103,7 +103,7 @@ class RestApiUtil(object):
             self.session = None
 
     # @backoff.on_exception(backoff.expo, requests.exceptions.RequestException, max_tries=8)
-    def get(self, uri, response_unpacker, headers=None):
+    def create_get(self, uri, response_unpacker, headers=None):
         async def do_get(uri_params=None):
             async with self.session.get(uri, params=uri_params, headers=headers) as response:
                 result = await response_unpacker(response)
@@ -146,7 +146,7 @@ class RestApiUtil(object):
 
     async def follow(self, response, responsefunc):
         loc = response.headers["Location"]
-        f = self.get(loc, responsefunc)
+        f = self.create_get(loc, responsefunc)
         return await f()
 
 
@@ -273,7 +273,7 @@ class MdbClient(MdbJsonApi):
 
         def std_json_get(method_name):
             real_method = self.api_method(method_name)
-            return self.rest_api_util.get(real_method, ApiResponseParser.unpack_json_response, self._headers)
+            return self.rest_api_util.create_get(real_method, ApiResponseParser.unpack_json_response, self._headers)
 
         self.meo_create = std_json_post("masterEO")
         self.pe_create = std_json_post("publicationEvent")
