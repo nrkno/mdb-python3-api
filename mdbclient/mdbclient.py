@@ -228,7 +228,7 @@ class MdbJsonApi(object):
         get_method = self.rest_api_util.create_get(self.rewritten_link(url), self.json_response_unpacker, headers_to_use)
         response, status = await get_method()
         if not ApiResponseParser.is_successful(status):
-            raise Exception(f"Http {status}:\n{response}")
+            raise Exception(f"Http {status} for {url}:\n{response}")
         return response
 
     async def update(self, owner, payload):
