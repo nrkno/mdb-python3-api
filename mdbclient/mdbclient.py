@@ -75,7 +75,7 @@ class ApiResponseParser:
 
     @staticmethod
     async def text_response(res):
-        return await res.text()
+        return await res.text(), res.status
 
     @staticmethod
     async def verbatim_response(created):
