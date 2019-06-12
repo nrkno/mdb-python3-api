@@ -3,7 +3,15 @@ import urllib.parse
 import aiohttp
 
 
+class AggregateGoneException(Exception):
+    pass
+
+
 class ApiResponseParser:
+    @staticmethod
+    def is_gone(http_status):
+        return http_status == 410
+
     @staticmethod
     def is_successful(http_status):
         return http_status < 400
@@ -225,8 +233,11 @@ class MdbJsonApi(object):
 
     async def get_json(self, url, additional_headers=None):
         headers_to_use = {**self._headers, **additional_headers} if additional_headers else self._headers
-        get_method = self.rest_api_util.create_get(self.rewritten_link(url), self.json_response_unpacker, headers_to_use)
+        get_method = self.rest_api_util.create_get(self.rewritten_link(url), self.json_response_unpacker,
+                                                   headers_to_use)
         response, status = await get_method()
+        if ApiResponseParser.is_gone(status):
+            raise AggregateGoneException()
         if not ApiResponseParser.is_successful(status):
             raise Exception(f"Http {status} for {url}:\n{response}")
         return response
