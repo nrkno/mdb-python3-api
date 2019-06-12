@@ -9,10 +9,6 @@ class AggregateGoneException(Exception):
 
 class ApiResponseParser:
     @staticmethod
-    def is_gone(http_status):
-        return http_status == 410
-
-    @staticmethod
     def is_successful(http_status):
         return http_status < 400
 
@@ -71,7 +67,7 @@ class ApiResponseParser:
         if response.status == 404:
             return None, 404
         if response.status == 410:
-            return None, 410
+            raise AggregateGoneException
         if response.status >= 500:
             return await response.text(), response.status
         try:
@@ -236,8 +232,6 @@ class MdbJsonApi(object):
         get_method = self.rest_api_util.create_get(self.rewritten_link(url), self.json_response_unpacker,
                                                    headers_to_use)
         response, status = await get_method()
-        if ApiResponseParser.is_gone(status):
-            raise AggregateGoneException()
         if not ApiResponseParser.is_successful(status):
             raise Exception(f"Http {status} for {url}:\n{response}")
         return response
