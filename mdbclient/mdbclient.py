@@ -215,9 +215,10 @@ class MdbJsonApi(object):
         resp = await self.parsed_json_post(payload, link)
         return resp
 
-    async def delete(self, owner):
+    async def delete(self, owner, additional_headers=None):
         link = self.rewritten_link(ApiResponseParser.self_link(owner))
-        resp, status = await self.rest_api_util.delete(link, self._headers, ApiResponseParser.text_response)
+        headers_to_use = {**self._headers, **additional_headers} if additional_headers else self._headers
+        resp, status = await self.rest_api_util.delete(link, headers_to_use, ApiResponseParser.text_response)
         return resp, status
 
     async def open(self, owner, additional_headers=None):
