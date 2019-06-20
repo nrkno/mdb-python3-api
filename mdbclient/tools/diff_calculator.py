@@ -194,6 +194,10 @@ class Diff:
                 if not key in target:
                     target[key] = []
                 target[key].extend(value)
+            elif isinstance(value, dict):
+                if not key in target:
+                    target[key] = {}
+                target[key].update(value)
             else:
                 raise Exception(f"Do not know to handle add field {key} of type {type(value)}")
 
