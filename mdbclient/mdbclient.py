@@ -95,7 +95,7 @@ class RestApiUtil(object):
         self.traffic = []
 
     async def __aenter__(self):
-        self.session = aiohttp.ClientSession(connector=aiohttp.TCPConnector(verify_ssl=False))
+        self.session = aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False))
         return self
 
     async def __aexit__(self, *err):
