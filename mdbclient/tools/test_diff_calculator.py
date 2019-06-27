@@ -1,4 +1,4 @@
-from copy import deepcopy
+from copy import deepcopy, copy
 
 import pytest
 
@@ -462,12 +462,58 @@ with_illustration = {"illustration": {
     "resId": "https://kaleido.nrk.no/service/api/1.0/data/_iXhb8d-6JPD4srMv4-rSA"
 }}
 
+with_illustration_with_crop = {"illustration": {
+    "identifier": "_iXhb8d-6JPD4srMv4-rSA",
+    "storageType": {
+        "resId": "http://id.nrk.no/2015/kaleido/image",
+        "label": "Kaleido",
+        "isSuppressed": False
+    },
+    "resId": "https://kaleido.nrk.no/service/api/1.0/data/_iXhb8d-6JPD4srMv4-rSA",
+    "illustrationAttributes": {
+        "cropOffsetX": 0.09,
+        "cropOffsetY": 0.060728395,
+        "cropWidth": 0.91,
+        "cropHeight": 0.91
+    }
+}}
+
 
 def test_illustration_added():
     differ = Differ(without_illustration, with_illustration)
     changes = differ.calculate()
     assert len(changes.Added) == 1
 
+
+def test_illustration_crop_added():
+    differ = Differ(with_illustration, with_illustration_with_crop)
+    changes = differ.calculate()
+    assert len(changes.Modified) == 1
+
+
+def test_illustration_crop_modified_offsetX():
+    cloned = deepcopy(with_illustration_with_crop)
+    cloned["illustration"]["illustrationAttributes"]["cropOffsetX"] = 3
+    changes = Differ(with_illustration_with_crop, cloned).calculate()
+    assert len(changes.Modified) == 1
+
+def test_illustration_crop_modified_offsetY():
+    cloned = deepcopy(with_illustration_with_crop)
+    cloned["illustration"]["illustrationAttributes"]["cropOffsetY"] = 3
+    changes = Differ(with_illustration_with_crop, cloned).calculate()
+    assert len(changes.Modified) == 1
+
+def test_illustration_crop_modified_cropWidth():
+    cloned = deepcopy(with_illustration_with_crop)
+    cloned["illustration"]["illustrationAttributes"]["cropWidth"] = 3
+    changes = Differ(with_illustration_with_crop, cloned).calculate()
+    assert len(changes.Modified) == 1
+
+def test_illustration_crop_modified_cropHeight():
+    cloned = deepcopy(with_illustration_with_crop)
+    cloned["illustration"]["illustrationAttributes"]["cropHeight"] = 3
+    changes = Differ(with_illustration_with_crop, cloned).calculate()
+    assert len(changes.Modified) == 1
 
 def test_illustration_removed():
     differ = Differ(with_illustration, without_illustration)
@@ -512,7 +558,7 @@ def test_geo_availability_modified():
     assert len(changes.Modified) == 1
 
 
-test_illustration_modified()
+# test_illustration_modified()
 '''
 test_diff_edited_value()
 test_diff_added()

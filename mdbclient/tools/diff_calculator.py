@@ -625,6 +625,20 @@ class Differ:
         if existing_image.get("identifier") != modified_image.get("identifier"):
             self.diff.Modified[_ILLU] = modified_image
 
+        existing_attrs = existing_image.get("illustrationAttributes")
+        modified_attrs = modified_image.get("illustrationAttributes")
+        if existing_attrs != modified_attrs:
+            self.diff.Modified[_ILLU] = modified_image
+        if not existing_attrs:
+            return
+
+        if len(existing_attrs) != len(modified_attrs):
+            self.diff.Modified[_ILLU] = modified_image
+        for key in existing_attrs:
+            if existing_attrs[key] != modified_attrs[key]:
+                self.diff.Modified[_ILLU] = modified_image
+
+
     def _apply_changes_geoavail(self):
         _GEOAVAIL = "geoAvailability"
         existing_geo = self.diff.existing.get(_GEOAVAIL, {})
