@@ -1,0 +1,6 @@
+G3EXTERNAL = "http://id.nrk.no/2016/mdb/reference/g3external"
+G3CLIPKEY = "http://id.nrk.no/2016/mdb/reference/g3clipKey"
+TEDIALMEDIAOBJECT = "http://id.nrk.no/2017/mdb/types/TedialMediaObject"
+PSAPI = "http://id.nrk.no/2016/mdb/reference/psAPI"
+GURI = "http://id.nrk.no/2018/mdb/reference/guri"
+TIPSEXTERNAL = "http://id.nrk.no/2017/mdb/reference/tipsExternalId"
