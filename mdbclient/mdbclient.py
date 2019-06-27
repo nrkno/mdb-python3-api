@@ -37,7 +37,7 @@ class ApiResponseParser:
 
     @staticmethod
     def links_of_sub_type(links_list, sub_type):
-        return [l for l in links_list if l["subType"] == sub_type]
+        return [l for l in links_list if l.get("subType") == sub_type]
 
     @staticmethod
     def child_links_of_sub_type(owner, child_name, sub_type):
