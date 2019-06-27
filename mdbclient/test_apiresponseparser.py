@@ -23,3 +23,7 @@ def test_find_link():
 def test_link_of_type():
     links = ApiResponseParser.find_link(meo_testdata.get("links"), "http://id.nrk.no/2016/mdb/relation/subjects")
     assert len(links) == 1
+
+def test_child_links_of_sub_type():
+    result = ApiResponseParser.child_links_of_sub_type(meo_testdata, "timelines", "http://id.nrk.no/2017/mdb/timelinetype/IndexPoints")
+    assert len(result) == 1

@@ -40,6 +40,11 @@ class ApiResponseParser:
         return [l for l in links_list if l["subType"] == sub_type]
 
     @staticmethod
+    def child_links_of_sub_type(owner, child_name, sub_type):
+        links_list = owner.get(child_name, [])
+        return ApiResponseParser.links_of_sub_type(links_list, sub_type)
+
+    @staticmethod
     def link_of_sub_type(links, sub_type):
         rel_ = ApiResponseParser.links_of_sub_type(links, sub_type)
         rel_item = next(iter(rel_), None)
