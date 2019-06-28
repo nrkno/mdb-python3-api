@@ -27,6 +27,47 @@ class FieldDiffResult:
     def has_add_modify_diff(self):
         return self.modified or self.added
 
+    def __print_it(self, item):
+        if "name" in item:
+            text = item.get("name", str(item))
+            return text
+
+        if "title" in item:
+            text = item.get("title", str(item))
+            return text
+        contact = item.get("contact", {})
+        role_obj = item.get("role", {})
+        title = contact.get("title", "")
+        role_str = role_obj.get("title", role_obj.get("resId", ""))
+        if title:
+            text = title
+            if role_str:
+                text += " as " + role_str
+            return text
+        return str(item)
+
+    def explain_collection_change(self):
+        res = ""
+        if self.added:
+            try:
+                for x in self.added:
+                    res += f"{self.field_name} added: " + self.__print_it(x) + "\n"
+            except TypeError:
+                res += f"{self.field_name} added: " + self.__print_it(self.added) + "\n"
+        if self.modified:
+            try:
+                for x in [self.__print_it(x) for x in self.modified if x]:
+                    res += f"{self.field_name} modified: " + x + "\n"
+            except TypeError:
+                res += f"{self.field_name} modified: " + self.__print_it(self.modified) + "\n"
+        if self.removed:
+            try:
+                for x in [self.__print_it(x) for x in self.removed if x]:
+                    res += f"{self.field_name} removed: " + x + "\n"
+            except TypeError:
+                res += f"{self.field_name} removed: " + self.__print_it(self.removed) + "\n"
+        return res
+
 
 def illustration_changes(existing, modified):
     field_name = "illustration"
