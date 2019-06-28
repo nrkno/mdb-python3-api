@@ -1,61 +1,61 @@
-class FieldDiffResult():
-    def __init__(self, Added, Modified, Removed):
-        self.Added = Added
-        self.Modified = Modified
-        self.Removed = Removed
+class FieldDiffResult:
+    def __init__(self, added, modified, removed, field_name=None):
+        self.field_name = field_name
+        self.added = added
+        self.modified = modified
+        self.removed = removed
 
     @staticmethod
-    def with_modified(modification):
-        return FieldDiffResult(None, modification, None)
+    def with_modified(field_name, modification):
+        return FieldDiffResult(None, modification, None, field_name)
 
     @staticmethod
-    def with_added(addition):
-        return FieldDiffResult(addition, None, None)
+    def with_added(field_name, addition):
+        return FieldDiffResult(addition, None, None, field_name)
 
     @staticmethod
-    def with_removal(removal):
-        return FieldDiffResult(None, None, removal)
+    def with_removal(field_name, removal):
+        return FieldDiffResult(None, None, removal, field_name)
 
     @staticmethod
     def unchanged():
         return FieldDiffResult(None, None, None)
 
     def has_diff(self):
-        return self.Modified or self.Added or self.Removed
+        return self.modified or self.added or self.removed
 
     def has_add_modify_diff(self):
-        return self.Modified or self.Added
-
-
+        return self.modified or self.added
 
 
 def illustration_changes(existing, modified):
-    existing_image = existing.get("illustration", {})
-    modified_image = modified.get("illustration", {})
+    field_name = "illustration"
+    existing_image = existing.get(field_name, {})
+    modified_image = modified.get(field_name, {})
 
     if not existing_image and modified_image:
-        return FieldDiffResult.with_added(modified_image)
+        return FieldDiffResult.with_added(field_name, modified_image)
     elif existing_image and not modified_image:
-        return FieldDiffResult.with_removal(existing_image)
+        return FieldDiffResult.with_removal(field_name, existing_image)
     elif existing_image.get("identifier") != modified_image.get("identifier"):
-        return FieldDiffResult.with_modified(modified_image)
+        return FieldDiffResult.with_modified(field_name, modified_image)
     else:
         existing_attrs = existing_image.get("illustrationAttributes")
         modified_attrs = modified_image.get("illustrationAttributes")
         if not existing_attrs and modified_attrs:
-            return FieldDiffResult.with_modified(modified_attrs)
+            return FieldDiffResult.with_modified(field_name, modified_attrs)
         if existing_attrs and not modified_attrs:
-            return FieldDiffResult.with_modified(modified_attrs)
+            return FieldDiffResult.with_modified(field_name, modified_attrs)
         if existing_attrs != modified_attrs:
-            return FieldDiffResult.with_modified(modified_image)
+            return FieldDiffResult.with_modified(field_name, modified_image)
         elif not existing_attrs and not modified_attrs:
             return FieldDiffResult.unchanged()
         elif len(existing_attrs) != len(modified_attrs):
-            return FieldDiffResult.with_modified(modified_image)
+            return FieldDiffResult.with_modified(field_name, modified_image)
         else:
             for key in existing_attrs:
                 if existing_attrs[key] != modified_attrs[key]:
-                    return FieldDiffResult.with_modified(modified_image)
+                    return FieldDiffResult.with_modified(field_name, modified_image)
     return FieldDiffResult.unchanged()
 
 
@@ -101,8 +101,8 @@ def categories_changes(existing, modified, reference_equals=__category_reference
 
 def attribute_change(original, modified, key):
     if key in original and key not in modified:
-        return FieldDiffResult.with_removal(original[key])
+        return FieldDiffResult.with_removal(key, original[key])
     if key not in original and key in modified:
-        return FieldDiffResult.with_added(modified[key])
+        return FieldDiffResult.with_added(key, modified[key])
     if key in original and key in modified and modified.get(key) != original[key]:
-        return FieldDiffResult.with_modified(modified.get(key))
+        return FieldDiffResult.with_modified(key, modified.get(key))

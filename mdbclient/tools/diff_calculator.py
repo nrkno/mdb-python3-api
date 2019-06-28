@@ -96,12 +96,12 @@ class Diff:
         self.Modified = DiffResult()
 
     def add_change_result(self, key, change):
-        if change.Added:
-            self.Added[key] = change.Added
-        if change.Removed:
-            self.Removed[key] = change.Removed
-        if change.Modified:
-            self.Modified[key] = change.Modified
+        if change.added:
+            self.Added[key] = change.added
+        if change.removed:
+            self.Removed[key] = change.removed
+        if change.modified:
+            self.Modified[key] = change.rodified
 
     def remove_key(self, key):
         if key in self.Added:

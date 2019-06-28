@@ -30,47 +30,47 @@ def illustration_of(d1, d2=None):
 
 def test_illustration_added():
     changes = illustration_changes(without_illustration, illustration_of(illustration_core))
-    assert changes.Added
+    assert changes.added
 
 
 def test_illustration_crop_added():
     changes = illustration_changes(illustration_of(illustration_core, {}), illustration_of(illustration_core, cropping))
-    assert changes.Modified
+    assert changes.modified
 
 
 def test_illustration_crop_modified_offset_x():
     cloned = illustration_of(illustration_core, cropping)
     cloned["illustration"]["illustrationAttributes"]["cropOffsetX"] = 3
     changes = illustration_changes(illustration_of(illustration_core, cropping), cloned)
-    assert changes.Modified
+    assert changes.modified
 
 
 def test_illustration_crop_modified_offset_y():
     cloned = illustration_of(illustration_core, cropping)
     cloned["illustration"]["illustrationAttributes"]["cropOffsetY"] = 3
     changes = illustration_changes(illustration_of(illustration_core, cropping), cloned)
-    assert changes.Modified
+    assert changes.modified
 
 
 def test_illustration_crop_modified_crop_width():
     cloned = illustration_of(illustration_core, cropping)
     cloned["illustration"]["illustrationAttributes"]["cropWidth"] = 37
     changes = illustration_changes(illustration_of(illustration_core, cropping), cloned)
-    assert changes.Modified
+    assert changes.modified
 
 
 def test_illustration_crop_modified_crop_height():
     cloned = illustration_of(illustration_core, cropping)
     cloned["illustration"]["illustrationAttributes"]["cropHeight"] = 3
     changes = illustration_changes(illustration_of(illustration_core, cropping), cloned)
-    assert changes.Modified
+    assert changes.modified
     assert changes.has_diff()
     assert changes.has_add_modify_diff()
 
 
 def test_illustration_removed():
     changes = illustration_changes(illustration_of(illustration_core), without_illustration)
-    assert changes.Removed
+    assert changes.removed
     assert changes.has_diff()
     assert not changes.has_add_modify_diff()
 
@@ -79,7 +79,7 @@ def test_illustration_modified():
     different_ill = deepcopy(illustration_of(illustration_core))
     different_ill["illustration"]["identifier"] = "badsk8ter"
     changes = illustration_changes(illustration_of(illustration_core), different_ill)
-    assert changes.Modified
+    assert changes.modified
 
 
 def test_illustration_unchanged():
@@ -92,16 +92,16 @@ def test_added_categories():
     original = {'title': 'foo', 'categories': [{"resId": "c1"}, {"resId": "c2"}]}
     modified = {'title': 'foo', 'categories': [{"resId": "c1"}, {"resId": "c2"}, {"resId": "c3"}]}
     changes = categories_changes(original, modified)
-    assert changes.Added
-    assert changes.Added == [{"resId": "c3"}]
+    assert changes.added
+    assert changes.added == [{"resId": "c3"}]
 
 
 def test_modified_categories():
     original = {'title': 'foo', 'categories': [{"resId": "c1"}, {"resId": "c2"}]}
     modified = {'title': 'foo', 'categories': [{"resId": "c1"}, {"resId": "c2", "title": "øl"}]}
     changes = categories_changes(original, modified)
-    assert changes.Modified
-    assert changes.Modified == [None, {"resId": "c2", "title": "øl"}]
+    assert changes.modified
+    assert changes.modified == [None, {"resId": "c2", "title": "øl"}]
 
 
 def test_modified_multiple_categories():
@@ -111,8 +111,8 @@ def test_modified_multiple_categories():
                 'categories': [{"resId": "c1"}, {"resId": "c2", "title": "øl"}, {"resId": "c3"},
                                {"resId": "c4", "title": "vold"}]}
     changes = categories_changes(original, modified)
-    assert changes.Modified
-    assert changes.Modified == [None, {"resId": "c2", "title": "øl"}, None,
+    assert changes.modified
+    assert changes.modified == [None, {"resId": "c2", "title": "øl"}, None,
                                 {"resId": "c4", "title": "vold"}]
 
 
@@ -120,32 +120,32 @@ def test_removed_categories():
     original = {'title': 'foo', 'categories': [{"resId": "c1"}, {"resId": "c2"}, {"resId": "c3"}]}
     modified = {'title': 'foo', 'categories': [{"resId": "c1"}, {"resId": "c2"}]}
     changes = categories_changes(original, modified)
-    assert changes.Removed
-    assert changes.Removed == [None, None, {"resId": "c3"}]
+    assert changes.removed
+    assert changes.removed == [None, None, {"resId": "c3"}]
 
 
 def test_attribute_change_modified():
     original = {'title': 'foo', 'baz': 'bazz'}
     modified = {'title': 'foo', 'baz': 'bazt'}
     changes = attribute_change(original, modified, "baz")
-    assert changes.Added is None
-    assert changes.Modified == 'bazt'
-    assert changes.Removed is None
+    assert changes.added is None
+    assert changes.modified == 'bazt'
+    assert changes.removed is None
 
 
 def test_attribute_change_removed():
     original = {'title': 'foo', 'baz': 'bazz'}
     modified = {'title': 'foo'}
     changes = attribute_change(original, modified, "baz")
-    assert changes.Added is None
-    assert changes.Modified is None
-    assert changes.Removed == 'bazz'
+    assert changes.added is None
+    assert changes.modified is None
+    assert changes.removed == 'bazz'
 
 
 def test_attribute_change_added():
     original = {'title': 'foo'}
     modified = {'title': 'foo', 'baz': 'bazt'}
     changes = attribute_change(original, modified, "baz")
-    assert changes.Added == 'bazt'
-    assert changes.Modified is None
-    assert changes.Removed is None
+    assert changes.added == 'bazt'
+    assert changes.modified is None
+    assert changes.removed is None
