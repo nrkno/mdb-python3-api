@@ -154,3 +154,11 @@ def test_attribute_change_added():
     assert changes.added == 'bazt'
     assert changes.modified is None
     assert changes.removed is None
+
+def test_attribute_no_change():
+    original = {'title': 'foo', 'baz': 'bazt'}
+    modified = {'title': 'foo', 'baz': 'bazt'}
+    changes = attribute_change(original, modified, "baz")
+    assert changes.added is None
+    assert changes.modified is None
+    assert changes.removed is None

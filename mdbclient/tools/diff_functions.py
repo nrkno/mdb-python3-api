@@ -18,8 +18,8 @@ class FieldDiffResult:
         return FieldDiffResult(None, None, removal, field_name)
 
     @staticmethod
-    def unchanged():
-        return FieldDiffResult(None, None, None)
+    def unchanged(field_name):
+        return FieldDiffResult(None, None, None, field_name)
 
     def has_diff(self):
         return self.modified or self.added or self.removed
@@ -142,3 +142,4 @@ def attribute_change(original, modified, key):
         return FieldDiffResult.with_added(key, modified[key])
     if key in original and key in modified and modified.get(key) != original[key]:
         return FieldDiffResult.with_modified(key, modified.get(key))
+    return FieldDiffResult.unchanged(key)
