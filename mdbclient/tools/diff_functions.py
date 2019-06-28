@@ -63,6 +63,16 @@ class FieldDiffResult:
         explain_item("removed", self.removed)
         return "\n".join(res)
 
+    def apply_primitive_field_to_edit(self, edit):
+        if self.added and self.modified:
+            raise Exception("Cannot have both added and modified for primitive fields")
+        if self.added:
+            edit[self.field_name] = self.added
+        if self.modified:
+            edit[self.field_name] = self.modified
+        if self.removed:
+            edit[self.field_name] = None
+
 
 def illustration_changes(existing, modified):
     field_name = "illustration"
