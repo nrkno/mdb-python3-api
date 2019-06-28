@@ -46,7 +46,7 @@ class FieldDiffResult:
             return text
         return str(item)
 
-    def explain_collection_change(self):
+    def explain(self):
         res = ""
         if self.added:
             try:

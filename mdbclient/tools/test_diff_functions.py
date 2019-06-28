@@ -102,6 +102,8 @@ def test_modified_categories():
     changes = categories_changes(original, modified)
     assert changes.modified
     assert changes.modified == [None, {"resId": "c2", "title": "øl"}]
+    assert changes.explain()
+
 
 
 def test_modified_multiple_categories():
