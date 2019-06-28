@@ -1,0 +1,108 @@
+class FieldDiffResult():
+    def __init__(self, Added, Modified, Removed):
+        self.Added = Added
+        self.Modified = Modified
+        self.Removed = Removed
+
+    @staticmethod
+    def with_modified(modification):
+        return FieldDiffResult(None, modification, None)
+
+    @staticmethod
+    def with_added(addition):
+        return FieldDiffResult(addition, None, None)
+
+    @staticmethod
+    def with_removal(removal):
+        return FieldDiffResult(None, None, removal)
+
+    @staticmethod
+    def unchanged():
+        return FieldDiffResult(None, None, None)
+
+    def has_diff(self):
+        return self.Modified or self.Added or self.Removed
+
+    def has_add_modify_diff(self):
+        return self.Modified or self.Added
+
+
+
+
+def illustration_changes(existing, modified):
+    existing_image = existing.get("illustration", {})
+    modified_image = modified.get("illustration", {})
+
+    if not existing_image and modified_image:
+        return FieldDiffResult.with_added(modified_image)
+    elif existing_image and not modified_image:
+        return FieldDiffResult.with_removal(existing_image)
+    elif existing_image.get("identifier") != modified_image.get("identifier"):
+        return FieldDiffResult.with_modified(modified_image)
+    else:
+        existing_attrs = existing_image.get("illustrationAttributes")
+        modified_attrs = modified_image.get("illustrationAttributes")
+        if not existing_attrs and modified_attrs:
+            return FieldDiffResult.with_modified(modified_attrs)
+        if existing_attrs and not modified_attrs:
+            return FieldDiffResult.with_modified(modified_attrs)
+        if existing_attrs != modified_attrs:
+            return FieldDiffResult.with_modified(modified_image)
+        elif not existing_attrs and not modified_attrs:
+            return FieldDiffResult.unchanged()
+        elif len(existing_attrs) != len(modified_attrs):
+            return FieldDiffResult.with_modified(modified_image)
+        else:
+            for key in existing_attrs:
+                if existing_attrs[key] != modified_attrs[key]:
+                    return FieldDiffResult.with_modified(modified_image)
+    return FieldDiffResult.unchanged()
+
+
+def __category_reference_equals(existing, modified):
+    return existing.get("resId") == modified.get("resId")
+
+
+def __category_value_equals(existing, modified):
+    return existing.get("title") == modified.get("title")
+
+
+def categories_changes(existing, modified, reference_equals=__category_reference_equals,
+                       value_equals=__category_value_equals):
+    def find(collection, comparator, modified_):
+        return [cat for cat in collection if comparator(cat, modified_)]
+
+    def has_valued_element(coll):
+        return [x for x in coll if x]
+
+    def handle_collections(field, ref_equality_predicate, value_equality_predicate):
+        existing_collection = list(existing.get(field, []))
+        modified_collection = list(modified.get(field, []))
+
+        added_items = [c for c in modified_collection if
+                       not find(existing_collection, ref_equality_predicate, c)]
+
+        def is_updated_x(ex, modified_):
+            return ref_equality_predicate(ex, modified_) and not value_equality_predicate(ex, modified_)
+
+        modified_items = [
+            find(modified_collection, is_updated_x, modified_elem)[0] if find(modified_collection, is_updated_x,
+                                                                              modified_elem) else None for
+            modified_elem in existing_collection]
+
+        removed_items = [ex if not find(modified_collection, ref_equality_predicate, ex) else None for ex in
+                         existing_collection]
+        return FieldDiffResult(added_items if has_valued_element(added_items) else None,
+                               modified_items if has_valued_element(modified) else None,
+                               removed_items if has_valued_element(removed_items) else None)
+
+    return handle_collections("categories", reference_equals, value_equals)
+
+
+def attribute_change(original, modified, key):
+    if key in original and key not in modified:
+        return FieldDiffResult.with_removal(original[key])
+    if key not in original and key in modified:
+        return FieldDiffResult.with_added(modified[key])
+    if key in original and key in modified and modified.get(key) != original[key]:
+        return FieldDiffResult.with_modified(modified.get(key))

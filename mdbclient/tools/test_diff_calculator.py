@@ -145,13 +145,6 @@ def test_diff_added_updated():
     assert "titttle" in changes.Removed
 
 
-def test_added_categories():
-    original = {'title': 'foo', 'categories': [{"resId": "c1"}, {"resId": "c2"}]}
-    modified = {'title': 'foo', 'categories': [{"resId": "c1"}, {"resId": "c2"}, {"resId": "c3"}]}
-    changes = Differ(original, modified).calculate()
-    assert len(changes.Added) == 1
-    assert changes.Added['categories'] == [{"resId": "c3"}]
-
 reference_1 = {
     "resId": "http://id.nrk.no/2016/mdb/publicationEvent/rest-client/object/07790398-f6a7-419e-b903-98f6a7819e64",
     "type": "http://id.nrk.no/2016/mdb/reference/psAPI",
@@ -220,34 +213,6 @@ def test_removed_unique_reference():
     changes = Differ({'references': [reference_1]}, {}).calculate()
     assert len(changes.Removed) == 1
     assert changes.Removed['references'] == [reference_1]
-
-
-def test_modified_categories():
-    original = {'title': 'foo', 'categories': [{"resId": "c1"}, {"resId": "c2"}]}
-    modified = {'title': 'foo', 'categories': [{"resId": "c1"}, {"resId": "c2", "title": "øl"}]}
-    changes = Differ(original, modified).calculate()
-    assert len(changes.Modified) == 1
-    assert changes.Modified['categories'] == [None, {"resId": "c2", "title": "øl"}]
-
-
-def test_modified_multiple_categories():
-    original = {'title': 'foo',
-                'categories': [{"resId": "c1"}, {"resId": "c2"}, {"resId": "c3"}, {"resId": "c4"}]}
-    modified = {'title': 'foo',
-                'categories': [{"resId": "c1"}, {"resId": "c2", "title": "øl"}, {"resId": "c3"},
-                               {"resId": "c4", "title": "vold"}]}
-    changes = Differ(original, modified).calculate()
-    assert len(changes.Modified) == 1
-    assert changes.Modified['categories'] == [None, {"resId": "c2", "title": "øl"}, None,
-                                              {"resId": "c4", "title": "vold"}]
-
-
-def test_removed_categories():
-    original = {'title': 'foo', 'categories': [{"resId": "c1"}, {"resId": "c2"}, {"resId": "c3"}]}
-    modified = {'title': 'foo', 'categories': [{"resId": "c1"}, {"resId": "c2"}]}
-    changes = Differ(original, modified).calculate()
-    assert len(changes.Removed) == 1
-    assert changes.Removed['categories'] == [None, None, {"resId": "c3"}]
 
 
 def test_add_contributor():
@@ -448,85 +413,6 @@ def test_spatials_modification():
     assert len(changes.Modified) == 1
     assert changes.Modified["spatials"] == modified["spatials"]
     assert changes.has_diff()
-
-
-without_illustration = {}
-
-with_illustration = {"illustration": {
-    "identifier": "_iXhb8d-6JPD4srMv4-rSA",
-    "storageType": {
-        "resId": "http://id.nrk.no/2015/kaleido/image",
-        "label": "Kaleido",
-        "isSuppressed": False
-    },
-    "resId": "https://kaleido.nrk.no/service/api/1.0/data/_iXhb8d-6JPD4srMv4-rSA"
-}}
-
-with_illustration_with_crop = {"illustration": {
-    "identifier": "_iXhb8d-6JPD4srMv4-rSA",
-    "storageType": {
-        "resId": "http://id.nrk.no/2015/kaleido/image",
-        "label": "Kaleido",
-        "isSuppressed": False
-    },
-    "resId": "https://kaleido.nrk.no/service/api/1.0/data/_iXhb8d-6JPD4srMv4-rSA",
-    "illustrationAttributes": {
-        "cropOffsetX": 0.09,
-        "cropOffsetY": 0.060728395,
-        "cropWidth": 0.91,
-        "cropHeight": 0.91
-    }
-}}
-
-
-def test_illustration_added():
-    differ = Differ(without_illustration, with_illustration)
-    changes = differ.calculate()
-    assert len(changes.Added) == 1
-
-
-def test_illustration_crop_added():
-    differ = Differ(with_illustration, with_illustration_with_crop)
-    changes = differ.calculate()
-    assert len(changes.Modified) == 1
-
-
-def test_illustration_crop_modified_offsetX():
-    cloned = deepcopy(with_illustration_with_crop)
-    cloned["illustration"]["illustrationAttributes"]["cropOffsetX"] = 3
-    changes = Differ(with_illustration_with_crop, cloned).calculate()
-    assert len(changes.Modified) == 1
-
-def test_illustration_crop_modified_offsetY():
-    cloned = deepcopy(with_illustration_with_crop)
-    cloned["illustration"]["illustrationAttributes"]["cropOffsetY"] = 3
-    changes = Differ(with_illustration_with_crop, cloned).calculate()
-    assert len(changes.Modified) == 1
-
-def test_illustration_crop_modified_cropWidth():
-    cloned = deepcopy(with_illustration_with_crop)
-    cloned["illustration"]["illustrationAttributes"]["cropWidth"] = 3
-    changes = Differ(with_illustration_with_crop, cloned).calculate()
-    assert len(changes.Modified) == 1
-
-def test_illustration_crop_modified_cropHeight():
-    cloned = deepcopy(with_illustration_with_crop)
-    cloned["illustration"]["illustrationAttributes"]["cropHeight"] = 3
-    changes = Differ(with_illustration_with_crop, cloned).calculate()
-    assert len(changes.Modified) == 1
-
-def test_illustration_removed():
-    differ = Differ(with_illustration, without_illustration)
-    changes = differ.calculate()
-    assert len(changes.Removed) == 1
-
-
-def test_illustration_modified():
-    different_ill = deepcopy(with_illustration)
-    different_ill["illustration"]["identifier"] = "badsk8ter"
-    differ = Differ(with_illustration, different_ill)
-    changes = differ.calculate()
-    assert len(changes.Modified) == 1
 
 
 geo_verden = {"geoAvailability": {

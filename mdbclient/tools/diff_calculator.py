@@ -4,6 +4,7 @@ import math
 from typing import Mapping
 
 from mdbclient.mdbclient import ApiResponseParser
+from mdbclient.tools.diff_functions import illustration_changes, categories_changes
 
 
 class DiffResult(Mapping):
@@ -93,6 +94,14 @@ class Diff:
         None. Modified elements will contain the full modified payload 
         """
         self.Modified = DiffResult()
+
+    def add_change_result(self, key, change):
+        if change.Added:
+            self.Added[key] = change.Added
+        if change.Removed:
+            self.Removed[key] = change.Removed
+        if change.Modified:
+            self.Modified[key] = change.Modified
 
     def remove_key(self, key):
         if key in self.Added:
@@ -612,31 +621,7 @@ class Differ:
             self.diff.Removed[key] = original[key]
 
     def _apply_changes_images(self):
-        _ILLU = "illustration"
-        existing_image = self.existing.get(_ILLU, {})
-        modified_image = self.modified.get(_ILLU, {})
-
-        if not existing_image and modified_image:
-            self.diff.Added[_ILLU] = modified_image
-            return
-        if existing_image and not modified_image:
-            self.diff.Removed[_ILLU] = existing_image
-            return
-        if existing_image.get("identifier") != modified_image.get("identifier"):
-            self.diff.Modified[_ILLU] = modified_image
-
-        existing_attrs = existing_image.get("illustrationAttributes")
-        modified_attrs = modified_image.get("illustrationAttributes")
-        if existing_attrs != modified_attrs:
-            self.diff.Modified[_ILLU] = modified_image
-        if not existing_attrs:
-            return
-
-        if len(existing_attrs) != len(modified_attrs):
-            self.diff.Modified[_ILLU] = modified_image
-        for key in existing_attrs:
-            if existing_attrs[key] != modified_attrs[key]:
-                self.diff.Modified[_ILLU] = modified_image
+        self.diff.add_change_result("illustration", illustration_changes(self.existing, self.modified))
 
 
     def _apply_changes_geoavail(self):
@@ -702,7 +687,8 @@ class Differ:
     def calculate(self):
         self.attribute_changes()
         self._apply_changes_editorial_object_collections()
-        self._apply_changes_images()
+        self.diff.add_change_result("categories", categories_changes(self.existing, self.modified))
+        self.diff.add_change_result("illustration", illustration_changes(self.existing, self.modified))
         self._apply_changes_geoavail()
         return self.diff
 
