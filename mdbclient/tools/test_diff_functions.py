@@ -94,6 +94,8 @@ def test_added_categories():
     changes = categories_changes(original, modified)
     assert changes.added
     assert changes.added == [{"resId": "c3"}]
+    explained = changes.explain()
+    assert explained == "categories added: {'resId': 'c3'}"
 
 
 def test_modified_categories():
@@ -102,7 +104,8 @@ def test_modified_categories():
     changes = categories_changes(original, modified)
     assert changes.modified
     assert changes.modified == [None, {"resId": "c2", "title": "øl"}]
-    assert changes.explain()
+    explained = changes.explain()
+    assert explained == "categories modified: øl"  # who hoo bad description!
 
 
 

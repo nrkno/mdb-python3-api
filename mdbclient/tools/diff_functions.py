@@ -47,17 +47,21 @@ class FieldDiffResult:
         return str(item)
 
     def explain(self):
+        res = []
+
         def explain_item(action, item):
-            res = ""
             if isinstance(item,list):
-                for x in self.added:
-                    res += f"{self.field_name} {action}: " + self.__print_it(x) + "\n"
-            else:
-                res += f"{self.field_name} {action}: " + str(self.added) + "\n"
+                for x in item:
+                    if x:
+                        res.append(f"{self.field_name} {action}: " + self.__print_it(x) )
+            elif item:
+                res.append(f"{self.field_name}{action}: " + str(self.field_name))
             return res
 
-        return explain_item("added", self.added) + explain_item("modified", self.modified) + explain_item("removed",
-                                                                                                          self.removed)
+        explain_item("added", self.added)
+        explain_item("modified", self.modified)
+        explain_item("removed", self.removed)
+        return "\n".join(res)
 
 
 def illustration_changes(existing, modified):
@@ -126,7 +130,7 @@ def categories_changes(existing, modified, reference_equals=__category_reference
                          existing_collection]
         return FieldDiffResult(added_items if has_valued_element(added_items) else None,
                                modified_items if has_valued_element(modified) else None,
-                               removed_items if has_valued_element(removed_items) else None)
+                               removed_items if has_valued_element(removed_items) else None, "categories")
 
     return handle_collections("categories", reference_equals, value_equals)
 
