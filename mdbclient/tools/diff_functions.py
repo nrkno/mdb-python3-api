@@ -47,26 +47,17 @@ class FieldDiffResult:
         return str(item)
 
     def explain(self):
-        res = ""
-        if self.added:
-            try:
+        def explain_item(action, item):
+            res = ""
+            if isinstance(item,list):
                 for x in self.added:
-                    res += f"{self.field_name} added: " + self.__print_it(x) + "\n"
-            except TypeError:
-                res += f"{self.field_name} added: " + self.__print_it(self.added) + "\n"
-        if self.modified:
-            try:
-                for x in [self.__print_it(x) for x in self.modified if x]:
-                    res += f"{self.field_name} modified: " + x + "\n"
-            except TypeError:
-                res += f"{self.field_name} modified: " + self.__print_it(self.modified) + "\n"
-        if self.removed:
-            try:
-                for x in [self.__print_it(x) for x in self.removed if x]:
-                    res += f"{self.field_name} removed: " + x + "\n"
-            except TypeError:
-                res += f"{self.field_name} removed: " + self.__print_it(self.removed) + "\n"
-        return res
+                    res += f"{self.field_name} {action}: " + self.__print_it(x) + "\n"
+            else:
+                res += f"{self.field_name} {action}: " + str(self.added) + "\n"
+            return res
+
+        return explain_item("added", self.added) + explain_item("modified", self.modified) + explain_item("removed",
+                                                                                                          self.removed)
 
 
 def illustration_changes(existing, modified):
