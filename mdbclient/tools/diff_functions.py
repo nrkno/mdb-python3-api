@@ -50,10 +50,10 @@ class FieldDiffResult:
         res = []
 
         def explain_item(action, item):
-            if isinstance(item,list):
+            if isinstance(item, list):
                 for x in item:
                     if x:
-                        res.append(f"{self.field_name} {action}: " + self.__print_it(x) )
+                        res.append(f"{self.field_name} {action}: " + self.__print_it(x))
             elif item:
                 res.append(f"{self.field_name}{action}: " + str(self.field_name))
             return res
@@ -85,14 +85,14 @@ def illustration_changes(existing, modified):
         if existing_attrs != modified_attrs:
             return FieldDiffResult.with_modified(field_name, modified_image)
         elif not existing_attrs and not modified_attrs:
-            return FieldDiffResult.unchanged()
+            return FieldDiffResult.unchanged(field_name)
         elif len(existing_attrs) != len(modified_attrs):
             return FieldDiffResult.with_modified(field_name, modified_image)
         else:
             for key in existing_attrs:
                 if existing_attrs[key] != modified_attrs[key]:
                     return FieldDiffResult.with_modified(field_name, modified_image)
-    return FieldDiffResult.unchanged()
+    return FieldDiffResult.unchanged(field_name)
 
 
 def __category_reference_equals(existing, modified):
