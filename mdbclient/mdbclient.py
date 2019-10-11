@@ -180,7 +180,7 @@ class MdbJsonApi(object):
 
     def __init__(self, user_id, correlation_id, source_system=None,
                  response_unpacker=ApiResponseParser.unpack_json_response,
-                 batch_id=True, force_host=None, force_scheme=None):
+                 batch_id=None, force_host=None, force_scheme=None):
         self._headers = {}
         if source_system:
             self._headers["X-Source-System"] = source_system
