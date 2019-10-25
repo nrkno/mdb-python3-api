@@ -22,7 +22,7 @@ async def test_delete_meos():
         result = await client.create_master_eo({"title": "fozz"})
         assert result['title'] == 'fozz'
         await client.delete(result)
-        updated = await client.open(result)
+        updated = await client.reload(result)
         assert updated['deleted'] == True
 
 
@@ -71,6 +71,30 @@ async def test_create_essence():
         essence = await client.create_essence(pmo, mr, {})
         assert essence['type'] == 'http://id.nrk.no/2016/mdb/types/Essence'
 
+@pytest.mark.asyncio
+async def test_add_timeline_item():
+    async with create_mdb_client() as client:
+        meo = await client.create_master_eo({"title": "fozz"})
+        tl = await client.create_timeline(meo, { "type": 'http://id.nrk.no/2017/mdb/timelinetype/IndexPoints'})
+        item_to_ad = {
+            "title": 'first indexpoint',
+            "name": 'FIRST_INDEX',
+        }
+        resp = await client.add_timeline_item(tl, item_to_ad)
+        assert resp["type"] == 'http://id.nrk.no/2017/mdb/timelineitem/IndexpointTimelineItem'
+
+@pytest.mark.asyncio
+async def test_replace_timeline():
+    async with create_mdb_client() as client:
+        meo = await client.create_master_eo({"title": "fozz"})
+        tl = await client.create_timeline(meo, { "type": 'http://id.nrk.no/2017/mdb/timelinetype/IndexPoints'})
+        replacement = {"type": "http://id.nrk.no/2017/mdb/timelinetype/IndexPoints", "items" : [{
+            "type" : "http://id.nrk.no/2017/mdb/timelineitem/IndexpointTimelineItem",
+            "title": 'first indexpoint',
+            "name": 'FIRST_INDEX',
+        }]}
+        resp = await client.replace_timeline(meo, tl, replacement)
+        assert resp["type"] == 'http://id.nrk.no/2017/mdb/timelinetype/IndexPoints'
 
 @pytest.mark.asyncio
 async def test_resolve_meo():
@@ -79,7 +103,7 @@ async def test_resolve_meo():
         assert result['title'] == 'fozz'
         resolved = await client.resolve(result['resId'])
         assert resolved is not None
-        test_open = await client.open(result)
+        test_open = await client.reload(result)
         assert test_open is not None
 
 
@@ -94,9 +118,8 @@ async def test_resolve_reference():
 
 
 @pytest.mark.asyncio
-async def test_add_on_rel():
+async def test_add_subjects():
     async with create_mdb_client() as client:
         result = await client.create_master_eo({"title": "fozz"})
-        subj, status = await client.add_on_rel(result, "http://id.nrk.no/2016/mdb/relation/subjects", {"title": 'sub2'})
-        assert status == 200
-        assert subj['subjects'][0]["title"] == 'sub2'
+        subj = await client.add_subject(result, {"title": 'sub2'})
+        assert subj["title"] == 'sub2'

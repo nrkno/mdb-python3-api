@@ -10,11 +10,11 @@ async def create_publication():
 
 async def resolve_mmeo_and_create_subject(uri):
     async with MdbJsonApi("my-user-id","my-correlation-id") as client:
-        meo = await client.open(uri)
-        vg = await client.open(meo["versionGroup"])
-        metadata_meo = await client.open(vg["metadataMeo"])
+        meo = await client.reload(uri)
+        vg = await client.reload(meo["versionGroup"])
+        metadata_meo = await client.reload(vg["metadataMeo"])
         # add a tag (subject)
-        await client.add_on_rel(meo, "http://id.nrk.no/2016/mdbclient/relation/subjects", {"title" : "min TestTagg"})
+        await client._add_on_rel(meo, "http://id.nrk.no/2016/mdbclient/relation/subjects", {"title" : "min TestTagg"})
 
 
 
