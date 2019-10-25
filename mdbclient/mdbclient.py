@@ -277,8 +277,6 @@ class MdbJsonApi(object):
         updated = await self.rest_api_util.http_post_follow(link, updates, self._merged_headers(headers))
         return updated.response
 
-
-
     def _rewritten_link(self, link):
         if not self.force_host:
             return link
@@ -364,6 +362,10 @@ class MdbClient(MdbJsonApi):
     async def add_timeline_item(self, timeline, item, headers=None):
         return await self.__add_on_rel(timeline, "http://id.nrk.no/2016/mdb/relation/items", item, headers)
 
+    async def add_stored_document(self, master_eo, stored_document, headers=None):
+        return await self.__add_on_rel(master_eo, "http://id.nrk.no/2016/mdb/relation/documents", stored_document,
+                                       headers)
+
     async def create_publication_event(self, master_eo, publication_event, headers=None):
         if not publication_event:
             raise Exception("Cannot create an empty publication event")
@@ -371,10 +373,11 @@ class MdbClient(MdbJsonApi):
         publication_event["subType"] = "http://authority.nrk.no/datadictionary/broadcast"
         return await self._invoke_create_method("publicationEvent", publication_event, headers)
 
-    async def create_publication_media_object(self, publication_event, media_object, publication_media_object,headers=None):
+    async def create_publication_media_object(self, publication_event, media_object, publication_media_object,
+                                              headers=None):
         publication_media_object["publicationEvent"] = _res_id(publication_event)
         publication_media_object["publishedVersionOf"] = _res_id(media_object)
-        return await self._invoke_create_method("publicationMediaObject", publication_media_object,headers)
+        return await self._invoke_create_method("publicationMediaObject", publication_media_object, headers)
 
     async def resolve(self, res_id, headers=None):
         if not res_id:
