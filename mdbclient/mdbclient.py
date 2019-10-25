@@ -393,7 +393,7 @@ class MdbClient(MdbJsonApi):
             if len(resp.response) > 1:
                 raise Exception(f"Multiple elements found when resolving {ref_type}={value}:{resp}")
             return await self.open(resp.response[0], headers)
-        return resp
+        return None
 
     @staticmethod
     def _timelines_of_subtype(master_eo, sub_type):
