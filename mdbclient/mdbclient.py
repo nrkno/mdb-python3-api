@@ -215,15 +215,15 @@ class MdbJsonApi(object):
 
     def __init__(self, api_base, user_id, correlation_id, source_system=None,
                  batch_id=None, force_host=None, force_scheme=None):
-        self._headers = {}
+        self._global_headers = {}
         if source_system:
-            self._headers["X-Source-System"] = source_system
+            self._global_headers["X-Source-System"] = source_system
         if user_id:
-            self._headers["X-userId"] = user_id
+            self._global_headers["X-userId"] = user_id
         if correlation_id:
-            self._headers["X-transactionId"] = correlation_id
+            self._global_headers["X-transactionId"] = correlation_id
         if batch_id:
-            self._headers["X-Batch-Identifier"] = batch_id
+            self._global_headers["X-Batch-Identifier"] = batch_id
 
         self.force_host = force_host
         self.force_scheme = force_scheme
@@ -242,17 +242,42 @@ class MdbJsonApi(object):
     def __api_method(self, sub_path):
         return self.api_base + "/" + sub_path
 
-    def add_header(self, key, value):
-        self._headers[key] = value
+    def add_global_header(self, key, value):
+        self._global_headers[key] = value
 
-    async def _invoke_get_method(self, name, parameters) -> StandardResponse:
+    def _merged_headers(self, request_headers):
+        return {**self._global_headers, **request_headers} if request_headers else self._global_headers
+
+    async def _invoke_get_method(self, name, parameters, headers=None) -> StandardResponse:
         real_method = self.__api_method(name)
-        return await self.rest_api_util.http_get(real_method, self._headers, parameters)
+        return await self.rest_api_util.http_get(real_method, self._merged_headers(headers), parameters)
 
-    async def _invoke_create_method(self, method_name, payload) -> StandardResponse:
+    async def _invoke_create_method(self, method_name, payload, headers=None) -> StandardResponse:
         real_method = self.__api_method(method_name)
-        stdresponse = await self.rest_api_util.http_post_follow(real_method, payload, self._headers)
+        stdresponse = await self.rest_api_util.http_post_follow(real_method, payload, self._merged_headers(headers))
         return stdresponse.response
+
+    async def _do_post(self, link, payload, headers=None):
+        posted = await self.rest_api_util.http_post(link, payload, self._merged_headers(headers))
+        return posted.response
+
+    async def _do_put(self, link, payload, headers=None) -> StandardResponse:
+        resp = await self.rest_api_util.put(link, payload, self._merged_headers(headers))
+        return resp.response
+
+    async def do_delete(self, link, headers=None):
+        deleted = await self.rest_api_util.delete(link, self._merged_headers(headers))
+        return deleted.response
+
+    async def do_get(self, link, headers=None):
+        reloaded = await self.rest_api_util.http_get(link, self._merged_headers(headers))
+        return reloaded.response
+
+    async def do_post_follow(self, link, updates, headers=None):
+        updated = await self.rest_api_util.http_post_follow(link, updates, self._merged_headers(headers))
+        return updated.response
+
+
 
     def _rewritten_link(self, link):
         if not self.force_host:
@@ -262,15 +287,8 @@ class MdbJsonApi(object):
         replaced = parsed._replace(netloc=self.force_host, scheme="http")
         return replaced.geturl()
 
-
-    async def _add_on_rel(self, owner, rel, payload):
-        link = self._rewritten_link(ApiResponseParser.link(owner, rel))
-        posted = await self.rest_api_util.http_post(link, payload, self._headers)
-        return posted.response
-
-    async def open_url(self, url, additional_headers=None):
-        headers_to_use = {**self._headers, **additional_headers} if additional_headers else self._headers
-        response = await self.rest_api_util.http_get(self._rewritten_link(url), headers_to_use)
+    async def open_url(self, url, headers=None):
+        response = await self.rest_api_util.http_get(self._rewritten_link(url), self._merged_headers(headers))
         if not response.is_successful():
             raise Exception(f"Http {response.status} for {url}:\n{response}")
         return response
@@ -297,77 +315,81 @@ class MdbClient(MdbJsonApi):
         return MdbClient("http://mdbklipp.felles.ds.nrk.no", user_id, correlation_id)
 
     async def __aenter__(self):
-        self.rest_api_util = RestApiUtil()
         await super().__aenter__()
         return self
 
-    async def create_master_eo(self, master_eo):
-        return await self._invoke_create_method("masterEO", master_eo)
+    async def __add_on_rel(self, owner, rel, payload, headers=None):
+        link = self._rewritten_link(ApiResponseParser.link(owner, rel))
+        return await self._do_post(link, payload, headers)
 
-    async def create_media_object(self, master_eo, media_object):
+    async def __replace_content(self, owner, payload, headers=None) -> StandardResponse:
+        link = self._rewritten_link(ApiResponseParser.self_link(owner))
+        return await self._do_put(link, payload, headers)
+
+    async def create_master_eo(self, master_eo, headers=None):
+        return await self._invoke_create_method("masterEO", master_eo, headers)
+
+    async def create_media_object(self, master_eo, media_object, headers=None):
         media_object["masterEO"] = _res_id(master_eo)
-        return await self._invoke_create_method("mediaObject", media_object)
+        return await self._invoke_create_method("mediaObject", media_object, headers)
 
-    async def create_media_resource(self, media_object, media_resource):
+    async def create_media_resource(self, media_object, media_resource, headers=None):
         media_resource["mediaObject"] = _res_id(media_object)
-        return await self._invoke_create_method("mediaResource", media_resource)
+        return await self._invoke_create_method("mediaResource", media_resource, headers=None)
 
-    async def create_essence(self, publication_media_object, media_resource, essence):
+    async def create_essence(self, publication_media_object, media_resource, essence, headers=None):
         essence["composedOf"] = _res_id(media_resource)
         essence["playoutOf"] = _res_id(publication_media_object)
-        return await self._invoke_create_method("essence", essence)
+        return await self._invoke_create_method("essence", essence, headers)
 
-    async def create_timeline(self, master_eo, timeline):
+    async def create_timeline(self, master_eo, timeline, headers=None):
         timeline["masterEO"] = _res_id(master_eo)
-        return await self._invoke_create_method("timeline", timeline)
+        return await self._invoke_create_method("timeline", timeline, headers)
 
-    async def replace_timeline(self, master_eo, existing_timeline, timeline):
+    async def replace_timeline(self, master_eo, existing_timeline, timeline, headers=None):
         timeline["masterEO"] = _res_id(master_eo)
-        self_link = ApiResponseParser.self_link(existing_timeline)
-        resp, status = await self.rest_api_util.put(self_link, timeline,
-                                                    self._headers)  # ApiResponseParser.verbatim_response
-        return resp
+        return await self.__replace_content(existing_timeline, timeline, headers)
 
-    async def add_subject(self, owner, subjects):
-        return await self._add_on_rel(owner, "http://id.nrk.no/2016/mdb/relation/subjects", subjects)
+    async def add_subject(self, owner, subjects, headers=None):
+        return await self.__add_on_rel(owner, "http://id.nrk.no/2016/mdb/relation/subjects", subjects, headers)
 
-    async def create_or_replace_timeline(self, master_eo, timeline):
+    async def create_or_replace_timeline(self, master_eo, timeline, headers=None):
         type_of_timeline = timeline["Type"]
         existing_timeline_of_same_type = self._timelines_of_subtype(master_eo, type_of_timeline)
         if existing_timeline_of_same_type:
-            return await self.replace_timeline(master_eo, existing_timeline_of_same_type, timeline)
+            return await self.replace_timeline(master_eo, existing_timeline_of_same_type, timeline, headers)
         else:
-            return await self._invoke_create_method("timeline", timeline)
+            return await self._invoke_create_method("timeline", timeline, headers)
 
-    async def add_timeline_item(self, timeline, item):
-        return await self._add_on_rel(timeline, "http://id.nrk.no/2016/mdb/relation/items", item)
+    async def add_timeline_item(self, timeline, item, headers=None):
+        return await self.__add_on_rel(timeline, "http://id.nrk.no/2016/mdb/relation/items", item, headers)
 
-    async def create_publication_event(self, master_eo, publication_event):
+    async def create_publication_event(self, master_eo, publication_event, headers=None):
         if not publication_event:
             raise Exception("Cannot create an empty publication event")
         publication_event["publishes"] = _res_id(master_eo)
         publication_event["subType"] = "http://authority.nrk.no/datadictionary/broadcast"
-        return await self._invoke_create_method("publicationEvent", publication_event)
+        return await self._invoke_create_method("publicationEvent", publication_event, headers)
 
-    async def create_publication_media_object(self, publication_event, media_object, publication_media_object):
+    async def create_publication_media_object(self, publication_event, media_object, publication_media_object,headers=None):
         publication_media_object["publicationEvent"] = _res_id(publication_event)
         publication_media_object["publishedVersionOf"] = _res_id(media_object)
-        return await self._invoke_create_method("publicationMediaObject", publication_media_object)
+        return await self._invoke_create_method("publicationMediaObject", publication_media_object,headers)
 
-    async def resolve(self, res_id):
+    async def resolve(self, res_id, headers=None):
         if not res_id:
             return
-        return await self._invoke_get_method("resolve", {'resId': res_id})
+        return await self._invoke_get_method("resolve", {'resId': res_id}, headers)
 
-    async def reference(self, ref_type, value):
-        return await self._invoke_get_method("references", {'type': ref_type, 'reference': value})
+    async def reference(self, ref_type, value, headers=None):
+        return await self._invoke_get_method("references", {'type': ref_type, 'reference': value}, headers)
 
-    async def reference_single(self, ref_type, value):
-        resp = await self._invoke_get_method("references", {'type': ref_type, 'reference': value})
+    async def reference_single(self, ref_type, value, headers=None):
+        resp = await self._invoke_get_method("references", {'type': ref_type, 'reference': value}, headers)
         if resp.response:
             if len(resp.response) > 1:
                 raise Exception(f"Multiple elements found when resolving {ref_type}={value}:{resp}")
-            return await self.open(resp.response[0])
+            return await self.open(resp.response[0], headers)
         return resp
 
     @staticmethod
@@ -375,38 +397,31 @@ class MdbClient(MdbJsonApi):
         item = (tl for tl in master_eo["timelines"] if tl["subType"] == sub_type)
         return next(item, None)
 
-    async def find_serie(self, title, master_system):
-        resp = await self._invoke_get_method("serie/by_title", {'title': title, 'masterSystem': master_system})
+    async def find_serie(self, title, master_system, headers=None):
+        resp = await self._invoke_get_method("serie/by_title", {'title': title, 'masterSystem': master_system}, headers)
         return resp.response.serie[0] if resp.response.serie else None
 
-    async def create_serie(self, title, master_system):
+    async def create_serie(self, title, master_system, headers=None):
         payload = {"title": title, "masterSystem": master_system}
-        return await self._invoke_create_method("serie", payload)
+        return await self._invoke_create_method("serie", payload, headers)
 
-    async def create_serie_2(self, payload):
-        return await self._invoke_create_method("serie", payload)
+    async def create_serie_2(self, payload, headers=None):
+        return await self._invoke_create_method("serie", payload, headers)
 
-    async def create_season(self, season):
-        return await self._invoke_create_method("season", season)
+    async def create_season(self, season, headers=None):
+        return await self._invoke_create_method("season", season, headers)
 
-    async def create_episode(self, season_id, episode):
-        return await self._invoke_create_method(f"serie/{season_id}/episode", episode)
+    async def create_episode(self, season_id, episode, headers=None):
+        return await self._invoke_create_method(f"serie/{season_id}/episode", episode, headers)
 
-    async def delete(self, owner, additional_headers=None):
+    async def delete(self, owner, headers=None):
         link = self._rewritten_link(ApiResponseParser.self_link(owner))
-        headers_to_use = {**self._headers, **additional_headers} if additional_headers else self._headers
-        deleted = await self.rest_api_util.delete(link, headers_to_use)
-        return deleted.response
+        return await self.do_delete(link, headers)
 
-    async def open(self, owner, additional_headers=None):
+    async def open(self, owner, headers=None):
         link = self._rewritten_link(ApiResponseParser.self_link(owner))
-        headers_to_use = {**self._headers, **additional_headers} if additional_headers else self._headers
-        reloaded = await self.rest_api_util.http_get(link, headers_to_use)
-        return reloaded.response
+        return await self.do_get(link, headers)
 
-
-    async def update(self, owner, updates):
+    async def update(self, owner, updates, headers=None):
         link = self._rewritten_link(ApiResponseParser.self_link(owner))
-        updated = await self.rest_api_util.http_post_follow(link, updates, self._headers)
-        return updated.response
-
+        return await self.do_post_follow(link, updates, headers)
