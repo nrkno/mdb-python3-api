@@ -367,7 +367,7 @@ class MdbClient(MdbJsonApi):
         if resp.response:
             if len(resp.response) > 1:
                 raise Exception(f"Multiple elements found when resolving {ref_type}={value}:{resp}")
-            return await self.reload(resp.response[0])
+            return await self.open(resp.response[0])
         return resp
 
     @staticmethod
@@ -398,7 +398,7 @@ class MdbClient(MdbJsonApi):
         deleted = await self.rest_api_util.delete(link, headers_to_use)
         return deleted.response
 
-    async def reload(self, owner, additional_headers=None):
+    async def open(self, owner, additional_headers=None):
         link = self._rewritten_link(ApiResponseParser.self_link(owner))
         headers_to_use = {**self._headers, **additional_headers} if additional_headers else self._headers
         reloaded = await self.rest_api_util.http_get(link, headers_to_use)

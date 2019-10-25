@@ -22,7 +22,7 @@ async def test_delete_meos():
         result = await client.create_master_eo({"title": "fozz"})
         assert result['title'] == 'fozz'
         await client.delete(result)
-        updated = await client.reload(result)
+        updated = await client.open(result)
         assert updated['deleted'] == True
 
 
@@ -103,7 +103,7 @@ async def test_resolve_meo():
         assert result['title'] == 'fozz'
         resolved = await client.resolve(result['resId'])
         assert resolved is not None
-        test_open = await client.reload(result)
+        test_open = await client.open(result)
         assert test_open is not None
 
 
