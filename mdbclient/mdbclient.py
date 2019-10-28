@@ -15,7 +15,7 @@ class BadRequest(Exception):
         self.request_payload = request_payload
 
 
-class HttpRequestException(Exception):
+class HttpReqException(Exception):
     def __init__(self, uri, request_payload, message, status):
         self.uri = uri
         self.request_payload = request_payload
@@ -158,8 +158,8 @@ class RestApiUtil(object):
         if response.status == 410:
             raise AggregateGoneException
         if response.status >= 400:
-            raise HttpRequestException(uri, request_payload, await RestApiUtil.__unpack_response_content(response),
-                                       response.status)
+            raise HttpReqException(uri, request_payload, await RestApiUtil.__unpack_response_content(response),
+                                   response.status)
 
     @staticmethod
     async def __unpack_json_response(response, request_uri, request_payload=None) -> StandardResponse:
