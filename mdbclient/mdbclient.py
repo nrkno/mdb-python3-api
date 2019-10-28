@@ -9,23 +9,30 @@ class AggregateGoneException(Exception):
 
 
 class BadRequest(Exception):
-    def __init__(self, message):
-        self.message = message
+    def __init__(self, uri, request_payload, response):
+        self.message = response
+        self.uri = uri
+        self.request_payload = request_payload
 
 
 class HttpRequestException(Exception):
-    def __init__(self, message, status):
+    def __init__(self, uri, request_payload, message, status):
+        self.uri = uri
+        self.request_payload = request_payload
         self.message = message
         self.status = status
 
 
 class Http404(Exception):
-    def __init__(self, message):
+    def __init__(self, uri, message):
+        self.uri = uri
         self.message = message
 
 
 class Conflict(Exception):
-    def __init__(self, message):
+    def __init__(self, uri, request_payload, message):
+        self.uri = uri
+        self.request_payload = request_payload
         self.message = message
 
 
@@ -141,21 +148,22 @@ class RestApiUtil(object):
         return await response.text()
 
     @staticmethod
-    async def __raise_errors(response):
+    async def __raise_errors(response, uri, request_payload):
         if response.status == 400:
-            raise BadRequest(await RestApiUtil.__unpack_response_content(response))
+            raise BadRequest(uri, request_payload, await RestApiUtil.__unpack_response_content(response))
         if response.status == 409:
-            raise Conflict(await RestApiUtil.__unpack_response_content(response))
+            raise Conflict(uri, request_payload, await RestApiUtil.__unpack_response_content(response))
         if response.status == 404:
-            raise Http404(None)
+            raise Http404(uri, None)
         if response.status == 410:
             raise AggregateGoneException
         if response.status >= 400:
-            raise HttpRequestException(await RestApiUtil.__unpack_response_content(response), response.status)
+            raise HttpRequestException(uri, request_payload, await RestApiUtil.__unpack_response_content(response),
+                                       response.status)
 
     @staticmethod
-    async def __unpack_json_response(response) -> StandardResponse:
-        await RestApiUtil.__raise_errors(response)
+    async def __unpack_json_response(response, request_uri, request_payload=None) -> StandardResponse:
+        await RestApiUtil.__raise_errors(response, request_uri, request_payload)
         try:
             return StandardResponse(await RestApiUtil.__unpack_response_content(response), response.status)
         except Exception as e:
@@ -164,18 +172,18 @@ class RestApiUtil(object):
 
     async def http_get(self, uri, headers=None, uri_params=None) -> StandardResponse:
         async with self.session.get(uri, params=uri_params, headers=headers) as response:
-            return await RestApiUtil.__unpack_json_response(response)
+            return await RestApiUtil.__unpack_json_response(response, uri)
 
     async def delete(self, uri, headers) -> StandardResponse:
         async with self.session.delete(uri, headers=headers) as response:
-            return await RestApiUtil.__unpack_json_response(response)
+            return await RestApiUtil.__unpack_json_response(response, uri)
 
     # @backoff.on_exception(backoff.expo, requests.exceptions.RequestException, max_tries=8)
     async def http_post_follow(self, uri, json_payload, headers=None) -> StandardResponse:
         log_msg = f"POST TO {uri}\n{json.dumps(json_payload, indent=4, sort_keys=True)}"
         self.traffic.append(log_msg)
         async with self.session.post(uri, json=json_payload, headers=headers) as response:
-            await RestApiUtil.__raise_errors(response)
+            await RestApiUtil.__raise_errors(response, uri, json_payload)
             reloaded = await self.follow(response, headers)
             self.traffic.append(reloaded)
             return reloaded
@@ -185,15 +193,13 @@ class RestApiUtil(object):
         log_msg = f"POST TO {uri}\n{json.dumps(json_payload, indent=4, sort_keys=True)}"
         self.traffic.append(log_msg)
         async with self.session.post(uri, json=json_payload, headers=headers) as response:
-            await RestApiUtil.__raise_errors(response)
-            firstlevel_response = await RestApiUtil.__unpack_json_response(response)
+            firstlevel_response = await RestApiUtil.__unpack_json_response(response, uri, json_payload)
             self.traffic.append(firstlevel_response)
             return firstlevel_response
 
     async def put(self, uri, json_payload, headers=None) -> StandardResponse:
         async with self.session.put(uri, json=json_payload, headers=headers) as response:
-            await RestApiUtil.__raise_errors(response)
-            result = await RestApiUtil.__unpack_json_response(response)
+            result = await RestApiUtil.__unpack_json_response(response, uri, json_payload)
             return result
 
     async def follow(self, response, headers=None) -> StandardResponse:
