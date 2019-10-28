@@ -139,7 +139,7 @@ class RestApiUtil(object):
         return await response.text()
 
     @staticmethod
-    def __raise_errors(response):
+    async def __raise_errors(response):
         if response.status == 400:
             raise BadRequest(await RestApiUtil.__unpack_ct(response))
         if response.status == 409:
@@ -153,7 +153,7 @@ class RestApiUtil(object):
 
     @staticmethod
     async def __unpack_json_response(response) -> StandardResponse:
-        RestApiUtil.__raise_errors(response)
+        await RestApiUtil.__raise_errors(response)
         try:
             return StandardResponse(await RestApiUtil.__unpack_ct(response), response.status)
         except Exception as e:
@@ -173,7 +173,7 @@ class RestApiUtil(object):
         log_msg = f"POST TO {uri}\n{json.dumps(json_payload, indent=4, sort_keys=True)}"
         self.traffic.append(log_msg)
         async with self.session.post(uri, json=json_payload, headers=headers) as response:
-            RestApiUtil.__raise_errors(response)
+            await RestApiUtil.__raise_errors(response)
             reloaded = await self.follow(response, headers)
             self.traffic.append(reloaded)
             return reloaded
@@ -183,14 +183,14 @@ class RestApiUtil(object):
         log_msg = f"POST TO {uri}\n{json.dumps(json_payload, indent=4, sort_keys=True)}"
         self.traffic.append(log_msg)
         async with self.session.post(uri, json=json_payload, headers=headers) as response:
-            RestApiUtil.__raise_errors(response)
+            await RestApiUtil.__raise_errors(response)
             firstlevel_response = await RestApiUtil.__unpack_json_response(response)
             self.traffic.append(firstlevel_response)
             return firstlevel_response
 
     async def put(self, uri, json_payload, headers=None):
         async with self.session.put(uri, json=json_payload, headers=headers) as response:
-            RestApiUtil.__raise_errors(response)
+            await RestApiUtil.__raise_errors(response)
             result = await RestApiUtil.__unpack_json_response(response)
             return result
 
