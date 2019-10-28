@@ -23,9 +23,11 @@ class Http404(Exception):
     def __init__(self, message):
         self.message = message
 
+
 class Conflict(Exception):
     def __init__(self, message):
         self.message = message
+
 
 class ApiResponseParser:
     @staticmethod
@@ -338,7 +340,7 @@ class MdbClient(MdbJsonApi):
 
     async def create_media_resource(self, media_object, media_resource, headers=None):
         media_resource["mediaObject"] = _res_id(media_object)
-        return await self._invoke_create_method("mediaResource", media_resource, headers=None)
+        return await self._invoke_create_method("mediaResource", media_resource, headers=headers)
 
     async def create_essence(self, publication_media_object, media_resource, essence, headers=None):
         essence["composedOf"] = _res_id(media_resource)
