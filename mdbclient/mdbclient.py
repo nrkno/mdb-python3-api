@@ -135,7 +135,7 @@ class RestApiUtil(object):
             self.session = None
 
     @staticmethod
-    async def __unpack_ct(response):
+    async def __unpack_response_content(response):
         if response.content_type == "application/json":
             return await response.json()
         return await response.text()
@@ -143,35 +143,35 @@ class RestApiUtil(object):
     @staticmethod
     async def __raise_errors(response):
         if response.status == 400:
-            raise BadRequest(await RestApiUtil.__unpack_ct(response))
+            raise BadRequest(await RestApiUtil.__unpack_response_content(response))
         if response.status == 409:
-            raise Conflict(await RestApiUtil.__unpack_ct(response))
+            raise Conflict(await RestApiUtil.__unpack_response_content(response))
         if response.status == 404:
             raise Http404(None)
         if response.status == 410:
             raise AggregateGoneException
         if response.status >= 400:
-            raise HttpRequestException(await RestApiUtil.__unpack_ct(response), response.status)
+            raise HttpRequestException(await RestApiUtil.__unpack_response_content(response), response.status)
 
     @staticmethod
     async def __unpack_json_response(response) -> StandardResponse:
         await RestApiUtil.__raise_errors(response)
         try:
-            return StandardResponse(await RestApiUtil.__unpack_ct(response), response.status)
+            return StandardResponse(await RestApiUtil.__unpack_response_content(response), response.status)
         except Exception as e:
             print(e)
             raise e
 
-    async def http_get(self, uri, headers=None, uri_params=None):
+    async def http_get(self, uri, headers=None, uri_params=None) -> StandardResponse:
         async with self.session.get(uri, params=uri_params, headers=headers) as response:
             return await RestApiUtil.__unpack_json_response(response)
 
-    async def delete(self, uri, headers):
+    async def delete(self, uri, headers) -> StandardResponse:
         async with self.session.delete(uri, headers=headers) as response:
             return await RestApiUtil.__unpack_json_response(response)
 
     # @backoff.on_exception(backoff.expo, requests.exceptions.RequestException, max_tries=8)
-    async def http_post_follow(self, uri, json_payload, headers=None):
+    async def http_post_follow(self, uri, json_payload, headers=None) -> StandardResponse:
         log_msg = f"POST TO {uri}\n{json.dumps(json_payload, indent=4, sort_keys=True)}"
         self.traffic.append(log_msg)
         async with self.session.post(uri, json=json_payload, headers=headers) as response:
@@ -181,7 +181,7 @@ class RestApiUtil(object):
             return reloaded
 
     # @backoff.on_exception(backoff.expo, requests.exceptions.RequestException, max_tries=8)
-    async def http_post(self, uri, json_payload, headers=None):
+    async def http_post(self, uri, json_payload, headers=None) -> StandardResponse:
         log_msg = f"POST TO {uri}\n{json.dumps(json_payload, indent=4, sort_keys=True)}"
         self.traffic.append(log_msg)
         async with self.session.post(uri, json=json_payload, headers=headers) as response:
@@ -190,13 +190,13 @@ class RestApiUtil(object):
             self.traffic.append(firstlevel_response)
             return firstlevel_response
 
-    async def put(self, uri, json_payload, headers=None):
+    async def put(self, uri, json_payload, headers=None) -> StandardResponse:
         async with self.session.put(uri, json=json_payload, headers=headers) as response:
             await RestApiUtil.__raise_errors(response)
             result = await RestApiUtil.__unpack_json_response(response)
             return result
 
-    async def follow(self, response, headers=None):
+    async def follow(self, response, headers=None) -> StandardResponse:
         loc = response.headers["Location"]
         return await self.http_get(loc, headers)
 
@@ -259,7 +259,7 @@ class MdbJsonApi(object):
         real_method = self.__api_method(name)
         return await self.rest_api_util.http_get(real_method, self._merged_headers(headers), parameters)
 
-    async def _invoke_create_method(self, method_name, payload, headers=None) -> StandardResponse:
+    async def _invoke_create_method(self, method_name, payload, headers=None):
         real_method = self.__api_method(method_name)
         stdresponse = await self.rest_api_util.http_post_follow(real_method, payload, self._merged_headers(headers))
         return stdresponse.response
