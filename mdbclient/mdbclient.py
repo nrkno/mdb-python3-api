@@ -363,6 +363,7 @@ class MdbClient(MdbJsonApi):
         essence["playoutOf"] = _res_id(publication_media_object)
         return await self._invoke_create_method("essence", essence, headers)
 
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def create_timeline(self, master_eo, timeline, headers=None):
         timeline["masterEO"] = _res_id(master_eo)
         return await self._invoke_create_method("timeline", timeline, headers)
