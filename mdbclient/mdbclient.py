@@ -212,7 +212,7 @@ def _res_id(mdb_object):
     return {"resId": mdb_object["resId"]}
 
 
-def __check_if_not_lock(exc: HttpReqException):
+def _check_if_not_lock(exc: HttpReqException):
     return exc.message.get("type") != 'LockAcquisitionFailedException'
 
 
@@ -303,7 +303,7 @@ class MdbJsonApi(object):
         replaced = parsed._replace(netloc=self.force_host, scheme="http")
         return replaced.geturl()
 
-    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=__check_if_not_lock)
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def open_url(self, url, headers=None):
         response = await self.rest_api_util.http_get(self._rewritten_link(url), self._merged_headers(headers))
         if not response.is_successful():
@@ -343,21 +343,21 @@ class MdbClient(MdbJsonApi):
         link = self._rewritten_link(ApiResponseParser.self_link(owner))
         return await self._do_put(link, payload, headers)
 
-    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=__check_if_not_lock)
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def create_master_eo(self, master_eo, headers=None):
         return await self._invoke_create_method("masterEO", master_eo, headers)
 
-    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=__check_if_not_lock)
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def create_media_object(self, master_eo, media_object, headers=None):
         media_object["masterEO"] = _res_id(master_eo)
         return await self._invoke_create_method("mediaObject", media_object, headers)
 
-    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=__check_if_not_lock)
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def create_media_resource(self, media_object, media_resource, headers=None):
         media_resource["mediaObject"] = _res_id(media_object)
         return await self._invoke_create_method("mediaResource", media_resource, headers=headers)
 
-    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=__check_if_not_lock)
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def create_essence(self, publication_media_object, media_resource, essence, headers=None):
         essence["composedOf"] = _res_id(media_resource)
         essence["playoutOf"] = _res_id(publication_media_object)
@@ -367,16 +367,16 @@ class MdbClient(MdbJsonApi):
         timeline["masterEO"] = _res_id(master_eo)
         return await self._invoke_create_method("timeline", timeline, headers)
 
-    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=__check_if_not_lock)
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def replace_timeline(self, master_eo, existing_timeline, timeline, headers=None):
         timeline["masterEO"] = _res_id(master_eo)
         return await self.__replace_content(existing_timeline, timeline, headers)
 
-    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=__check_if_not_lock)
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def add_subject(self, owner, subjects, headers=None):
         return await self.__add_on_rel(owner, "http://id.nrk.no/2016/mdb/relation/subjects", subjects, headers)
 
-    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=__check_if_not_lock)
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def create_or_replace_timeline(self, master_eo, timeline, headers=None):
         type_of_timeline = timeline["Type"]
         existing_timeline_of_same_type = self._timelines_of_subtype(master_eo, type_of_timeline)
@@ -385,16 +385,16 @@ class MdbClient(MdbJsonApi):
         else:
             return await self._invoke_create_method("timeline", timeline, headers)
 
-    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=__check_if_not_lock)
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def add_timeline_item(self, timeline, item, headers=None):
         return await self.__add_on_rel(timeline, "http://id.nrk.no/2016/mdb/relation/items", item, headers)
 
-    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=__check_if_not_lock)
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def add_stored_document(self, master_eo, stored_document, headers=None):
         return await self.__add_on_rel(master_eo, "http://id.nrk.no/2016/mdb/relation/documents", stored_document,
                                        headers)
 
-    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=__check_if_not_lock)
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def create_publication_event(self, master_eo, publication_event, headers=None):
         if not publication_event:
             raise Exception("Cannot create an empty publication event")
@@ -402,24 +402,24 @@ class MdbClient(MdbJsonApi):
         publication_event["subType"] = "http://authority.nrk.no/datadictionary/broadcast"
         return await self._invoke_create_method("publicationEvent", publication_event, headers)
 
-    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=__check_if_not_lock)
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def create_publication_media_object(self, publication_event, media_object, publication_media_object,
                                               headers=None):
         publication_media_object["publicationEvent"] = _res_id(publication_event)
         publication_media_object["publishedVersionOf"] = _res_id(media_object)
         return await self._invoke_create_method("publicationMediaObject", publication_media_object, headers)
 
-    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=__check_if_not_lock)
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def resolve(self, res_id, headers=None):
         if not res_id:
             return
         return await self._invoke_get_method("resolve", {'resId': res_id}, headers)
 
-    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=__check_if_not_lock)
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def reference(self, ref_type, value, headers=None):
         return await self._invoke_get_method("references", {'type': ref_type, 'reference': value}, headers)
 
-    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=__check_if_not_lock)
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def reference_single(self, ref_type, value, headers=None):
         resp = await self._invoke_get_method("references", {'type': ref_type, 'reference': value}, headers)
         if resp.response:
@@ -433,39 +433,39 @@ class MdbClient(MdbJsonApi):
         item = (tl for tl in master_eo["timelines"] if tl["subType"] == sub_type)
         return next(item, None)
 
-    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=__check_if_not_lock)
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def find_serie(self, title, master_system, headers=None):
         resp = await self._invoke_get_method("serie/by_title", {'title': title, 'masterSystem': master_system}, headers)
         return resp.response.serie[0] if resp.response.serie else None
 
-    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=__check_if_not_lock)
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def create_serie(self, title, master_system, headers=None):
         payload = {"title": title, "masterSystem": master_system}
         return await self._invoke_create_method("serie", payload, headers)
 
-    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=__check_if_not_lock)
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def create_serie_2(self, payload, headers=None):
         return await self._invoke_create_method("serie", payload, headers)
 
-    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=__check_if_not_lock)
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def create_season(self, season, headers=None):
         return await self._invoke_create_method("season", season, headers)
 
-    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=__check_if_not_lock)
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def create_episode(self, season_id, episode, headers=None):
         return await self._invoke_create_method(f"serie/{season_id}/episode", episode, headers)
 
-    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=__check_if_not_lock)
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def delete(self, owner, headers=None):
         link = self._rewritten_link(ApiResponseParser.self_link(owner))
         return await self._do_delete(link, headers)
 
-    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=__check_if_not_lock)
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def open(self, owner, headers=None):
         link = self._rewritten_link(ApiResponseParser.self_link(owner))
         return await self._do_get(link, headers)
 
-    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=__check_if_not_lock)
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def update(self, owner, updates, headers=None):
         link = self._rewritten_link(ApiResponseParser.self_link(owner))
         return await self._do_post_follow(link, updates, headers)
