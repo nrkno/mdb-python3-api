@@ -212,9 +212,15 @@ def _res_id(mdb_object):
     return {"resId": mdb_object["resId"]}
 
 
-def _check_if_not_lock(exc: HttpReqException):
+def _check_if_lock(exc: HttpReqException):
+    if not isinstance(exc.message, dict):
+        return False
     type = exc.message.get("type")
-    return type != 'LockAcquisitionFailedException' and type !='DeadlockException'
+    return type == 'LockAcquisitionFailedException' or type == 'DeadlockException'
+
+
+def _check_if_not_lock(exc: HttpReqException):
+    return not _check_if_lock(exc)
 
 
 class MdbJsonApi(object):
