@@ -168,11 +168,7 @@ class RestApiUtil(object):
     @staticmethod
     async def __unpack_json_response(response, request_uri, request_payload=None) -> StandardResponse:
         await RestApiUtil.__raise_errors(response, request_uri, request_payload)
-        try:
-            return StandardResponse(await RestApiUtil.__unpack_response_content(response), response.status)
-        except Exception as e:
-            print(e)
-            raise e
+        return StandardResponse(await RestApiUtil.__unpack_response_content(response), response.status)
 
     async def http_get(self, uri, headers=None, uri_params=None) -> StandardResponse:
         async with self.session.get(uri, params=uri_params, headers=headers) as response:
