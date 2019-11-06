@@ -324,7 +324,7 @@ class MdbJsonApi(object):
 
 class MdbClient(MdbJsonApi):
     def __init__(self, api_base, user_id, session: ClientSession = None, correlation_id=None, source_system=None):
-        super().__init__(api_base, correlation_id, session, user_id, source_system)
+        super().__init__(api_base, user_id, correlation_id, session, source_system)
 
     @staticmethod
     def localhost(user_id, session: ClientSession = None, correlation_id=None):
