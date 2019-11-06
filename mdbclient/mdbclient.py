@@ -245,19 +245,19 @@ class MdbJsonApi(object):
                  batch_id=None, force_host=None, force_scheme=None):
         self._global_headers = {}
         if source_system:
-            if not isinstance(str, source_system):
+            if not isinstance(source_system, str):
                 raise TypeError("source_system is not a string: " + type(source_system))
             self._global_headers["X-Source-System"] = source_system
         if user_id:
-            if not isinstance(str, user_id):
+            if not isinstance(user_id, str):
                 raise TypeError("user_id is not a string: " + type(user_id))
             self._global_headers["X-userId"] = user_id
         if correlation_id:
-            if not isinstance(str, correlation_id):
+            if not isinstance(correlation_id, str):
                 raise TypeError("correlation_id is not a string: " + type(correlation_id))
             self._global_headers["X-transactionId"] = correlation_id
         if batch_id:
-            if not isinstance(str, batch_id):
+            if not isinstance(batch_id, str):
                 raise TypeError("batch_id is not a string: " + type(batch_id))
             self._global_headers["X-Batch-Identifier"] = batch_id
 
@@ -280,7 +280,7 @@ class MdbJsonApi(object):
         return self.api_base + "/" + sub_path
 
     def add_global_header(self, key, value):
-        if not isinstance(str, value):
+        if not isinstance(value, str):
             raise TypeError(f"header value for {key} value is not a string: {type(value)}")
 
         self._global_headers[key] = value
