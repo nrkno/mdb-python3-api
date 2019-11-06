@@ -3,6 +3,7 @@ import urllib.parse
 
 import aiohttp
 import backoff
+from aiohttp import ClientSession
 
 
 class AggregateGoneException(Exception):
@@ -126,7 +127,7 @@ class FollowedResponse(StandardResponse):
 # Use https://pypi.org/project/backoff-async/ to handle retries
 class RestApiUtil(object):
 
-    def __init__(self, session):
+    def __init__(self, session: ClientSession):
         self.client_managed_session = session
         self.session = session
         self.traffic = []
@@ -240,7 +241,7 @@ class MdbJsonApi(object):
     This class is unaware of the url of the remote system since it's all in the hyperlinked payloads.
     """
 
-    def __init__(self, api_base, user_id, correlation_id, session=None, source_system=None,
+    def __init__(self, api_base, user_id, correlation_id, session: ClientSession = None, source_system=None,
                  batch_id=None, force_host=None, force_scheme=None):
         self._global_headers = {}
         if source_system:
@@ -322,24 +323,24 @@ class MdbJsonApi(object):
 
 
 class MdbClient(MdbJsonApi):
-    def __init__(self, api_base, user_id, session=None, correlation_id=None, source_system=None):
+    def __init__(self, api_base, user_id, session: ClientSession = None, correlation_id=None, source_system=None):
         super().__init__(api_base, correlation_id, session, user_id, source_system)
 
     @staticmethod
-    def localhost(user_id, correlation_id=None):
-        return MdbClient("http://localhost:22338", user_id, correlation_id)
+    def localhost(user_id, session: ClientSession = None, correlation_id=None):
+        return MdbClient("http://localhost:22338", user_id, session, correlation_id)
 
     @staticmethod
-    def dev(user_id, correlation_id=None):
-        return MdbClient("http://mdbklippdev.felles.ds.nrk.no", user_id, correlation_id)
+    def dev(user_id, session: ClientSession = None, correlation_id=None):
+        return MdbClient("http://mdbklippdev.felles.ds.nrk.no", user_id, session, correlation_id)
 
     @staticmethod
-    def stage(user_id, correlation_id=None):
-        return MdbClient("http://mdbklippstage.felles.ds.nrk.no", user_id, correlation_id)
+    def stage(user_id, session: ClientSession = None, correlation_id=None):
+        return MdbClient("http://mdbklippstage.felles.ds.nrk.no", user_id, session, correlation_id)
 
     @staticmethod
-    def prod(user_id, correlation_id=None):
-        return MdbClient("http://mdbklipp.felles.ds.nrk.no", user_id, correlation_id)
+    def prod(user_id, session: ClientSession = None, correlation_id=None):
+        return MdbClient("http://mdbklipp.felles.ds.nrk.no", user_id, session, correlation_id)
 
     async def __aenter__(self):
         await super().__aenter__()
