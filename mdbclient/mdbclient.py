@@ -126,19 +126,21 @@ class FollowedResponse(StandardResponse):
 # Use https://pypi.org/project/backoff-async/ to handle retries
 class RestApiUtil(object):
 
-    def __init__(self):
-        self.session = None
+    def __init__(self, session):
+        self.client_managed_session = session
+        self.session = session
         self.traffic = []
 
     async def __aenter__(self):
-        self.session = aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False))
+        if not self.client_managed_session:
+            self.session = aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False))
         return self
 
     async def __aexit__(self, *err):
         await self.close()
 
     async def close(self):
-        if self.session:
+        if not self.client_managed_session and self.session:
             await self.session.close()
             self.session = None
 
@@ -215,8 +217,8 @@ def _res_id(mdb_object):
 def _check_if_lock(exc: HttpReqException):
     if not isinstance(exc.message, dict):
         return False
-    type = exc.message.get("type")
-    return type == 'LockAcquisitionFailedException' or type == 'DeadlockException'
+    type_ = exc.message.get("type")
+    return type_ == 'LockAcquisitionFailedException' or type_ == 'DeadlockException'
 
 
 def _check_if_not_lock(exc: HttpReqException):
@@ -238,7 +240,7 @@ class MdbJsonApi(object):
     This class is unaware of the url of the remote system since it's all in the hyperlinked payloads.
     """
 
-    def __init__(self, api_base, user_id, correlation_id, source_system=None,
+    def __init__(self, api_base, user_id, correlation_id, session=None, source_system=None,
                  batch_id=None, force_host=None, force_scheme=None):
         self._global_headers = {}
         if source_system:
@@ -254,9 +256,10 @@ class MdbJsonApi(object):
         self.force_scheme = force_scheme
         parsed = urllib.parse.urlparse(api_base)
         self.api_base = parsed.scheme + "://" + parsed.netloc + "/api"
+        self.session = session
 
     async def __aenter__(self):
-        self.rest_api_util = RestApiUtil()
+        self.rest_api_util = RestApiUtil(self.session)
         await self.rest_api_util.__aenter__()
         return self
 
@@ -319,8 +322,8 @@ class MdbJsonApi(object):
 
 
 class MdbClient(MdbJsonApi):
-    def __init__(self, api_base, user_id, correlation_id=None, source_system=None):
-        super().__init__(api_base, correlation_id, user_id, source_system)
+    def __init__(self, api_base, user_id, session=None, correlation_id=None, source_system=None):
+        super().__init__(api_base, correlation_id, session, user_id, source_system)
 
     @staticmethod
     def localhost(user_id, correlation_id=None):
