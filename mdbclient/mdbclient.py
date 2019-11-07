@@ -130,7 +130,6 @@ class RestApiUtil(object):
     def __init__(self, session: ClientSession):
         self.client_managed_session = session
         self.session = session
-        self.traffic = []
 
     async def __aenter__(self):
         if not self.client_managed_session:
@@ -181,20 +180,16 @@ class RestApiUtil(object):
     # @backoff.on_exception(backoff.expo, requests.exceptions.RequestException, max_tries=8)
     async def http_post_follow(self, uri, json_payload, headers=None) -> StandardResponse:
         log_msg = f"POST TO {uri}\n{json.dumps(json_payload, indent=4, sort_keys=True)}"
-        self.traffic.append(log_msg)
         async with self.session.post(uri, json=json_payload, headers=headers) as response:
             await RestApiUtil.__raise_errors(response, uri, json_payload)
             reloaded = await self.follow(response, headers)
-            self.traffic.append(reloaded)
             return reloaded
 
     # @backoff.on_exception(backoff.expo, requests.exceptions.RequestException, max_tries=8)
     async def http_post(self, uri, json_payload, headers=None) -> StandardResponse:
         log_msg = f"POST TO {uri}\n{json.dumps(json_payload, indent=4, sort_keys=True)}"
-        self.traffic.append(log_msg)
         async with self.session.post(uri, json=json_payload, headers=headers) as response:
             firstlevel_response = await RestApiUtil.__unpack_json_response(response, uri, json_payload)
-            self.traffic.append(firstlevel_response)
             return firstlevel_response
 
     async def put(self, uri, json_payload, headers=None) -> StandardResponse:
