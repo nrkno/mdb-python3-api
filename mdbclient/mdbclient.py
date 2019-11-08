@@ -98,7 +98,7 @@ class ApiResponseParser:
 
 
 class StandardResponse(object):
-    def __init__(self, response, status, location=None):
+    def __init__(self, response: dict, status, location=None):
         self.response = response
         self.status = status
         self.location = location
@@ -252,32 +252,33 @@ class MdbJsonApi(object):
     def _merged_headers(self, request_headers):
         return {**self._global_headers, **request_headers} if request_headers else self._global_headers
 
-    async def _invoke_get_method(self, name, parameters, headers=None) -> StandardResponse:
+    async def _invoke_get_method(self, name, parameters, headers=None) -> dict:
         real_method = self.__api_method(name)
-        return await self.rest_api_util.http_get(real_method, self._merged_headers(headers), parameters)
+        parameters_ = await self.rest_api_util.http_get(real_method, self._merged_headers(headers), parameters)
+        return parameters_.response
 
-    async def _invoke_create_method(self, method_name, payload, headers=None):
+    async def _invoke_create_method(self, method_name, payload, headers=None) -> {}:
         real_method = self.__api_method(method_name)
         stdresponse = await self.rest_api_util.http_post_follow(real_method, payload, self._merged_headers(headers))
         return stdresponse.response
 
-    async def _do_post(self, link, payload, headers=None):
+    async def _do_post(self, link, payload, headers=None) -> {}:
         posted = await self.rest_api_util.http_post(link, payload, self._merged_headers(headers))
         return posted.response
 
-    async def _do_put(self, link, payload, headers=None) -> StandardResponse:
+    async def _do_put(self, link, payload, headers=None) -> {}:
         resp = await self.rest_api_util.put(link, payload, self._merged_headers(headers))
         return resp.response
 
-    async def _do_delete(self, link, headers=None):
+    async def _do_delete(self, link, headers=None) -> {}:
         deleted = await self.rest_api_util.delete(link, self._merged_headers(headers))
         return deleted.response
 
-    async def _do_get(self, link, headers=None):
+    async def _do_get(self, link, headers=None) -> {}:
         reloaded = await self.rest_api_util.http_get(link, self._merged_headers(headers))
         return reloaded.response
 
-    async def _do_post_follow(self, link, updates, headers=None):
+    async def _do_post_follow(self, link, updates, headers=None) -> {}:
         updated = await self.rest_api_util.http_post_follow(link, updates, self._merged_headers(headers))
         return updated.response
 
@@ -321,7 +322,7 @@ class MdbClient(MdbJsonApi):
         link = self._rewritten_link(ApiResponseParser.link(owner, rel))
         return await self._do_post(link, payload, headers)
 
-    async def __replace_content(self, owner, payload, headers=None) -> StandardResponse:
+    async def __replace_content(self, owner, payload, headers=None) -> dict:
         link = self._rewritten_link(ApiResponseParser.self_link(owner))
         return await self._do_put(link, payload, headers)
 
@@ -393,23 +394,27 @@ class MdbClient(MdbJsonApi):
         return await self._invoke_create_method("publicationMediaObject", publication_media_object, headers)
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
-    async def resolve(self, res_id, headers=None):
+    async def resolve(self, res_id, headers=None) -> dict:
         if not res_id:
-            return
+            return {}
         return await self._invoke_get_method("resolve", {'resId': res_id}, headers)
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
-    async def reference(self, ref_type, value, headers=None):
+    async def find_media_object(self, name, headers=None) -> dict:
+        return await self._invoke_get_method("mediaObject/by-name", {"name": name}, headers)
+
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
+    async def reference(self, ref_type, value, headers=None) -> dict:
         return await self._invoke_get_method("references", {'type': ref_type, 'reference': value}, headers)
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
-    async def reference_single(self, ref_type, value, headers=None):
+    async def reference_single(self, ref_type, value, headers=None) -> dict:
         resp = await self._invoke_get_method("references", {'type': ref_type, 'reference': value}, headers)
-        if resp.response:
-            if len(resp.response) > 1:
+        if resp:
+            if len(resp) > 1:
                 raise Exception(f"Multiple elements found when resolving {ref_type}={value}:{resp}")
-            return await self.open(resp.response[0], headers)
-        return None
+            return await self.open(resp[0], headers)
+        return {}
 
     @staticmethod
     def _timelines_of_subtype(master_eo, sub_type):
@@ -418,8 +423,9 @@ class MdbClient(MdbJsonApi):
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def find_serie(self, title, master_system, headers=None):
-        resp = await self._invoke_get_method("serie/by_title", {'title': title, 'masterSystem': master_system}, headers)
-        return resp.response.serie[0] if resp.response.serie else None
+        response = await self._invoke_get_method("serie/by_title", {'title': title, 'masterSystem': master_system},
+                                                 headers)
+        return response.get("serie")[0] if response.get("serie") else None
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def create_serie(self, title, master_system, headers=None):
