@@ -1,7 +1,5 @@
-import json
 import urllib.parse
 
-import aiohttp
 import backoff
 from aiohttp import ClientSession
 
@@ -128,21 +126,7 @@ class FollowedResponse(StandardResponse):
 class RestApiUtil(object):
 
     def __init__(self, session: ClientSession):
-        self.client_managed_session = session
         self.session = session
-
-    async def __aenter__(self):
-        if not self.client_managed_session:
-            self.session = aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False))
-        return self
-
-    async def __aexit__(self, *err):
-        await self.close()
-
-    async def close(self):
-        if not self.client_managed_session and self.session:
-            await self.session.close()
-            self.session = None
 
     @staticmethod
     async def __unpack_response_content(response):
@@ -179,7 +163,6 @@ class RestApiUtil(object):
 
     # @backoff.on_exception(backoff.expo, requests.exceptions.RequestException, max_tries=8)
     async def http_post_follow(self, uri, json_payload, headers=None) -> StandardResponse:
-        log_msg = f"POST TO {uri}\n{json.dumps(json_payload, indent=4, sort_keys=True)}"
         async with self.session.post(uri, json=json_payload, headers=headers) as response:
             await RestApiUtil.__raise_errors(response, uri, json_payload)
             reloaded = await self.follow(response, headers)
@@ -187,7 +170,6 @@ class RestApiUtil(object):
 
     # @backoff.on_exception(backoff.expo, requests.exceptions.RequestException, max_tries=8)
     async def http_post(self, uri, json_payload, headers=None) -> StandardResponse:
-        log_msg = f"POST TO {uri}\n{json.dumps(json_payload, indent=4, sort_keys=True)}"
         async with self.session.post(uri, json=json_payload, headers=headers) as response:
             firstlevel_response = await RestApiUtil.__unpack_json_response(response, uri, json_payload)
             return firstlevel_response
@@ -256,16 +238,7 @@ class MdbJsonApi(object):
         self.force_scheme = force_scheme
         parsed = urllib.parse.urlparse(api_base)
         self.api_base = parsed.scheme + "://" + parsed.netloc + "/api"
-        self.session = session
-
-    async def __aenter__(self):
-        self.rest_api_util = RestApiUtil(self.session)
-        await self.rest_api_util.__aenter__()
-        return self
-
-    async def __aexit__(self, *err):
-        await self.rest_api_util.__aexit__()
-        self.rest_api_util = None
+        self.rest_api_util = RestApiUtil(session)
 
     def __api_method(self, sub_path):
         return self.api_base + "/" + sub_path
@@ -343,10 +316,6 @@ class MdbClient(MdbJsonApi):
     @staticmethod
     def prod(user_id, session: ClientSession = None, correlation_id=None):
         return MdbClient("http://mdbklipp.felles.ds.nrk.no", user_id, session, correlation_id)
-
-    async def __aenter__(self):
-        await super().__aenter__()
-        return self
 
     async def __add_on_rel(self, owner, rel, payload, headers=None):
         link = self._rewritten_link(ApiResponseParser.link(owner, rel))
