@@ -1,15 +1,17 @@
-from mdbclient.mdbclient import MdbJsonApi
-from mdbclient import MdbClient
+import aiohttp
+from mdbclient.mdbclient import MdbClient
 
 
 async def create_publication():
-    async with MdbClient("http://mdbklippdev.felles.ds.nrk.no/api", "my-user-id", "my-correlation-id") as client:
+    async with aiohttp.ClientSession() as session:
+        client = MdbClient("http://mdbklippdev.felles.ds.nrk.no/api", "my-user-id", "my-correlation-id", session)
         meo = await client.create_master_eo({"title": "myMeo"})
         pe = await client.create_publication_event(meo, {"title": "min publisering"})
 
 
 async def resolve_mmeo_and_create_subject(uri):
-    async with MdbJsonApi("my-user-id","my-correlation-id") as client:
+    async with aiohttp.ClientSession() as session:
+        client = MdbClient("http://mdbklippdev.felles.ds.nrk.no/api", "my-user-id", "my-correlation-id", session)
         meo = await client.open(uri)
         vg = await client.open(meo["versionGroup"])
         metadata_meo = await client.open(vg["metadataMeo"])

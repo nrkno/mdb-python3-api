@@ -159,7 +159,7 @@ def random_string(string_length=10):
 @pytest.mark.asyncio
 async def test_find_media_object():
     async with aiohttp.ClientSession() as session:
-        mediaobject_name = "test_" + random_string(10)
+        mediaobject_name = "fozz-bizz&cz_" + random_string(10)
         client = MdbClient.localhost("test", session, "test_correlation")
         result = await client.create_master_eo({"title": "fozz"})
         mo = await client.create_media_object(result, {"name": mediaobject_name})

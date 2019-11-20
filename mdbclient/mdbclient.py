@@ -214,8 +214,8 @@ class MdbJsonApi(object):
     This class is unaware of the url of the remote system since it's all in the hyperlinked payloads.
     """
 
-    def __init__(self, api_base, user_id, correlation_id, session: ClientSession = None, source_system=None,
-                 batch_id=None, force_host=None, force_scheme=None):
+    def __init__(self, user_id, correlation_id, session: ClientSession = None, source_system=None, batch_id=None,
+                 force_host=None, force_scheme=None):
         self._global_headers = {}
         if source_system:
             if not isinstance(source_system, str):
@@ -236,12 +236,7 @@ class MdbJsonApi(object):
 
         self.force_host = force_host
         self.force_scheme = force_scheme
-        parsed = urllib.parse.urlparse(api_base)
-        self.api_base = parsed.scheme + "://" + parsed.netloc + "/api"
         self.rest_api_util = RestApiUtil(session)
-
-    def __api_method(self, sub_path):
-        return self.api_base + "/" + sub_path
 
     def add_global_header(self, key, value):
         if not isinstance(value, str):
@@ -251,16 +246,6 @@ class MdbJsonApi(object):
 
     def _merged_headers(self, request_headers):
         return {**self._global_headers, **request_headers} if request_headers else self._global_headers
-
-    async def _invoke_get_method(self, name, parameters, headers=None) -> dict:
-        real_method = self.__api_method(name)
-        parameters_ = await self.rest_api_util.http_get(real_method, self._merged_headers(headers), parameters)
-        return parameters_.response
-
-    async def _invoke_create_method(self, method_name, payload, headers=None) -> {}:
-        real_method = self.__api_method(method_name)
-        stdresponse = await self.rest_api_util.http_post_follow(real_method, payload, self._merged_headers(headers))
-        return stdresponse.response
 
     async def _do_post(self, link, payload, headers=None) -> {}:
         posted = await self.rest_api_util.http_post(link, payload, self._merged_headers(headers))
@@ -298,25 +283,51 @@ class MdbJsonApi(object):
         return response
 
 
-class MdbClient(MdbJsonApi):
-    def __init__(self, api_base, user_id, session: ClientSession = None, correlation_id=None, source_system=None):
+class MdbJsonMethodApi(MdbJsonApi):
+    """
+    A jason api that knows how to invoke method calls directly by name. Requires a server addreess (api_base)
+    """
+
+    def __init__(self, api_base, user_id, correlation_id, session: ClientSession = None, source_system=None,
+                 batch_id=None,
+                 force_host=None, force_scheme=None):
+        super().__init__(user_id, correlation_id, session, source_system, batch_id, force_host, force_scheme)
+        parsed = urllib.parse.urlparse(api_base)
+        self.api_base = parsed.scheme + "://" + parsed.netloc + "/api"
+
+    def __api_method(self, sub_path):
+        return self.api_base + "/" + sub_path
+
+    async def _invoke_get_method(self, name, parameters, headers=None) -> dict:
+        real_method = self.__api_method(name)
+        parameters_ = await self.rest_api_util.http_get(real_method, self._merged_headers(headers), parameters)
+        return parameters_.response
+
+    async def _invoke_create_method(self, method_name, payload, headers=None) -> {}:
+        real_method = self.__api_method(method_name)
+        stdresponse = await self.rest_api_util.http_post_follow(real_method, payload, self._merged_headers(headers))
+        return stdresponse.response
+
+
+class MdbClient(MdbJsonMethodApi):
+    def __init__(self, api_base, user_id, correlation_id, session: ClientSession = None, source_system=None):
         super().__init__(api_base, user_id, correlation_id, session, source_system)
 
     @staticmethod
     def localhost(user_id, session: ClientSession = None, correlation_id=None):
-        return MdbClient("http://localhost:22338", user_id, session, correlation_id)
+        return MdbClient(user_id, session, correlation_id)
 
     @staticmethod
     def dev(user_id, session: ClientSession = None, correlation_id=None):
-        return MdbClient("http://mdbklippdev.felles.ds.nrk.no", user_id, session, correlation_id)
+        return MdbClient(user_id, session, correlation_id)
 
     @staticmethod
     def stage(user_id, session: ClientSession = None, correlation_id=None):
-        return MdbClient("http://mdbklippstage.felles.ds.nrk.no", user_id, session, correlation_id)
+        return MdbClient(user_id, session, correlation_id)
 
     @staticmethod
     def prod(user_id, session: ClientSession = None, correlation_id=None):
-        return MdbClient("http://mdbklipp.felles.ds.nrk.no", user_id, session, correlation_id)
+        return MdbClient(user_id, session, correlation_id)
 
     async def __add_on_rel(self, owner, rel, payload, headers=None):
         link = self._rewritten_link(ApiResponseParser.link(owner, rel))
