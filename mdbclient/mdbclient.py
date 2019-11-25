@@ -315,19 +315,19 @@ class MdbClient(MdbJsonMethodApi):
 
     @staticmethod
     def localhost(user_id, session: ClientSession = None, correlation_id=None):
-        return MdbClient(user_id, session, correlation_id)
+        return MdbClient("http://localhost:22338", user_id, correlation_id, session)
 
     @staticmethod
     def dev(user_id, session: ClientSession = None, correlation_id=None):
-        return MdbClient(user_id, session, correlation_id)
+        return MdbClient("http://mdbklippdev.felles.ds.nrk.no", user_id, correlation_id, session)
 
     @staticmethod
     def stage(user_id, session: ClientSession = None, correlation_id=None):
-        return MdbClient(user_id, session, correlation_id)
+        return MdbClient("http://mdbklippstage.felles.ds.nrk.no", user_id, correlation_id, session)
 
     @staticmethod
     def prod(user_id, session: ClientSession = None, correlation_id=None):
-        return MdbClient(user_id, session, correlation_id)
+        return MdbClient("http://mdbklipp.felles.ds.nrk.no", user_id, correlation_id, session)
 
     async def __add_on_rel(self, owner, rel, payload, headers=None):
         link = self._rewritten_link(ApiResponseParser.link(owner, rel))
