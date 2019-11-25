@@ -291,7 +291,7 @@ class MdbJsonMethodApi(MdbJsonApi):
     def __init__(self, api_base, user_id, correlation_id, session: ClientSession = None, source_system=None,
                  batch_id=None,
                  force_host=None, force_scheme=None):
-        super().__init__(user_id, correlation_id, session, source_system, batch_id, force_host, force_scheme)
+        MdbJsonApi.__init__(self, user_id, correlation_id, session, source_system, batch_id, force_host, force_scheme)
         parsed = urllib.parse.urlparse(api_base)
         self.api_base = parsed.scheme + "://" + parsed.netloc + "/api"
 
@@ -311,7 +311,7 @@ class MdbJsonMethodApi(MdbJsonApi):
 
 class MdbClient(MdbJsonMethodApi):
     def __init__(self, api_base, user_id, correlation_id, session: ClientSession = None, source_system=None):
-        super().__init__(api_base, user_id, correlation_id, session, source_system)
+        MdbJsonMethodApi.__init__(self, api_base, user_id, correlation_id, session, source_system)
 
     @staticmethod
     def localhost(user_id, session: ClientSession = None, correlation_id=None):
