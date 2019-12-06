@@ -375,12 +375,19 @@ class MdbClient(MdbJsonMethodApi):
         return await self.__add_on_rel(owner, "http://id.nrk.no/2016/mdb/relation/subjects", subjects, headers)
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
-    async def broadcast_change(self, destination, object, headers=None):
+    async def broadcast_change(self, destination, resid, type_, headers=None):
         payload = {
             "destination": destination,
-            "resId": object["resId"],
-            "type": object["type"]
+            "resId": resid,
+            "type": type_
         }
+        '''
+        {
+          "resId" : "http://id.nrk.no/2017/mdb/timeline/963df4ef-d884-410b-bdf4-efd884a10bf3",
+          "changeType" : "NOOP",
+          "aggregateType" : "http://id.nrk.no/2017/mdb/types/Timeline",
+          "resolve" : "http://mdbklippstage.felles.ds.nrk.no/api/resolve/http%3A%2F%2Fid.nrk.no%2F2017%2Fmdb%2Ftimeline%2F963df4ef-d884-410b-bdf4-efd884a10bf3"
+        }'''
         real_method = self._api_method("changes/by-resid")
         stdresponse = await self.rest_api_util.http_post(real_method, payload, self._merged_headers(headers))
         return stdresponse.response
