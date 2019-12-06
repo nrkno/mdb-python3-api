@@ -298,6 +298,9 @@ class MdbJsonMethodApi(MdbJsonApi):
     def __api_method(self, sub_path):
         return self.api_base + "/" + sub_path
 
+    def _api_method(self, sub_path):
+        return self.api_base + "/" + sub_path
+
     async def _invoke_get_method(self, name, parameters, headers=None) -> dict:
         real_method = self.__api_method(name)
         parameters_ = await self.rest_api_util.http_get(real_method, self._merged_headers(headers), parameters)
@@ -378,7 +381,7 @@ class MdbClient(MdbJsonMethodApi):
             "resId": object["resId"],
             "type": object["type"]
         }
-        real_method = self.__api_method("changes/by-resid")
+        real_method = self._api_method("changes/by-resid")
         stdresponse = await self.rest_api_util.http_post(real_method, payload, self._merged_headers(headers))
         return stdresponse.response
 
