@@ -373,13 +373,12 @@ class MdbClient(MdbJsonMethodApi):
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def broadcast_change(self, destination, object, headers=None):
-        link = self._rewritten_link(ApiResponseParser.self_link(object))
         payload = {
             "destination": destination,
             "resId": object["resId"],
             "type": object["type"]
         }
-        return await self._do_post(link, payload, headers)
+        return await self._invoke_create_method("changes/by-resid", payload, headers)
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def create_or_replace_timeline(self, master_eo, timeline, headers=None):
