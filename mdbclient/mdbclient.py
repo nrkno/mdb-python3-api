@@ -372,6 +372,16 @@ class MdbClient(MdbJsonMethodApi):
         return await self.__add_on_rel(owner, "http://id.nrk.no/2016/mdb/relation/subjects", subjects, headers)
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
+    async def send_change(self, destination, object, headers=None):
+        link = self._rewritten_link(ApiResponseParser.self_link(object))
+        payload = {
+            "destination": destination,
+            "resId": object["resId"],
+            "type": object["type"]
+        }
+        return await self._do_post(link, payload, headers)
+
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def create_or_replace_timeline(self, master_eo, timeline, headers=None):
         type_of_timeline = timeline["Type"]
         existing_timeline_of_same_type = self._timelines_of_subtype(master_eo, type_of_timeline)
