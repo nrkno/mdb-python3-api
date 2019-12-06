@@ -378,7 +378,9 @@ class MdbClient(MdbJsonMethodApi):
             "resId": object["resId"],
             "type": object["type"]
         }
-        return await self._invoke_create_method("changes/by-resid", payload, headers)
+        real_method = self.__api_method("changes/by-resid")
+        stdresponse = await self.rest_api_util.http_post(real_method, payload, self._merged_headers(headers))
+        return stdresponse.response
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def create_or_replace_timeline(self, master_eo, timeline, headers=None):
