@@ -174,6 +174,11 @@ class RestApiUtil(object):
             firstlevel_response = await RestApiUtil.__unpack_json_response(response, uri, json_payload)
             return firstlevel_response
 
+    async def http_post_form(self, uri, dict_payload, headers=None) -> StandardResponse:
+        async with self.session.post(uri, data=dict_payload, headers=headers) as response:
+            firstlevel_response = await RestApiUtil.__unpack_json_response(response, uri, dict_payload)
+            return firstlevel_response
+
     async def put(self, uri, json_payload, headers=None) -> StandardResponse:
         async with self.session.put(uri, json=json_payload, headers=headers) as response:
             result = await RestApiUtil.__unpack_json_response(response, uri, json_payload)
@@ -389,7 +394,7 @@ class MdbClient(MdbJsonMethodApi):
           "resolve" : "http://mdbklippstage.felles.ds.nrk.no/api/resolve/http%3A%2F%2Fid.nrk.no%2F2017%2Fmdb%2Ftimeline%2F963df4ef-d884-410b-bdf4-efd884a10bf3"
         }'''
         real_method = self._api_method("changes/by-resid")
-        stdresponse = await self.rest_api_util.http_post(real_method, payload, self._merged_headers(headers))
+        stdresponse = await self.rest_api_util.http_post_form(real_method, payload, self._merged_headers(headers))
         return stdresponse.response
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
