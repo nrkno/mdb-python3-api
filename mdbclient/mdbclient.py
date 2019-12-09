@@ -4,6 +4,7 @@ from typing import Optional, Mapping as Mapping
 
 import backoff
 from aiohttp import ClientSession
+from mdbclient.mdbclient import ApiResponseParser
 
 
 class AggregateGoneException(Exception):
@@ -55,7 +56,15 @@ class Timeline(UserDict):
         super().__init__(dict_, **kwargs)
 
 
-class MasterEO(UserDict):
+class EditorialObject(UserDict):
+    def reference_values(self, ref_type):
+        return ApiResponseParser.reference_values(self, ref_type)
+
+    def self_link(self):
+        return ApiResponseParser.self_link(self)
+
+
+class MasterEO(EditorialObject):
 
     def __init__(self, dict_=..., **kwargs) -> None:
         super().__init__(dict_, **kwargs)
@@ -88,7 +97,7 @@ class Essence(UserDict):
         super().__init__(dict_, **kwargs)
 
 
-class PublicationEvent(UserDict):
+class PublicationEvent(EditorialObject):
 
     def __init__(self, dict_=..., **kwargs) -> None:
         super().__init__(dict_, **kwargs)
