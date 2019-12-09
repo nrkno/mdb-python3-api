@@ -81,6 +81,9 @@ class MasterEO(EditorialObject):
     def timeline_of_sub_type(self, sub_type):
         return ApiResponseParser.timeline_of_sub_type(self, sub_type)
 
+    def media_objects_of_sub_type(self, sub_type):
+        return ApiResponseParser.child_links_of_sub_type(self, "mediaObjects", sub_type)
+
 
 class MediaObject(UserDict):
 
