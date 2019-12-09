@@ -60,6 +60,15 @@ class EditorialObject(UserDict):
     def reference_values(self, ref_type):
         return ApiResponseParser.reference_values(self, ref_type)
 
+    def reference_value(self, ref_type):
+        found = self.reference_values(ref_type)
+        if not found:
+            return
+        if len(found) > 1:
+            raise Exception(f"Multiple refs of type {ref_type} in {ApiResponseParser.self_link(meo)}")
+        return found[0]["reference"]
+
+
     def self_link(self):
         return ApiResponseParser.self_link(self)
 
