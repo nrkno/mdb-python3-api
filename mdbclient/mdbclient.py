@@ -65,11 +65,6 @@ def _self_link(owner):
 
 
 class Timeline(UserDict):
-    GENEALOGY_TIMELINE = "http://id.nrk.no/2017/mdb/timelinetype/Genealogy"
-    RIGHTS_TIMELINE = "http://id.nrk.no/2017/mdb/timelinetype/Rights"
-    INTERNAL_TIMELINE = "http://id.nrk.no/2017/mdb/timelinetype/Internal"
-    TECHNICAL_TIMELINE = "http://id.nrk.no/2017/mdb/timelinetype/Technical"
-    INDEXPOINTS_TIMELINE = "http://id.nrk.no/2017/mdb/timelinetype/IndexPoints"
     TIMELINE_ITEMTYPE_EXTRACTEDVERSIONTIMELINEITEM = 'http://id.nrk.no/2017/mdb/timelineitem/ExtractedVersionTimelineItem'
     TIMELINE_ITEMTYPE_EXPLOITATIONISSUETIMELINEITEM = 'http://id.nrk.no/2017/mdb/timelineitem/ExploitationIssueTimelineItem'
     TIMELINE_ITEMTYPE_GENERALRIGHTS = 'http://id.nrk.no/2017/mdb/timelineitem/GeneralRightsTimelineItem'
@@ -79,6 +74,54 @@ class Timeline(UserDict):
 
     def __init__(self, dict_=..., **kwargs) -> None:
         super().__init__(dict_, **kwargs)
+
+
+class RightsTimeline(Timeline):
+    TYPE = "http://id.nrk.no/2017/mdb/timelinetype/Rights"
+
+    def __init__(self, dict_=..., **kwargs) -> None:
+        super().__init__(dict_, **kwargs)
+        self["type"] = self.TYPE
+
+
+class IndexpointTimeline(Timeline):
+    TYPE = "http://id.nrk.no/2017/mdb/timelinetype/IndexPoints"
+
+    def __init__(self, dict_=..., **kwargs) -> None:
+        super().__init__(dict_, **kwargs)
+        self["type"] = self.TYPE
+
+
+class GenealogyTimeline(Timeline):
+    TYPE = "http://id.nrk.no/2017/mdb/timelinetype/Genealogy"
+
+    def __init__(self, dict_=..., **kwargs) -> None:
+        super().__init__(dict_, **kwargs)
+        self["type"] = self.TYPE
+
+
+class GenealogyRightsTimeline(Timeline):
+    TYPE = "http://id.nrk.no/2017/mdb/timelinetype/GenealogyRights"
+
+    def __init__(self, dict_=..., **kwargs) -> None:
+        super().__init__(dict_, **kwargs)
+        self["type"] = self.TYPE
+
+
+class TechnicalTimeline(Timeline):
+    TYPE = "http://id.nrk.no/2017/mdb/timelinetype/Technical"
+
+    def __init__(self, dict_=..., **kwargs) -> None:
+        super().__init__(dict_, **kwargs)
+        self["type"] = self.TYPE
+
+
+class InternalTimeline(Timeline):
+    TYPE = "http://id.nrk.no/2017/mdb/timelinetype/Internal"
+
+    def __init__(self, dict_=..., **kwargs) -> None:
+        super().__init__(dict_, **kwargs)
+        self["type"] = self.TYPE
 
 
 class EditorialObject(UserDict):
@@ -161,18 +204,18 @@ def create_response(response):
         return Essence(response)
     if type_ == "http://id.nrk.no/2016/mdb/types/PublicationEvent":
         return PublicationEvent(response)
-    if type_ == "http://id.nrk.no/2017/mdb/timelinetype/Internal":
-        return Timeline(response)
-    if type_ == "http://id.nrk.no/2017/mdb/timelinetype/Genealogy":
-        return Timeline(response)
-    if type_ == "http://id.nrk.no/2017/mdb/timelinetype/IndexPoints":
-        return Timeline(response)
-    if type_ == "http://id.nrk.no/2017/mdb/timelinetype/Technical":
-        return Timeline(response)
-    if type_ == "http://id.nrk.no/2017/mdb/timelinetype/Rights":
-        return Timeline(response)
-    if type_ == "http://id.nrk.no/2017/mdb/timelinetype/GenealogyRights":
-        return Timeline(response)
+    if type_ == InternalTimeline.TYPE:
+        return InternalTimeline(response)
+    if type_ == GenealogyTimeline.TYPE:
+        return GenealogyTimeline(response)
+    if type_ == IndexpointTimeline.TYPE:
+        return IndexpointTimeline(response)
+    if type_ == TechnicalTimeline.TYPE:
+        return TechnicalTimeline(response)
+    if type_ == RightsTimeline.TYPE:
+        return RightsTimeline(response)
+    if type_ == GenealogyRightsTimeline.TYPE:
+        return GenealogyRightsTimeline(response)
     raise Exception(f"Dont know how to create response for {type_}")
 
 
