@@ -1,10 +1,8 @@
 import urllib.parse
 from collections import UserDict
-from typing import Optional, Mapping as Mapping
 
 import backoff
 from aiohttp import ClientSession
-from mdbclient.mdbclient import ApiResponseParser
 
 
 class AggregateGoneException(Exception):
@@ -39,6 +37,33 @@ class Conflict(Exception):
         self.message = message
 
 
+def _reference_values(meo, ref_type):
+    references = meo.get("references", [])
+    return [x for x in references if x.get("type") == ref_type]
+
+
+def _links_of_sub_type(links_list, sub_type):
+    return [l for l in links_list if l.get("subType") == sub_type]
+
+
+def _child_links_of_sub_type(owner, child_name, sub_type):
+    links_list = owner.get(child_name, [])
+    return _links_of_sub_type(links_list, sub_type)
+
+
+def _link(owner, rel):
+    links = owner.get("links", [])
+    rel_ = [l for l in links if l["rel"] == rel]
+    rel_item = next(iter(rel_), None)
+    if not rel_item:
+        raise Exception(f"could not find {rel} in {owner}")
+    return rel_item["href"]
+
+
+def _self_link(owner):
+    return _link(owner, "self")
+
+
 class Timeline(UserDict):
     GENEALOGY_TIMELINE = "http://id.nrk.no/2017/mdb/timelinetype/Genealogy"
     RIGHTS_TIMELINE = "http://id.nrk.no/2017/mdb/timelinetype/Rights"
@@ -58,29 +83,21 @@ class Timeline(UserDict):
 
 class EditorialObject(UserDict):
     def reference_values(self, ref_type):
-        return ApiResponseParser.reference_values(self, ref_type)
+        return _reference_values(self, ref_type)
 
     def reference_value(self, ref_type):
         found = self.reference_values(ref_type)
         if not found:
             return
         if len(found) > 1:
-            raise Exception(f"Multiple refs of type {ref_type} in {ApiResponseParser.self_link(self)}")
+            raise Exception(f"Multiple refs of type {ref_type} in {_self_link(self)}")
         return found[0]["reference"]
 
     def self_link(self):
-        return ApiResponseParser.self_link(self)
+        return _self_link(self)
 
     def link(self, rel):
-        links = self.get("links", [])
-        rel_ = ApiResponseParser.find_link(links, rel)
-        rel_item = next(iter(rel_), None)
-        if not rel_item:
-            raise Exception(f"could not find {rel} in {self}")
-        return rel_item["href"]
-
-
-
+        return _link(self, rel)
 
 
 class MasterEO(EditorialObject):
@@ -88,13 +105,16 @@ class MasterEO(EditorialObject):
     def __init__(self, dict_=..., **kwargs) -> None:
         super().__init__(dict_, **kwargs)
 
+    def _timeline_of_sub_type(self, sub_type):
+        rel_ = [l for l in self["timelines"] if
+                l.get("type") == "http://id.nrk.no/2017/mdb/types/Timeline" and l.get("subType") == sub_type]
+        return next(iter(rel_), None)
+
     def timeline_of_sub_type(self, sub_type):
-        return ApiResponseParser.timeline_of_sub_type(self, sub_type)
+        return self._timeline_of_sub_type(sub_type)
 
     def media_objects_of_sub_type(self, sub_type):
-        return ApiResponseParser.child_links_of_sub_type(self, "mediaObjects", sub_type)
-
-
+        return _child_links_of_sub_type(self, "mediaObjects", sub_type)
 
 
 class MediaObject(UserDict):
@@ -154,67 +174,6 @@ def create_response(response):
     if type_ == "http://id.nrk.no/2017/mdb/timelinetype/GenealogyRights":
         return Timeline(response)
     raise Exception(f"Dont know how to create response for {type_}")
-
-
-class ApiResponseParser:
-    @staticmethod
-    def is_successful(http_status):
-        return http_status < 400
-
-    @staticmethod
-    def reference_value(meo, ref_type):
-        found = ApiResponseParser.reference_values(meo, ref_type)
-        if not found:
-            return
-        if len(found) > 1:
-            raise Exception(f"Multiple refs of type {ref_type} in {ApiResponseParser.self_link(meo)}")
-        return found[0]["reference"]
-
-    @staticmethod
-    def reference_values(meo, ref_type):
-        references = meo.get("references", [])
-        return [x for x in references if x.get("type") == ref_type]
-
-    @staticmethod
-    def link(owner, rel):
-        links = owner.get("links", [])
-        rel_ = ApiResponseParser.find_link(links, rel)
-        rel_item = next(iter(rel_), None)
-        if not rel_item:
-            raise Exception(f"could not find {rel} in {owner}")
-        return rel_item["href"]
-
-    @staticmethod
-    def links_of_sub_type(links_list, sub_type):
-        return [l for l in links_list if l.get("subType") == sub_type]
-
-    @staticmethod
-    def child_links_of_sub_type(owner, child_name, sub_type):
-        links_list = owner.get(child_name, [])
-        return ApiResponseParser.links_of_sub_type(links_list, sub_type)
-
-    @staticmethod
-    def link_of_sub_type(links, sub_type):
-        rel_ = ApiResponseParser.links_of_sub_type(links, sub_type)
-        rel_item = next(iter(rel_), None)
-        if not rel_item:
-            raise Exception(f"could not find link of subType={sub_type}")
-        return ApiResponseParser.self_link(rel_item)
-
-    @staticmethod
-    def find_link(links_list, link_type, sub_type=None):
-        rel_ = [l for l in links_list if l["rel"] == link_type and (not sub_type or l["subType"] == sub_type)]
-        return rel_
-
-    @staticmethod
-    def timeline_of_sub_type(master_eo, sub_type):
-        rel_ = [l for l in master_eo["timelines"] if
-                l.get("type") == "http://id.nrk.no/2017/mdb/types/Timeline" and l.get("subType") == sub_type]
-        return next(iter(rel_), None)
-
-    @staticmethod
-    def self_link(owner):
-        return ApiResponseParser.link(owner, "self")
 
 
 class StandardResponse(object):
@@ -458,11 +417,11 @@ class MdbClient(MdbJsonMethodApi):
         return MdbClient("http://mdbklipp.felles.ds.nrk.no", user_id, correlation_id, session)
 
     async def __add_on_rel(self, owner, rel, payload, headers=None):
-        link = self._rewritten_link(ApiResponseParser.link(owner, rel))
+        link = self._rewritten_link(_link(owner, rel))
         return await self._do_post(link, payload, headers)
 
     async def __replace_content(self, owner, payload, headers=None) -> dict:
-        link = self._rewritten_link(ApiResponseParser.self_link(owner))
+        link = self._rewritten_link(_self_link(owner))
         return await self._do_put(link, payload, headers)
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
@@ -615,15 +574,15 @@ class MdbClient(MdbJsonMethodApi):
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def delete(self, owner, headers=None):
-        link = self._rewritten_link(ApiResponseParser.self_link(owner))
+        link = self._rewritten_link(_self_link(owner))
         return await self._do_delete(link, headers)
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def open(self, owner, headers=None):
-        link = self._rewritten_link(ApiResponseParser.self_link(owner))
+        link = self._rewritten_link(_self_link(owner))
         return create_response(await self._do_get(link, headers))
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def update(self, owner, updates, headers=None):
-        link = self._rewritten_link(ApiResponseParser.self_link(owner))
+        link = self._rewritten_link(_self_link(owner))
         return await self._do_post_follow(link, updates, headers)

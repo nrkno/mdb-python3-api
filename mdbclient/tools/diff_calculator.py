@@ -3,7 +3,7 @@ import json
 import math
 from typing import Mapping
 
-from mdbclient.mdbclient import ApiResponseParser
+from mdbclient.mdbclient import _self_link
 from mdbclient.tools.diff_functions import illustration_changes, categories_changes
 
 
@@ -248,7 +248,7 @@ class Diff:
         if fields:
             res += "Fields: " + ",".join(fields)
         if res:
-            res = "\n" + ApiResponseParser.self_link(self.existing) + " modified:\n" + res
+            res = "\n" + _self_link(self.existing) + " modified:\n" + res
         return res
 
     def add_to_added(self, name, elements):
