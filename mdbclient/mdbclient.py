@@ -588,7 +588,7 @@ class MdbClient(MdbJsonMethodApi):
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def open(self, owner, headers=None):
         link = self._rewritten_link(ApiResponseParser.self_link(owner))
-        return await self._do_get(link, headers)
+        return create_response(await self._do_get(link, headers))
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def update(self, owner, updates, headers=None):
