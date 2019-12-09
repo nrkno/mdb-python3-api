@@ -1,5 +1,4 @@
 import urllib.parse
-from collections import UserDict
 
 import backoff
 from aiohttp import ClientSession
@@ -64,7 +63,7 @@ def _self_link(owner):
     return _link(owner, "self")
 
 
-class Timeline(UserDict):
+class Timeline(dict):
     TIMELINE_ITEMTYPE_EXTRACTEDVERSIONTIMELINEITEM = 'http://id.nrk.no/2017/mdb/timelineitem/ExtractedVersionTimelineItem'
     TIMELINE_ITEMTYPE_EXPLOITATIONISSUETIMELINEITEM = 'http://id.nrk.no/2017/mdb/timelineitem/ExploitationIssueTimelineItem'
     TIMELINE_ITEMTYPE_GENERALRIGHTS = 'http://id.nrk.no/2017/mdb/timelineitem/GeneralRightsTimelineItem'
@@ -124,7 +123,7 @@ class InternalTimeline(Timeline):
         self["type"] = self.TYPE
 
 
-class EditorialObject(UserDict):
+class EditorialObject(dict):
     def reference_values(self, ref_type):
         return _reference_values(self, ref_type)
 
@@ -160,25 +159,25 @@ class MasterEO(EditorialObject):
         return _child_links_of_sub_type(self, "mediaObjects", sub_type)
 
 
-class MediaObject(UserDict):
+class MediaObject(dict):
 
     def __init__(self, dict_=..., **kwargs) -> None:
         super().__init__(dict_, **kwargs)
 
 
-class PublicationMediaObject(UserDict):
+class PublicationMediaObject(dict):
 
     def __init__(self, dict_=..., **kwargs) -> None:
         super().__init__(dict_, **kwargs)
 
 
-class MediaResource(UserDict):
+class MediaResource(dict):
 
     def __init__(self, dict_=..., **kwargs) -> None:
         super().__init__(dict_, **kwargs)
 
 
-class Essence(UserDict):
+class Essence(dict):
 
     def __init__(self, dict_=..., **kwargs) -> None:
         super().__init__(dict_, **kwargs)
