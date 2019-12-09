@@ -1,4 +1,6 @@
 import urllib.parse
+from collections import UserDict
+from typing import Optional, Mapping as Mapping
 
 import backoff
 from aiohttp import ClientSession
@@ -34,6 +36,91 @@ class Conflict(Exception):
         self.uri = uri
         self.request_payload = request_payload
         self.message = message
+
+
+class Timeline(UserDict):
+    GENEALOGY_TIMELINE = "http://id.nrk.no/2017/mdb/timelinetype/Genealogy"
+    RIGHTS_TIMELINE = "http://id.nrk.no/2017/mdb/timelinetype/Rights"
+    INTERNAL_TIMELINE = "http://id.nrk.no/2017/mdb/timelinetype/Internal"
+    TECHNICAL_TIMELINE = "http://id.nrk.no/2017/mdb/timelinetype/Technical"
+    INDEXPOINTS_TIMELINE = "http://id.nrk.no/2017/mdb/timelinetype/IndexPoints"
+    TIMELINE_ITEMTYPE_EXTRACTEDVERSIONTIMELINEITEM = 'http://id.nrk.no/2017/mdb/timelineitem/ExtractedVersionTimelineItem'
+    TIMELINE_ITEMTYPE_EXPLOITATIONISSUETIMELINEITEM = 'http://id.nrk.no/2017/mdb/timelineitem/ExploitationIssueTimelineItem'
+    TIMELINE_ITEMTYPE_GENERALRIGHTS = 'http://id.nrk.no/2017/mdb/timelineitem/GeneralRightsTimelineItem'
+    TIMELINE_ITEMTYPE_INDEXPOINTTIMELINEITEM = 'http://id.nrk.no/2017/mdb/timelineitem/IndexpointTimelineItem'
+    TIMELINE_ITEMTYPE_INTERNALTIMELINEITEM = 'http://id.nrk.no/2017/mdb/timelineitem/InternalTimelineItem'
+    TIMELINE_ITEMTYPE_TECHNICALTIMELINEITEM = 'http://id.nrk.no/2017/mdb/timelineitem/TechnicalTimelineItem'
+
+    def __init__(self, dict_=..., **kwargs) -> None:
+        super().__init__(dict_, **kwargs)
+
+
+class MasterEO(UserDict):
+
+    def __init__(self, dict_=..., **kwargs) -> None:
+        super().__init__(dict_, **kwargs)
+
+    def timeline_of_sub_type(self, sub_type):
+        return ApiResponseParser.timeline_of_sub_type(self, sub_type)
+
+
+class MediaObject(UserDict):
+
+    def __init__(self, dict_=..., **kwargs) -> None:
+        super().__init__(dict_, **kwargs)
+
+
+class PublicationMediaObject(UserDict):
+
+    def __init__(self, dict_=..., **kwargs) -> None:
+        super().__init__(dict_, **kwargs)
+
+
+class MediaResource(UserDict):
+
+    def __init__(self, dict_=..., **kwargs) -> None:
+        super().__init__(dict_, **kwargs)
+
+
+class Essence(UserDict):
+
+    def __init__(self, dict_=..., **kwargs) -> None:
+        super().__init__(dict_, **kwargs)
+
+
+class PublicationEvent(UserDict):
+
+    def __init__(self, dict_=..., **kwargs) -> None:
+        super().__init__(dict_, **kwargs)
+
+
+def create_response(response):
+    type_ = response.get("type")
+    if type_ == "http://id.nrk.no/2016/mdb/types/MasterEditorialObject":
+        return MasterEO(response)
+    if type_ == "http://id.nrk.no/2016/mdb/types/MediaObject":
+        return MediaObject(response)
+    if type_ == "http://id.nrk.no/2016/mdb/types/PublicationMediaObject":
+        return PublicationMediaObject(response)
+    if type_ == "http://id.nrk.no/2016/mdb/types/MediaResource":
+        return MediaResource(response)
+    if type_ == "http://id.nrk.no/2016/mdb/types/Essence":
+        return Essence(response)
+    if type_ == "http://id.nrk.no/2016/mdb/types/PublicationEvent":
+        return PublicationEvent(response)
+    if type_ == "http://id.nrk.no/2017/mdb/timelinetype/Internal":
+        return Timeline(response)
+    if type_ == "http://id.nrk.no/2017/mdb/timelinetype/Genealogy":
+        return Timeline(response)
+    if type_ == "http://id.nrk.no/2017/mdb/timelinetype/IndexPoints":
+        return Timeline(response)
+    if type_ == "http://id.nrk.no/2017/mdb/timelinetype/Technical":
+        return Timeline(response)
+    if type_ == "http://id.nrk.no/2017/mdb/timelinetype/Rights":
+        return Timeline(response)
+    if type_ == "http://id.nrk.no/2017/mdb/timelinetype/GenealogyRights":
+        return Timeline(response)
+    raise Exception(f"Dont know how to create response for {type_}")
 
 
 class ApiResponseParser:
@@ -347,33 +434,40 @@ class MdbClient(MdbJsonMethodApi):
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def create_master_eo(self, master_eo, headers=None):
-        return await self._invoke_create_method("masterEO", master_eo, headers)
+        return create_response(await self._invoke_create_method("masterEO", master_eo, headers))
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def create_media_object(self, master_eo, media_object, headers=None):
         media_object["masterEO"] = _res_id(master_eo)
-        return await self._invoke_create_method("mediaObject", media_object, headers)
+        return create_response(await self._invoke_create_method("mediaObject", media_object, headers))
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def create_media_resource(self, media_object, media_resource, headers=None):
         media_resource["mediaObject"] = _res_id(media_object)
-        return await self._invoke_create_method("mediaResource", media_resource, headers=headers)
+        return create_response(await self._invoke_create_method("mediaResource", media_resource, headers=headers))
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def create_essence(self, publication_media_object, media_resource, essence, headers=None):
         essence["composedOf"] = _res_id(media_resource)
         essence["playoutOf"] = _res_id(publication_media_object)
-        return await self._invoke_create_method("essence", essence, headers)
+        return create_response(await self._invoke_create_method("essence", essence, headers))
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
-    async def create_timeline(self, master_eo, timeline, headers=None):
+    async def create_timeline(self, master_eo, timeline, headers=None, shallow=False):
         timeline["masterEO"] = _res_id(master_eo)
-        return await self._invoke_create_method("timeline", timeline, headers)
+        if shallow:
+            items = timeline.get("items")
+            del timeline["items"]
+        try:
+            return create_response(await self._invoke_create_method("timeline", timeline, headers))
+        finally:
+            if shallow and items:
+                timeline["items"] = items
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def replace_timeline(self, master_eo, existing_timeline, timeline, headers=None):
         timeline["masterEO"] = _res_id(master_eo)
-        return await self.__replace_content(existing_timeline, timeline, headers)
+        return create_response(await self.__replace_content(existing_timeline, timeline, headers))
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def add_subject(self, owner, subjects, headers=None):
@@ -402,9 +496,10 @@ class MdbClient(MdbJsonMethodApi):
         type_of_timeline = timeline["Type"]
         existing_timeline_of_same_type = self._timelines_of_subtype(master_eo, type_of_timeline)
         if existing_timeline_of_same_type:
-            return await self.replace_timeline(master_eo, existing_timeline_of_same_type, timeline, headers)
+            return create_response(
+                await self.replace_timeline(master_eo, existing_timeline_of_same_type, timeline, headers))
         else:
-            return await self._invoke_create_method("timeline", timeline, headers)
+            return create_response(await self._invoke_create_method("timeline", timeline, headers))
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def add_timeline_item(self, timeline, item, headers=None):
@@ -421,14 +516,15 @@ class MdbClient(MdbJsonMethodApi):
             raise Exception("Cannot create an empty publication event")
         publication_event["publishes"] = _res_id(master_eo)
         publication_event["subType"] = "http://authority.nrk.no/datadictionary/broadcast"
-        return await self._invoke_create_method("publicationEvent", publication_event, headers)
+        return create_response(await self._invoke_create_method("publicationEvent", publication_event, headers))
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def create_publication_media_object(self, publication_event, media_object, publication_media_object,
                                               headers=None):
         publication_media_object["publicationEvent"] = _res_id(publication_event)
         publication_media_object["publishedVersionOf"] = _res_id(media_object)
-        return await self._invoke_create_method("publicationMediaObject", publication_media_object, headers)
+        return create_response(
+            await self._invoke_create_method("publicationMediaObject", publication_media_object, headers))
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def resolve(self, res_id, headers=None) -> dict:
