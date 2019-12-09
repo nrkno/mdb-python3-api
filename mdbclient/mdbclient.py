@@ -68,9 +68,19 @@ class EditorialObject(UserDict):
             raise Exception(f"Multiple refs of type {ref_type} in {ApiResponseParser.self_link(meo)}")
         return found[0]["reference"]
 
-
     def self_link(self):
         return ApiResponseParser.self_link(self)
+    
+    def link(self, rel):
+        links = self.get("links", [])
+        rel_ = ApiResponseParser.find_link(links, rel)
+        rel_item = next(iter(rel_), None)
+        if not rel_item:
+            raise Exception(f"could not find {rel} in {self}")
+        return rel_item["href"]
+
+
+
 
 
 class MasterEO(EditorialObject):
@@ -83,6 +93,8 @@ class MasterEO(EditorialObject):
 
     def media_objects_of_sub_type(self, sub_type):
         return ApiResponseParser.child_links_of_sub_type(self, "mediaObjects", sub_type)
+
+
 
 
 class MediaObject(UserDict):
