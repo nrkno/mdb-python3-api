@@ -65,12 +65,12 @@ class EditorialObject(UserDict):
         if not found:
             return
         if len(found) > 1:
-            raise Exception(f"Multiple refs of type {ref_type} in {ApiResponseParser.self_link(meo)}")
+            raise Exception(f"Multiple refs of type {ref_type} in {ApiResponseParser.self_link(self)}")
         return found[0]["reference"]
 
     def self_link(self):
         return ApiResponseParser.self_link(self)
-    
+
     def link(self, rel):
         links = self.get("links", [])
         rel_ = ApiResponseParser.find_link(links, rel)
