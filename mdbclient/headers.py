@@ -1,2 +1,1 @@
-def suppress_notifications():
-    return "X-suppress-notifications","True"
+suppress_notifications = "X-suppress-notifications", "True"
