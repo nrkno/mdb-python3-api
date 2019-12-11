@@ -3,6 +3,8 @@ import urllib.parse
 import backoff
 from aiohttp import ClientSession
 
+from mdbclient.relations import REL_ITEMS, REL_DOCUMENTS
+
 
 class AggregateGoneException(Exception):
     pass
@@ -537,11 +539,11 @@ class MdbClient(MdbJsonMethodApi):
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def add_timeline_item(self, timeline, item, headers=None):
-        return await self.__add_on_rel(timeline, "http://id.nrk.no/2016/mdb/relation/items", item, headers)
+        return await self.__add_on_rel(timeline, REL_ITEMS, item, headers)
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def add_stored_document(self, master_eo, stored_document, headers=None):
-        return await self.__add_on_rel(master_eo, "http://id.nrk.no/2016/mdb/relation/documents", stored_document,
+        return await self.__add_on_rel(master_eo, REL_DOCUMENTS, stored_document,
                                        headers)
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
