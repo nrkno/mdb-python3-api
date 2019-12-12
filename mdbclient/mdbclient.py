@@ -76,6 +76,13 @@ class Timeline(dict):
     def __init__(self, dict_=..., **kwargs) -> None:
         super().__init__(dict_, **kwargs)
 
+    def find_item(self, resid):
+        resid_ = [x for x in self.get("items", []) if x.get("resId") == resid]
+        if len(resid_) == 1:
+            return resid_[0]
+        if len(resid_) > 1:
+            raise Exception(f"Multiple elements found for {resid}")
+
 
 class RightsTimeline(Timeline):
     TYPE = "http://id.nrk.no/2017/mdb/timelinetype/Rights"

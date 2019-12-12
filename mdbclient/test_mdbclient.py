@@ -4,7 +4,8 @@ import string
 import aiohttp
 import pytest
 
-from mdbclient.mdbclient import MdbClient
+from mdbclient.headers import create_headers
+from mdbclient.mdbclient import MdbClient, Timeline
 
 
 @pytest.mark.asyncio
@@ -149,6 +150,7 @@ async def test_add_subjects():
         subj = await client.add_subject(result, {"title": 'sub2'})
         assert subj["title"] == 'sub2'
 
+
 def random_string(string_length=10):
     """Generate a random string of fixed length """
     letters = string.ascii_lowercase
@@ -166,3 +168,16 @@ async def test_find_media_object():
         found = await client.find_media_object(mediaobject_name)
         assert mo["resId"] == found["resId"]
 
+
+@pytest.mark.asyncio
+async def test_create_headers():
+    hdrs = create_headers(("X-A", "B"), ("X-C", "D"))
+    assert len(hdrs) == 2
+    assert hdrs["X-A"] == "B"
+    assert hdrs["X-C"] == "D"
+
+@pytest.mark.asyncio
+async def test_timeline_item():
+    timeline = Timeline({"items": [{"resId": "abc", "offset" : 10}, {"resId": "cde",  "offset" : 20}]})
+    first = timeline.find_item("abc")
+    assert first["offset"] == 10
