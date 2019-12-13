@@ -89,7 +89,7 @@ class Timeline(dict):
             raise Exception(f"Multiple elements found for {resid}")
 
     def find_index_points_by_title_and_offset(self, title, offset):
-        return [x for x in self.get("items", []) if x["title"] == title and x["offset"] == offset]
+        return [x for x in self.get("items", []) if x.get("title") == title and x.get("offset") == offset]
 
     def find_index_point_by_title_and_offset(self, title, offset):
         matching = self.find_index_points_by_title_and_offset(title, offset)
@@ -99,7 +99,7 @@ class Timeline(dict):
             return matching[0]
 
     def find_index_points_by_offset_and_duration(self, offset, duration):
-        return [x for x in self.get('items', []) if x['offset'] == offset and x['duration'] == duration]
+        return [x for x in self.get('items', []) if x.get('offset') == offset and x.get('duration') == duration]
 
     def find_index_point_by_offset_and_duration(self, offset, duration):
         matching = self.find_index_points_by_offset_and_duration(offset, duration)
