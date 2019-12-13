@@ -66,8 +66,10 @@ def _self_link(owner):
 
 
 class Timeline(dict):
-    TIMELINE_ITEMTYPE_EXTRACTEDVERSIONTIMELINEITEM = 'http://id.nrk.no/2017/mdb/timelineitem/ExtractedVersionTimelineItem'
-    TIMELINE_ITEMTYPE_EXPLOITATIONISSUETIMELINEITEM = 'http://id.nrk.no/2017/mdb/timelineitem/ExploitationIssueTimelineItem'
+    TIMELINE_ITEMTYPE_EXTRACTEDVERSIONTIMELINEITEM = \
+        'http://id.nrk.no/2017/mdb/timelineitem/ExtractedVersionTimelineItem'
+    TIMELINE_ITEMTYPE_EXPLOITATIONISSUETIMELINEITEM = \
+        'http://id.nrk.no/2017/mdb/timelineitem/ExploitationIssueTimelineItem'
     TIMELINE_ITEMTYPE_GENERALRIGHTS = 'http://id.nrk.no/2017/mdb/timelineitem/GeneralRightsTimelineItem'
     TIMELINE_ITEMTYPE_INDEXPOINTTIMELINEITEM = 'http://id.nrk.no/2017/mdb/timelineitem/IndexpointTimelineItem'
     TIMELINE_ITEMTYPE_INTERNALTIMELINEITEM = 'http://id.nrk.no/2017/mdb/timelineitem/InternalTimelineItem'
@@ -496,28 +498,29 @@ class MdbClient(MdbJsonMethodApi):
         return await self._do_put(link, payload, headers)
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
-    async def create_master_eo(self, master_eo, headers=None):
+    async def create_master_eo(self, master_eo, headers=None) -> MasterEO:
         return create_response(await self._invoke_create_method("masterEO", master_eo, headers))
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
-    async def create_media_object(self, master_eo, media_object, headers=None):
+    async def create_media_object(self, master_eo, media_object, headers=None) -> MediaObject:
         media_object["masterEO"] = _res_id(master_eo)
         return create_response(await self._invoke_create_method("mediaObject", media_object, headers))
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
-    async def create_media_resource(self, media_object, media_resource, headers=None):
+    async def create_media_resource(self, media_object, media_resource, headers=None) -> MediaResource:
         media_resource["mediaObject"] = _res_id(media_object)
         return create_response(await self._invoke_create_method("mediaResource", media_resource, headers=headers))
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
-    async def create_essence(self, publication_media_object, media_resource, essence, headers=None):
+    async def create_essence(self, publication_media_object, media_resource, essence, headers=None) -> Essence:
         essence["composedOf"] = _res_id(media_resource)
         essence["playoutOf"] = _res_id(publication_media_object)
         return create_response(await self._invoke_create_method("essence", essence, headers))
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
-    async def create_timeline(self, master_eo, timeline, headers=None, shallow=False):
+    async def create_timeline(self, master_eo, timeline, headers=None, shallow=False) -> Timeline:
         timeline["masterEO"] = _res_id(master_eo)
+        items = None
         if shallow:
             items = timeline.get("items")
             del timeline["items"]
@@ -528,7 +531,7 @@ class MdbClient(MdbJsonMethodApi):
                 timeline["items"] = items
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
-    async def replace_timeline(self, master_eo, existing_timeline, timeline, headers=None):
+    async def replace_timeline(self, master_eo, existing_timeline, timeline, headers=None) -> Timeline:
         timeline["masterEO"] = _res_id(master_eo)
         return create_response(await self.__replace_content(existing_timeline, timeline, headers))
 
@@ -548,14 +551,14 @@ class MdbClient(MdbJsonMethodApi):
           "resId" : "http://id.nrk.no/2017/mdb/timeline/963df4ef-d884-410b-bdf4-efd884a10bf3",
           "changeType" : "NOOP",
           "aggregateType" : "http://id.nrk.no/2017/mdb/types/Timeline",
-          "resolve" : "http://mdbklippstage.felles.ds.nrk.no/api/resolve/http%3A%2F%2Fid.nrk.no%2F2017%2Fmdb%2Ftimeline%2F963df4ef-d884-410b-bdf4-efd884a10bf3"
+          "resolve" : "http://mdbklippstage.felles.ds.nrk.no/api/resolve/http%3A%2F%2Fid.blabla"
         }'''
         real_method = self._api_method("changes/by-resid")
         stdresponse = await self.rest_api_util.http_post_form(real_method, payload, self._merged_headers(headers))
         return stdresponse.response
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
-    async def create_or_replace_timeline(self, master_eo, timeline, headers=None):
+    async def create_or_replace_timeline(self, master_eo, timeline, headers=None) -> Timeline:
         type_of_timeline = timeline["Type"]
         existing_timeline_of_same_type = self._timelines_of_subtype(master_eo, type_of_timeline)
         if existing_timeline_of_same_type:
@@ -574,7 +577,7 @@ class MdbClient(MdbJsonMethodApi):
                                        headers)
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
-    async def create_publication_event(self, master_eo, publication_event, headers=None):
+    async def create_publication_event(self, master_eo, publication_event, headers=None) -> PublicationEvent:
         if not publication_event:
             raise Exception("Cannot create an empty publication event")
         publication_event["publishes"] = _res_id(master_eo)
@@ -583,7 +586,7 @@ class MdbClient(MdbJsonMethodApi):
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def create_publication_media_object(self, publication_event, media_object, publication_media_object,
-                                              headers=None):
+                                              headers=None) -> PublicationMediaObject:
         publication_media_object["publicationEvent"] = _res_id(publication_event)
         publication_media_object["publishedVersionOf"] = _res_id(media_object)
         return create_response(
