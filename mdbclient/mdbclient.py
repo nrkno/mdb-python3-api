@@ -80,7 +80,7 @@ class Timeline(dict):
 
     def filter_items(self, predicate):
         return [x for x in self.get("items", []) if predicate(x)]
-    
+
     def find_item(self, resid):
         resid_ = [x for x in self.get("items", []) if x.get("resId") == resid]
         if len(resid_) == 1:
@@ -599,7 +599,7 @@ class MdbClient(MdbJsonMethodApi):
     async def resolve(self, res_id, headers=None) -> dict:
         if not res_id:
             return {}
-        return await self._invoke_get_method("resolve", {'resId': res_id}, headers)
+        return create_response(await self._invoke_get_method("resolve", {'resId': res_id}, headers))
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def find_media_object(self, name, headers=None) -> dict:
