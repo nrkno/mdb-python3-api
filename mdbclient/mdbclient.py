@@ -78,6 +78,9 @@ class Timeline(dict):
     def __init__(self, dict_=..., **kwargs) -> None:
         super().__init__(dict_, **kwargs)
 
+    def self_link(self):
+        return _self_link(self)
+
     def filter_items(self, predicate):
         return [x for x in self.get("items", []) if predicate(x)]
 
