@@ -598,7 +598,7 @@ class MdbClient(MdbJsonMethodApi):
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def resolve(self, res_id, headers=None) -> dict:
         if not res_id:
-            return {}
+            return
         return create_response(await self._invoke_get_method("resolve", {'resId': res_id}, headers))
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
