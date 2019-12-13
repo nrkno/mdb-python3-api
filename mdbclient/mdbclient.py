@@ -78,6 +78,9 @@ class Timeline(dict):
     def __init__(self, dict_=..., **kwargs) -> None:
         super().__init__(dict_, **kwargs)
 
+    def filter_items(self, predicate):
+        return [x for x in self.get("items", []) if predicate(x)]
+    
     def find_item(self, resid):
         resid_ = [x for x in self.get("items", []) if x.get("resId") == resid]
         if len(resid_) == 1:
