@@ -83,6 +83,26 @@ class Timeline(dict):
         if len(resid_) > 1:
             raise Exception(f"Multiple elements found for {resid}")
 
+    def find_index_points_by_title_and_offset(self, title, offset):
+        return [x for x in self.get("items", []) if x["title"] == title and x["offset"] == offset]
+
+    def find_index_point_by_title_and_offset(self, title, offset):
+        matching = self.find_index_points_by_title_and_offset(title, offset)
+        if len(matching) > 1:
+            raise Exception(f"More than one index point found for title={title} offset={offset}")
+        if matching:
+            return matching[0]
+
+    def find_index_points_by_offset_and_duration(self, offset, duration):
+        return [x for x in self.get('items', []) if x['offset'] == offset and x['duration'] == duration]
+
+    def find_index_point_by_offset_and_duration(self, offset, duration):
+        matching = self.find_index_points_by_offset_and_duration(offset, duration)
+        if len(matching) > 1:
+            raise Exception(f"More than one index point found for offset={offset} duration={duration}")
+        if matching:
+            return matching[0]
+
 
 class RightsTimeline(Timeline):
     TYPE = "http://id.nrk.no/2017/mdb/timelinetype/Rights"
