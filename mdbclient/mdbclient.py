@@ -499,6 +499,10 @@ class MdbClient(MdbJsonMethodApi):
         link = self._rewritten_link(_link(owner, rel))
         return await self._do_post(link, payload, headers)
 
+    async def open_rel(self, owner, rel, headers=None):
+        link = self._rewritten_link(_link(owner, rel))
+        return await self._do_get(link, headers)
+
     async def __replace_content(self, owner, payload, headers=None) -> dict:
         link = self._rewritten_link(_self_link(owner))
         return await self._do_put(link, payload, headers)
