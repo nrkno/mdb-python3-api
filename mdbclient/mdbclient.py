@@ -185,7 +185,7 @@ class MasterEO(EditorialObject):
         super().__init__(dict_, **kwargs)
 
     def _timeline_of_sub_type(self, sub_type):
-        rel_ = [l for l in self["timelines"] if
+        rel_ = [l for l in self.get("timelines", []) if
                 l.get("type") == "http://id.nrk.no/2017/mdb/types/Timeline" and l.get("subType") == sub_type]
         return next(iter(rel_), None)
 
