@@ -607,7 +607,7 @@ class MdbClient(MdbJsonMethodApi):
             await self._invoke_create_method("publicationMediaObject", publication_media_object, headers))
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
-    async def resolve(self, res_id, headers=None, fast: bool=True) -> dict:
+    async def resolve(self, res_id, headers=None, fast: bool=False) -> dict:
         if not res_id:
             return
         parameters = {'resId': res_id}
