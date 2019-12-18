@@ -132,6 +132,17 @@ async def test_resolve_meo():
 
 
 @pytest.mark.asyncio
+async def test_resolve_meo_fast():
+    async with aiohttp.ClientSession() as session:
+        client = MdbClient.localhost("test", session, "test_correlation")
+        result = await client.create_master_eo({"title": "fozz"})
+        assert result['title'] == 'fozz'
+        resolved = await client.resolve(result['resId'], fast=True)
+        assert resolved is not None
+        assert resolved["resId"] == result["resId"]
+
+
+@pytest.mark.asyncio
 async def test_resolve_reference():
     async with aiohttp.ClientSession() as session:
         client = MdbClient.localhost("test", session, "test_correlation")

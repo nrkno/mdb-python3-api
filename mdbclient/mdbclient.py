@@ -1,7 +1,7 @@
 import urllib.parse
 
 import backoff
-from aiohttp import ClientSession
+from aiohttp import ClientSession, ClientResponse
 
 from mdbclient.relations import REL_ITEMS, REL_DOCUMENTS
 
@@ -315,6 +315,10 @@ class RestApiUtil(object):
         async with self.session.get(uri, params=uri_params, headers=headers) as response:
             return await RestApiUtil.__unpack_json_response(response, uri)
 
+    async def http_get_no_redirect(self, uri, headers=None, uri_params=None) -> ClientResponse:
+        async with self.session.get(uri, params=uri_params, headers=headers, allow_redirects=False) as response:
+            return response
+
     async def delete(self, uri, headers) -> StandardResponse:
         async with self.session.delete(uri, headers=headers) as response:
             return await RestApiUtil.__unpack_json_response(response, uri)
@@ -603,10 +607,18 @@ class MdbClient(MdbJsonMethodApi):
             await self._invoke_create_method("publicationMediaObject", publication_media_object, headers))
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
-    async def resolve(self, res_id, headers=None) -> dict:
+    async def resolve(self, res_id, headers=None, fast: bool=True) -> dict:
         if not res_id:
             return
-        return create_response(await self._invoke_get_method("resolve", {'resId': res_id}, headers))
+        parameters = {'resId': res_id}
+        if fast:
+            real_method = self._api_method("resolve")
+            raw_response = await self.rest_api_util.http_get_no_redirect(real_method, self._merged_headers(headers), parameters)
+            location = raw_response.headers["location"]
+            actual = await self.open_url(location + "?fast=true")
+            return create_response(actual.response)
+        else:
+            return create_response(await self._invoke_get_method("resolve", parameters, headers))
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def find_media_object(self, name, headers=None) -> dict:
