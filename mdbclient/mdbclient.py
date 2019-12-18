@@ -151,6 +151,16 @@ class TechnicalTimeline(Timeline):
         super().__init__(dict_, **kwargs)
         self["type"] = self.TYPE
 
+    def find_index_points_by_event_and_offset(self, event_, offset):
+        return [x for x in self.get("items", []) if x.get("event") == event_ and x.get("offset") == offset]
+
+    def find_index_point_by_event_and_offset(self, event, offset):
+        matching = self.find_index_points_by_event_and_offset(event, offset)
+        if len(matching) > 1:
+            raise Exception(f"More than one index point found for event={event} offset={offset}")
+        if matching:
+            return matching[0]
+
 
 class InternalTimeline(Timeline):
     TYPE = "http://id.nrk.no/2017/mdb/timelinetype/Internal"
