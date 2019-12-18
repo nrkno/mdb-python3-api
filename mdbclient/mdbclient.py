@@ -151,6 +151,9 @@ class TechnicalTimeline(Timeline):
         super().__init__(dict_, **kwargs)
         self["type"] = self.TYPE
 
+    def find_index_points_by_event(self, event_):
+        return [x for x in self.get("items", []) if x.get("event") == event_]
+
     def find_index_points_by_event_and_offset(self, event_, offset):
         return [x for x in self.get("items", []) if x.get("event") == event_ and x.get("offset") == offset]
 
