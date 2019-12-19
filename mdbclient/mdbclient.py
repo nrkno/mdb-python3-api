@@ -242,6 +242,9 @@ class PublicationEvent(EditorialObject):
 
 def create_response(response):
     type_ = response.get("type")
+    if not type_:
+        return response
+
     if type_ == "http://id.nrk.no/2016/mdb/types/MasterEditorialObject":
         return MasterEO(response)
     if type_ == "http://id.nrk.no/2016/mdb/types/MediaObject":
@@ -650,7 +653,8 @@ class MdbClient(MdbJsonMethodApi):
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def reference(self, ref_type, value, headers=None) -> dict:
-        return create_response(await self._invoke_get_method("references", {'type': ref_type, 'reference': value}, headers))
+        responses = await self._invoke_get_method("references", {'type': ref_type, 'reference': value}, headers)
+        return [create_response(x) for x in responses]
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def reference_single(self, ref_type, value, headers=None) -> dict:
