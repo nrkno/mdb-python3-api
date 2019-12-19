@@ -44,7 +44,7 @@ def _reference_values(meo, ref_type):
 
 
 def _links_of_sub_type(links_list, sub_type):
-    return [l for l in links_list if l.get("subType") == sub_type]
+    return [x for x in links_list if x.get("subType") == sub_type]
 
 
 def _child_links_of_sub_type(owner, child_name, sub_type):
@@ -54,7 +54,7 @@ def _child_links_of_sub_type(owner, child_name, sub_type):
 
 def _link(owner, rel):
     links = owner.get("links", [])
-    rel_ = [l for l in links if l["rel"] == rel]
+    rel_ = [x for x in links if x["rel"] == rel]
     rel_item = next(iter(rel_), None)
     if not rel_item:
         raise Exception(f"could not find {rel} in {owner}")
@@ -77,7 +77,7 @@ class Timeline(dict):
 
     def __init__(self, dict_=..., **kwargs) -> None:
         super().__init__(dict_, **kwargs)
-        self.items = self.get("items",[])
+        self.items = self.get("items", [])
 
     def self_link(self):
         return _self_link(self)
@@ -199,8 +199,8 @@ class MasterEO(EditorialObject):
         super().__init__(dict_, **kwargs)
 
     def _timeline_of_sub_type(self, sub_type):
-        rel_ = [l for l in self.get("timelines", []) if
-                l.get("type") == "http://id.nrk.no/2017/mdb/types/Timeline" and l.get("subType") == sub_type]
+        rel_ = [x for x in self.get("timelines", []) if
+                x.get("type") == "http://id.nrk.no/2017/mdb/types/Timeline" and x.get("subType") == sub_type]
         return next(iter(rel_), None)
 
     def timeline_of_sub_type(self, sub_type):
@@ -621,13 +621,14 @@ class MdbClient(MdbJsonMethodApi):
             await self._invoke_create_method("publicationMediaObject", publication_media_object, headers))
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
-    async def resolve(self, res_id, headers=None, fast: bool=False) -> dict:
+    async def resolve(self, res_id, headers=None, fast: bool = False) -> dict:
         if not res_id:
             return
         parameters = {'resId': res_id}
         if fast:
             real_method = self._api_method("resolve")
-            raw_response = await self.rest_api_util.http_get_no_redirect(real_method, self._merged_headers(headers), parameters)
+            raw_response = await self.rest_api_util.http_get_no_redirect(real_method, self._merged_headers(headers),
+                                                                         parameters)
             location = raw_response.headers["location"]
             actual = await self.open_url(location + "?fast=true")
             return create_response(actual.response)
