@@ -644,13 +644,13 @@ class MdbClient(MdbJsonMethodApi):
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def find_media_object(self, name, headers=None) -> dict:
         try:
-            return await self._invoke_get_method("mediaObject/by-name", {"name": name}, headers)
+            return create_response(await self._invoke_get_method("mediaObject/by-name", {"name": name}, headers))
         except Http404:
             pass
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def reference(self, ref_type, value, headers=None) -> dict:
-        return await self._invoke_get_method("references", {'type': ref_type, 'reference': value}, headers)
+        return create_response(await self._invoke_get_method("references", {'type': ref_type, 'reference': value}, headers))
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def reference_single(self, ref_type, value, headers=None) -> dict:
