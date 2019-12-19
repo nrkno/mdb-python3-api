@@ -419,6 +419,12 @@ class MdbJsonApi(object):
         self.force_scheme = force_scheme
         self.rest_api_util = RestApiUtil(session)
 
+
+    @staticmethod
+    def force_host_args(force_host):
+        return {"force_host": force_host if force_host else None,
+                   "force_scheme": "http" if force_host else None}
+
     def add_global_header(self, key, value):
         if not isinstance(value, str):
             raise TypeError(f"header value for {key} value is not a string: {type(value)}")
