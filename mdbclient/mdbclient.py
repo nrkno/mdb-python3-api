@@ -77,7 +77,9 @@ class Timeline(dict):
 
     def __init__(self, dict_=..., **kwargs) -> None:
         super().__init__(dict_, **kwargs)
-        self.items = self.get("items", [])
+
+    def items(self):
+        return self.get("items", [])
 
     def self_link(self):
         return _self_link(self)
