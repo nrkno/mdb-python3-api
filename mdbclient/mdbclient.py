@@ -2,6 +2,7 @@ import urllib.parse
 
 import backoff
 from aiohttp import ClientSession, ClientResponse
+from typing import Optional, Union
 
 from mdbclient.relations import REL_ITEMS, REL_DOCUMENTS
 
@@ -252,7 +253,10 @@ class PublicationEvent(EditorialObject):
         super().__init__(dict_, **kwargs)
 
 
-def create_response(response):
+def create_response(response) -> \
+        Union[
+            MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent, InternalTimeline,
+            GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline, GenealogyRightsTimeline]:
     type_ = response.get("type")
     if not type_:
         return response
@@ -610,6 +614,7 @@ class MdbClient(MdbJsonMethodApi):
         type_of_timeline = timeline["Type"]
         existing_timeline_of_same_type = self._timelines_of_subtype(master_eo, type_of_timeline)
         if existing_timeline_of_same_type:
+            # noinspection PyTypeChecker
             return create_response(
                 await self.replace_timeline(master_eo, existing_timeline_of_same_type, timeline, headers))
         else:
@@ -641,7 +646,9 @@ class MdbClient(MdbJsonMethodApi):
             await self._invoke_create_method("publicationMediaObject", publication_media_object, headers))
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
-    async def resolve(self, res_id, headers=None, fast: bool = False) -> dict:
+    async def resolve(self, res_id, headers=None, fast: bool = False) -> Optional[Union[
+            MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent, InternalTimeline,
+            GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline, GenealogyRightsTimeline]]:
         if not res_id:
             return
         parameters = {'resId': res_id}
@@ -663,7 +670,7 @@ class MdbClient(MdbJsonMethodApi):
             pass
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
-    async def reference(self, ref_type, value, headers=None) -> dict:
+    async def reference(self, ref_type, value, headers=None) -> []:
         responses = await self._invoke_get_method("references", {'type': ref_type, 'reference': value}, headers)
         return [create_response(x) for x in responses]
 
