@@ -65,7 +65,20 @@ def _self_link(owner):
     return _link(owner, "self")
 
 
-class Timeline(dict):
+class BasicMdbObject(dict):
+
+    def __init__(self, dict_=..., **kwargs) -> None:
+        super().__init__(dict_, **kwargs)
+        self.resid = self.get("resId")
+
+    def self_link(self):
+        return _self_link(self)
+
+    def link(self, rel):
+        return _link(self, rel)
+
+
+class Timeline(BasicMdbObject):
     TIMELINE_ITEMTYPE_EXTRACTEDVERSIONTIMELINEITEM = \
         'http://id.nrk.no/2017/mdb/timelineitem/ExtractedVersionTimelineItem'
     TIMELINE_ITEMTYPE_EXPLOITATIONISSUETIMELINEITEM = \
@@ -174,7 +187,12 @@ class InternalTimeline(Timeline):
         self["type"] = self.TYPE
 
 
-class EditorialObject(dict):
+class EditorialObject(BasicMdbObject):
+
+    def __init__(self, dict_=..., **kwargs) -> None:
+        super().__init__(dict_, **kwargs)
+        self.resid = self.get("resId")
+
     def reference_values(self, ref_type):
         return _reference_values(self, ref_type)
 
@@ -185,12 +203,6 @@ class EditorialObject(dict):
         if len(found) > 1:
             raise Exception(f"Multiple refs of type {ref_type} in {_self_link(self)}")
         return found[0]["reference"]
-
-    def self_link(self):
-        return _self_link(self)
-
-    def link(self, rel):
-        return _link(self, rel)
 
 
 class MasterEO(EditorialObject):
@@ -210,25 +222,25 @@ class MasterEO(EditorialObject):
         return _child_links_of_sub_type(self, "mediaObjects", sub_type)
 
 
-class MediaObject(dict):
+class MediaObject(BasicMdbObject):
 
     def __init__(self, dict_=..., **kwargs) -> None:
         super().__init__(dict_, **kwargs)
 
 
-class PublicationMediaObject(dict):
+class PublicationMediaObject(BasicMdbObject):
 
     def __init__(self, dict_=..., **kwargs) -> None:
         super().__init__(dict_, **kwargs)
 
 
-class MediaResource(dict):
+class MediaResource(BasicMdbObject):
 
     def __init__(self, dict_=..., **kwargs) -> None:
         super().__init__(dict_, **kwargs)
 
 
-class Essence(dict):
+class Essence(BasicMdbObject):
 
     def __init__(self, dict_=..., **kwargs) -> None:
         super().__init__(dict_, **kwargs)
@@ -422,11 +434,10 @@ class MdbJsonApi(object):
         self.force_scheme = force_scheme
         self.rest_api_util = RestApiUtil(session)
 
-
     @staticmethod
     def force_host_args(force_host):
         return {"force_host": force_host if force_host else None,
-                   "force_scheme": "http" if force_host else None}
+                "force_scheme": "http" if force_host else None}
 
     def add_global_header(self, key, value):
         if not isinstance(value, str):
