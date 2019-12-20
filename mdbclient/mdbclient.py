@@ -518,24 +518,25 @@ class MdbJsonMethodApi(MdbJsonApi):
 
 
 class MdbClient(MdbJsonMethodApi):
-    def __init__(self, api_base, user_id, correlation_id, session: ClientSession = None, source_system=None):
-        MdbJsonMethodApi.__init__(self, api_base, user_id, correlation_id, session, source_system)
+    def __init__(self, api_base, user_id, correlation_id, session: ClientSession = None, source_system=None,
+                 batch_id=None):
+        MdbJsonMethodApi.__init__(self, api_base, user_id, correlation_id, session, source_system, batch_id)
 
     @staticmethod
-    def localhost(user_id, session: ClientSession = None, correlation_id=None):
-        return MdbClient("http://localhost:22338", user_id, correlation_id, session)
+    def localhost(user_id, session: ClientSession = None, correlation_id=None, batch_id=None):
+        return MdbClient("http://localhost:22338", user_id, correlation_id, session, batch_id)
 
     @staticmethod
-    def dev(user_id, session: ClientSession = None, correlation_id=None):
-        return MdbClient("http://mdbklippdev.felles.ds.nrk.no", user_id, correlation_id, session)
+    def dev(user_id, session: ClientSession = None, correlation_id=None, batch_id=None):
+        return MdbClient("http://mdbklippdev.felles.ds.nrk.no", user_id, correlation_id, session, batch_id)
 
     @staticmethod
-    def stage(user_id, session: ClientSession = None, correlation_id=None):
-        return MdbClient("http://mdbklippstage.felles.ds.nrk.no", user_id, correlation_id, session)
+    def stage(user_id, session: ClientSession = None, correlation_id=None, batch_id=None):
+        return MdbClient("http://mdbklippstage.felles.ds.nrk.no", user_id, correlation_id, session, batch_id)
 
     @staticmethod
-    def prod(user_id, session: ClientSession = None, correlation_id=None):
-        return MdbClient("http://mdbklipp.felles.ds.nrk.no", user_id, correlation_id, session)
+    def prod(user_id, session: ClientSession = None, correlation_id=None, batch_id=None):
+        return MdbClient("http://mdbklipp.felles.ds.nrk.no", user_id, correlation_id, session, batch_id)
 
     async def __add_on_rel(self, owner, rel, payload, headers=None):
         link = self._rewritten_link(_link(owner, rel))
