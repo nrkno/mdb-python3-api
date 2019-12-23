@@ -414,7 +414,8 @@ class MdbJsonApi(object):
     This class is unaware of the url of the remote system since it's all in the hyperlinked payloads.
     """
 
-    def __init__(self, user_id, correlation_id, session: ClientSession = None, source_system=None, batch_id=None,
+    def __init__(self, user_id, correlation_id, session: ClientSession = None, source_system=None,
+                 batch_id="default-batch-id",
                  force_host=None, force_scheme=None):
         self._global_headers = {}
         if source_system:
@@ -430,8 +431,9 @@ class MdbJsonApi(object):
                 raise TypeError("correlation_id is not a string: " + type(correlation_id))
             self._global_headers["X-transactionId"] = correlation_id
         if batch_id:
+            id_to_use = batch_id if batch_id != "default-batch-id" else correlation_id
             if not isinstance(batch_id, str):
-                raise TypeError("batch_id is not a string: " + type(batch_id))
+                raise TypeError("batch_id is not a string: " + str(type(batch_id)))
             self._global_headers["X-Batch-Identifier"] = batch_id
 
         self.force_host = force_host
@@ -519,23 +521,23 @@ class MdbJsonMethodApi(MdbJsonApi):
 
 class MdbClient(MdbJsonMethodApi):
     def __init__(self, api_base, user_id, correlation_id, session: ClientSession = None, source_system=None,
-                 batch_id=None):
+                 batch_id="default-batch-id"):
         MdbJsonMethodApi.__init__(self, api_base, user_id, correlation_id, session, source_system, batch_id)
 
     @staticmethod
-    def localhost(user_id, session: ClientSession = None, correlation_id=None, batch_id=None):
+    def localhost(user_id, session: ClientSession = None, correlation_id=None, batch_id="default-batch-id"):
         return MdbClient("http://localhost:22338", user_id, correlation_id, session, batch_id)
 
     @staticmethod
-    def dev(user_id, session: ClientSession = None, correlation_id=None, batch_id=None):
+    def dev(user_id, session: ClientSession = None, correlation_id=None, batch_id="default-batch-id"):
         return MdbClient("http://mdbklippdev.felles.ds.nrk.no", user_id, correlation_id, session, batch_id)
 
     @staticmethod
-    def stage(user_id, session: ClientSession = None, correlation_id=None, batch_id=None):
+    def stage(user_id, session: ClientSession = None, correlation_id=None, batch_id="default-batch-id"):
         return MdbClient("http://mdbklippstage.felles.ds.nrk.no", user_id, correlation_id, session, batch_id)
 
     @staticmethod
-    def prod(user_id, session: ClientSession = None, correlation_id=None, batch_id=None):
+    def prod(user_id, session: ClientSession = None, correlation_id=None, batch_id="default-batch-id"):
         return MdbClient("http://mdbklipp.felles.ds.nrk.no", user_id, correlation_id, session, batch_id)
 
     async def __add_on_rel(self, owner, rel, payload, headers=None):
@@ -648,8 +650,8 @@ class MdbClient(MdbJsonMethodApi):
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def resolve(self, res_id, headers=None, fast: bool = False) -> Optional[Union[
-            MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent, InternalTimeline,
-            GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline, GenealogyRightsTimeline]]:
+        MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent, InternalTimeline,
+        GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline, GenealogyRightsTimeline]]:
         if not res_id:
             return
         parameters = {'resId': res_id}
