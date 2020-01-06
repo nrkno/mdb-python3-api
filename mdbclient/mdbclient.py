@@ -187,6 +187,17 @@ class InternalTimeline(Timeline):
         super().__init__(dict_, **kwargs)
         self["type"] = self.TYPE
 
+    def find_index_points_by_subtype_title_and_offset(self, subtype, title, offset):
+        return [x for x in self.get("items", []) if
+                x.get("title") == title and x.get("offset") == offset and x.get("subType") == subtype]
+
+    def find_index_point_by_sybtype_title_and_offset(self, subtype, title, offset):
+        matching = self.find_index_points_by_subtype_title_and_offset(subtype, title, offset)
+        if len(matching) > 1:
+            raise Exception(f"More than one index point found for subtype={subtype}, title={title} offset={offset}")
+        if matching:
+            return matching[0]
+
 
 class EditorialObject(BasicMdbObject):
 
