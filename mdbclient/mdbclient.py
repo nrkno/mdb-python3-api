@@ -187,14 +187,14 @@ class InternalTimeline(Timeline):
         super().__init__(dict_, **kwargs)
         self["type"] = self.TYPE
 
-    def find_index_points_by_subtype_offset_and_duration(self, subtype, offset, duration):
+    def find_index_points_by_subtype_offset_duration(self, subtype, offset, duration):
         return [x for x in self.get("items", []) if
                 x.get("offset") == offset and x.get("duration") == duration and x.get("subType") == subtype]
 
-    def find_index_point_by_sybtype_offset_and_duration(self, subtype, offset, duration):
-        matching = self.find_index_points_by_subtype_offset_and_duration(subtype, offset, duration)
+    def find_index_point_by_sybtype_offset_duration(self, subtype, offset, duration):
+        matching = self.find_index_points_by_subtype_offset_duration(subtype, offset, duration)
         if len(matching) > 1:
-            raise Exception(f"More than one index point found for subtype={subtype}, offset={offset} duration={duration}")
+            raise Exception(f"More than one index point found for subtype={subtype}, offset={offset} duration={duration} in {self.self_link()}")
         if matching:
             return matching[0]
 
