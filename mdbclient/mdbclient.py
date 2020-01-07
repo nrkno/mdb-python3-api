@@ -659,7 +659,7 @@ class MdbClient(MdbJsonMethodApi):
         return create_response(
             await self._invoke_create_method("publicationMediaObject", publication_media_object, headers))
 
-    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=120, giveup=_check_if_not_lock)
     async def resolve(self, res_id, headers=None, fast: bool = False) -> Optional[Union[
         MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent, InternalTimeline,
         GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline, GenealogyRightsTimeline]]:
