@@ -372,6 +372,8 @@ class RestApiUtil(object):
         async with self.session.post(uri, json=json_payload, headers=headers) as response:
             await RestApiUtil.__raise_errors(response, uri, json_payload)
             reloaded = await self.follow(response, headers)
+            if isinstance(reloaded.response, str):
+                raise HttpReqException(uri, json_payload, reloaded.response, reloaded.status)
             return reloaded
 
     # @backoff.on_exception(backoff.expo, requests.exceptions.RequestException, max_tries=8)
