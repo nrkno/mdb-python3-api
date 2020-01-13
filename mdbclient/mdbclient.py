@@ -113,6 +113,13 @@ class Timeline(BasicMdbObject):
         if len(resid_) > 1:
             raise Exception(f"Multiple elements found for title {title}")
 
+    def find_by_description(self, description):
+        resid_ = [x for x in self.get("items", []) if x.get("title") == description]
+        if len(resid_) == 1:
+            return resid_[0]
+        if len(resid_) > 1:
+            raise Exception(f"Multiple elements found for title {description}")
+
     def find_index_points_by_title_and_offset(self, title, offset):
         return [x for x in self.get("items", []) if x.get("title") == title and x.get("offset") == offset]
 
