@@ -141,6 +141,15 @@ class Timeline(BasicMdbObject):
     def find_index_point_by_offset(self, offset):
         return self.__single(("offset", offset))
 
+    def stabilize_order(self):
+        """
+        Provides a guaranteed stable order of values
+        """
+
+        self.get("subjects",[]).sort(key=lambda x: x["title"])
+        self.get("spatials",[]).sort(key=lambda x: x["name"])
+        self.get("contributors",[]).sort(key=lambda x: x["contact"]["title"] + x["role"]["resId"])
+
 
 class RightsTimeline(Timeline):
     TYPE = "http://id.nrk.no/2017/mdb/timelinetype/Rights"
