@@ -136,9 +136,10 @@ class Timeline(BasicMdbObject):
         return self.__select(("offset", offset), ("duration", duration))
 
     def find_index_point_by_offset_and_duration(self, offset, duration):
-        fmatch = [("offset", offset), ("duration", duration)]
-        return self.__single(fmatch)
+        return self.__single(("offset", offset), ("duration", duration))
 
+    def find_index_point_by_offset(self, offset):
+        return self.__single(("offset", offset))
 
 class RightsTimeline(Timeline):
     TYPE = "http://id.nrk.no/2017/mdb/timelinetype/Rights"
