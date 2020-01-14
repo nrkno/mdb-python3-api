@@ -99,46 +99,45 @@ class Timeline(BasicMdbObject):
     def filter_items(self, predicate):
         return [x for x in self.get("items", []) if predicate(x)]
 
-    def find_item(self, resid):
-        resid_ = [x for x in self.get("items", []) if x.get("resId") == resid]
-        if len(resid_) == 1:
-            return resid_[0]
-        if len(resid_) > 1:
-            raise Exception(f"Multiple elements found for {resid}")
+    def __select(self, *fieldexp):
+        def matches_field_exps(item):
+            for exp in fieldexp:
+                if not item.get(exp[0]) == exp[1]:
+                    return False
+            return True
+
+        res = [x for x in self.get("items", []) if matches_field_exps(x)]
+        return res
+
+    def __single(self, *fieldexp):
+        items = self.__select(*fieldexp)
+        if len(items) == 1:
+            return items[0]
+        if len(items) > 1:
+            msg = ",".join([f"{x[0]}={x[1]}]" for x in fieldexp])
+            raise Exception(f"Multiple elements found for {msg}")
+
+    def find_item(self, res_id):
+        return self.__single(("resId", res_id))
 
     def find_by_title(self, title):
-        resid_ = [x for x in self.get("items", []) if x.get("title") == title]
-        if len(resid_) == 1:
-            return resid_[0]
-        if len(resid_) > 1:
-            raise Exception(f"Multiple elements found for title {title}")
+        return self.__single(("title", title))
 
     def find_by_description(self, description):
-        resid_ = [x for x in self.get("items", []) if x.get("title") == description]
-        if len(resid_) == 1:
-            return resid_[0]
-        if len(resid_) > 1:
-            raise Exception(f"Multiple elements found for title {description}")
+        return self.__single(("description", description))
 
     def find_index_points_by_title_and_offset(self, title, offset):
-        return [x for x in self.get("items", []) if x.get("title") == title and x.get("offset") == offset]
+        return self.__select(("title", title), ("offset", offset))
 
     def find_index_point_by_title_and_offset(self, title, offset):
-        matching = self.find_index_points_by_title_and_offset(title, offset)
-        if len(matching) > 1:
-            raise Exception(f"More than one index point found for title={title} offset={offset}")
-        if matching:
-            return matching[0]
+        return self.__single(("title", title), ("offset", offset))
 
     def find_index_points_by_offset_and_duration(self, offset, duration):
-        return [x for x in self.get('items', []) if x.get('offset') == offset and x.get('duration') == duration]
+        return self.__select(("offset", offset), ("duration", duration))
 
     def find_index_point_by_offset_and_duration(self, offset, duration):
-        matching = self.find_index_points_by_offset_and_duration(offset, duration)
-        if len(matching) > 1:
-            raise Exception(f"More than one index point found for offset={offset} duration={duration}")
-        if matching:
-            return matching[0]
+        fmatch = [("offset", offset), ("duration", duration)]
+        return self.__single(fmatch)
 
 
 class RightsTimeline(Timeline):
