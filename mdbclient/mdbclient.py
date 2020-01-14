@@ -141,6 +141,7 @@ class Timeline(BasicMdbObject):
     def find_index_point_by_offset(self, offset):
         return self.__single(("offset", offset))
 
+
 class RightsTimeline(Timeline):
     TYPE = "http://id.nrk.no/2017/mdb/timelinetype/Rights"
 
@@ -208,7 +209,8 @@ class InternalTimeline(Timeline):
     def find_index_point_by_sybtype_offset_duration(self, subtype, offset, duration):
         matching = self.find_index_points_by_subtype_offset_duration(subtype, offset, duration)
         if len(matching) > 1:
-            raise Exception(f"More than one index point found for subtype={subtype}, offset={offset} duration={duration} in {self.self_link()}")
+            raise Exception(
+                f"More than one index point found for subtype={subtype}, offset={offset} duration={duration} in {self.self_link()}")
         if matching:
             return matching[0]
 
