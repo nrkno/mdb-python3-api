@@ -99,9 +99,9 @@ class Timeline(BasicMdbObject):
     def filter_items(self, predicate):
         return [x for x in self.get("items", []) if predicate(x)]
 
-    def __select(self, *fieldexp):
+    def select_items(self, *keyvalue_tuples):
         def matches_field_exps(item):
-            for exp in fieldexp:
+            for exp in keyvalue_tuples:
                 if not item.get(exp[0]) == exp[1]:
                     return False
             return True
@@ -109,37 +109,37 @@ class Timeline(BasicMdbObject):
         res = [x for x in self.get("items", []) if matches_field_exps(x)]
         return res
 
-    def __single(self, *fieldexp):
-        items = self.__select(*fieldexp)
+    def select_single_item(self, *keyvalue_tuples):
+        items = self.select_items(*keyvalue_tuples)
         if len(items) == 1:
             return items[0]
         if len(items) > 1:
-            msg = ",".join([f"{x[0]}={x[1]}]" for x in fieldexp])
+            msg = ",".join([f"{x[0]}={x[1]}]" for x in keyvalue_tuples])
             raise Exception(f"Multiple elements found for {msg}")
 
     def find_item(self, res_id):
-        return self.__single(("resId", res_id))
+        return self.select_single_item(("resId", res_id))
 
     def find_by_title(self, title):
-        return self.__single(("title", title))
+        return self.select_single_item(("title", title))
 
     def find_by_description(self, description):
-        return self.__single(("description", description))
+        return self.select_single_item(("description", description))
 
     def find_index_points_by_title_and_offset(self, title, offset):
-        return self.__select(("title", title), ("offset", offset))
+        return self.select_items(("title", title), ("offset", offset))
 
     def find_index_point_by_title_and_offset(self, title, offset):
-        return self.__single(("title", title), ("offset", offset))
+        return self.select_single_item(("title", title), ("offset", offset))
 
     def find_index_points_by_offset_and_duration(self, offset, duration):
-        return self.__select(("offset", offset), ("duration", duration))
+        return self.select_items(("offset", offset), ("duration", duration))
 
     def find_index_point_by_offset_and_duration(self, offset, duration):
-        return self.__single(("offset", offset), ("duration", duration))
+        return self.select_single_item(("offset", offset), ("duration", duration))
 
     def find_index_point_by_offset(self, offset):
-        return self.__single(("offset", offset))
+        return self.select_single_item(("offset", offset))
 
     def stabilize_order(self):
         """
@@ -191,10 +191,10 @@ class TechnicalTimeline(Timeline):
         self["type"] = self.TYPE
 
     def find_index_points_by_event(self, event_):
-        return [x for x in self.get("items", []) if x.get("event") == event_]
+        return self.select_items(("event", event_))
 
     def find_index_points_by_event_and_offset(self, event_, offset):
-        return [x for x in self.get("items", []) if x.get("event") == event_ and x.get("offset") == offset]
+        return self.select_items(("event", event_), ("offset", offset))
 
     def find_index_point_by_event_and_offset(self, event, offset):
         matching = self.find_index_points_by_event_and_offset(event, offset)
@@ -212,8 +212,7 @@ class InternalTimeline(Timeline):
         self["type"] = self.TYPE
 
     def find_index_points_by_subtype_offset_duration(self, subtype, offset, duration):
-        return [x for x in self.get("items", []) if
-                x.get("offset") == offset and x.get("duration") == duration and x.get("subType") == subtype]
+        return self.select_items(("subType", subtype), ("offset", offset), ("duration", duration))
 
     def find_index_point_by_sybtype_offset_duration(self, subtype, offset, duration):
         matching = self.find_index_points_by_subtype_offset_duration(subtype, offset, duration)
