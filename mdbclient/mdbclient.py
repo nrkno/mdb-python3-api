@@ -723,6 +723,18 @@ class MdbClient(MdbJsonMethodApi):
             return await self.open(resp[0], headers)
         return {}
 
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
+    async def publish_change(self, resid, destination, headers=None) -> dict:
+        resolved = await self.resolve(resid)
+        payload = {
+            "type": resolved["type"],
+            "resId": resid,
+            "destination": destination
+
+        }
+        resp = await self._invoke_create_method("changes/by-resid", payload, headers)
+        return {}
+
     @staticmethod
     def _timelines_of_subtype(master_eo, sub_type):
         item = (tl for tl in master_eo["timelines"] if tl["subType"] == sub_type)
