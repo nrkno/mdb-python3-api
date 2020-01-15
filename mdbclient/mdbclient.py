@@ -632,21 +632,16 @@ class MdbClient(MdbJsonMethodApi):
         return await self.__add_on_rel(owner, "http://id.nrk.no/2016/mdb/relation/subjects", subjects, headers)
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
-    async def broadcast_change(self, destination, resid, type_, headers=None):
+    async def broadcast_change(self, destination, resid, headers=None):
+        resolved = await self.resolve(resid)
         payload = {
             "destination": destination,
             "resId": resid,
-            "type": type_
+            "type": resolved["type"]
         }
-        '''
-        {
-          "resId" : "http://id.nrk.no/2017/mdb/timeline/963df4ef-d884-410b-bdf4-efd884a10bf3",
-          "changeType" : "NOOP",
-          "aggregateType" : "http://id.nrk.no/2017/mdb/types/Timeline",
-          "resolve" : "http://mdbklippstage.felles.ds.nrk.no/api/resolve/http%3A%2F%2Fid.blabla"
-        }'''
         real_method = self._api_method("changes/by-resid")
-        stdresponse = await self.rest_api_util.http_post_form(real_method, payload, self._merged_headers(headers))
+        headers = {**{"content-type": "application/x-www-form-urlencoded"}, **self._merged_headers(headers)}
+        stdresponse = await self.rest_api_util.http_post_form(real_method, payload, headers)
         return stdresponse.response
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
@@ -723,17 +718,6 @@ class MdbClient(MdbJsonMethodApi):
             return await self.open(resp[0], headers)
         return {}
 
-    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
-    async def publish_change(self, resid, destination, headers=None) -> dict:
-        resolved = await self.resolve(resid)
-        payload = {
-            "type": resolved["type"],
-            "resId": resid,
-            "destination": destination
-
-        }
-        resp = await self._invoke_create_method("changes/by-resid", payload, headers)
-        return {}
 
     @staticmethod
     def _timelines_of_subtype(master_eo, sub_type):
