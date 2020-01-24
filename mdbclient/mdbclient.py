@@ -2,7 +2,7 @@ import urllib.parse
 
 import backoff
 from aiohttp import ClientSession, ClientResponse
-from typing import Optional, Union
+from typing import Optional, Union, List
 
 from mdbclient.relations import REL_ITEMS, REL_DOCUMENTS
 
@@ -714,7 +714,9 @@ class MdbClient(MdbJsonMethodApi):
             pass
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
-    async def reference(self, ref_type, value, headers=None) -> []:
+    async def reference(self, ref_type, value, headers=None) -> List[Union[
+            MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent, InternalTimeline,
+            GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline, GenealogyRightsTimeline]]:
         responses = await self._invoke_get_method("references", {'type': ref_type, 'reference': value}, headers)
         return [create_response(x) for x in responses]
 
