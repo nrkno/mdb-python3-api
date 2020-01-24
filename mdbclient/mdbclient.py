@@ -229,6 +229,16 @@ class EditorialObject(BasicMdbObject):
         super().__init__(dict_, **kwargs)
         self.resid = self.get("resId")
 
+    def links_of_type(self, collection_name, main_type=None, sub_type=None):
+        result = self.get(collection_name, [])
+        if not main_type and not sub_type:
+            raise Exception("This method requires that either type, subType or BOTH are specified")
+        if sub_type:
+            result = [x for x in result if x.get("subType") == sub_type]
+        if main_type:
+            result = [x for x in result if x.get("type") == main_type]
+        return result
+
     def reference_values(self, ref_type):
         return _reference_values(self, ref_type)
 
@@ -247,8 +257,7 @@ class MasterEO(EditorialObject):
         super().__init__(dict_, **kwargs)
 
     def _timeline_of_sub_type(self, sub_type):
-        rel_ = [x for x in self.get("timelines", []) if
-                x.get("type") == "http://id.nrk.no/2017/mdb/types/Timeline" and x.get("subType") == sub_type]
+        rel_ = self.links_of_type("timelines", main_type="http://id.nrk.no/2017/mdb/types/Timeline", sub_type=sub_type)
         return next(iter(rel_), None)
 
     def timeline_of_sub_type(self, sub_type):

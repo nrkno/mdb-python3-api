@@ -5,7 +5,7 @@ import aiohttp
 import pytest
 
 from mdbclient.headers import create_headers
-from mdbclient.mdbclient import MdbClient, Timeline
+from mdbclient.mdbclient import MdbClient, Timeline, EditorialObject
 
 
 @pytest.mark.asyncio
@@ -211,3 +211,17 @@ async def test_timeline_item_offset_duration():
     assert len(first) == 2
     assert first[0]["resId"] == "cde"
     assert first[1]["resId"] == "cde2"
+
+
+@pytest.mark.asyncio
+async def test_editorialbject_find_by_subtype():
+    eo = EditorialObject({"items": [{"type": "abc", "offset": 10, "subType": "ABC"},
+                                    {"type": "cde", "offset": 20, "subType": "CDE"},
+                                    {"type": "cde2", "offset": 20, "subType": "CDE2"}]})
+    first = eo.links_of_type("items", sub_type="CDE2")
+    assert len(first) == 1
+    assert first[0]["type"] == "cde2"
+
+    first = eo.links_of_type("items", main_type="cde2")
+    assert len(first) == 1
+    assert first[0]["subType"] == "CDE2"
