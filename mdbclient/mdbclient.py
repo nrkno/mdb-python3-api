@@ -719,13 +719,15 @@ class MdbClient(MdbJsonMethodApi):
         return [create_response(x) for x in responses]
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
-    async def reference_single(self, ref_type, value, headers=None) -> dict:
+    async def reference_single(self, ref_type, value, headers=None) ->  Union[
+            MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent, InternalTimeline,
+            GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline, GenealogyRightsTimeline, None]:
         resp = await self._invoke_get_method("references", {'type': ref_type, 'reference': value}, headers)
         if resp:
             if len(resp) > 1:
                 raise Exception(f"Multiple elements found when resolving {ref_type}={value}:{resp}")
             return await self.open(resp[0], headers)
-        return {}
+        return None
 
 
     @staticmethod
