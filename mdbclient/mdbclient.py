@@ -4,8 +4,6 @@ import backoff
 from aiohttp import ClientSession, ClientResponse
 from typing import Optional, Union, List
 
-from mdbclient.mdbclient import StandardResponse
-
 from mdbclient.relations import REL_ITEMS, REL_DOCUMENTS
 
 
@@ -148,9 +146,9 @@ class Timeline(BasicMdbObject):
         Provides a guaranteed stable order of values
         """
 
-        self.get("subjects",[]).sort(key=lambda x: x["title"])
-        self.get("spatials",[]).sort(key=lambda x: x["name"])
-        self.get("contributors",[]).sort(key=lambda x: x["contact"]["title"] + x["role"]["resId"])
+        self.get("subjects", []).sort(key=lambda x: x["title"])
+        self.get("spatials", []).sort(key=lambda x: x["name"])
+        self.get("contributors", []).sort(key=lambda x: x["contact"]["title"] + x["role"]["resId"])
 
 
 class RightsTimeline(Timeline):
@@ -220,7 +218,8 @@ class InternalTimeline(Timeline):
         matching = self.find_index_points_by_subtype_offset_duration(subtype, offset, duration)
         if len(matching) > 1:
             raise Exception(
-                f"More than one index point found for subtype={subtype}, offset={offset} duration={duration} in {self.self_link()}")
+                f"More than one index point found for subtype={subtype}, offset={offset} "
+                f"duration={duration} in {self.self_link()}")
         if matching:
             return matching[0]
 
@@ -298,9 +297,24 @@ class PublicationEvent(EditorialObject):
     def __init__(self, dict_=..., **kwargs) -> None:
         super().__init__(dict_, **kwargs)
 
-def create_response_from_std_response(std_response : StandardResponse) ->  Union[
-            MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent, InternalTimeline,
-            GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline, GenealogyRightsTimeline]:
+
+class StandardResponse(object):
+    def __init__(self, requested_uri, response: dict, status, location=None):
+        self.response = response
+        self.status = status
+        self.location = location
+        self.requested_uri = requested_uri
+
+    def __iter__(self):
+        for i in [self.response, self.status]:
+            yield i
+
+    def is_successful(self):
+        return self.status < 400
+
+
+def create_response_from_std_response(std_response: StandardResponse) -> Union[
+    MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent, InternalTimeline, GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline, GenealogyRightsTimeline]:
     if not std_response.is_successful():
         raise Exception(f"Http {std_response.status} for {std_response.requested_uri}:\n{str(std_response.response)}")
 
@@ -340,21 +354,6 @@ def create_response(response) -> \
     if type_ == GenealogyRightsTimeline.TYPE:
         return GenealogyRightsTimeline(response)
     raise Exception(f"Dont know how to create response for {type_}")
-
-
-class StandardResponse(object):
-    def __init__(self, requested_uri, response: dict, status, location=None):
-        self.response = response
-        self.status = status
-        self.location = location
-        self.requested_uri = requested_uri
-
-    def __iter__(self):
-        for i in [self.response, self.status]:
-            yield i
-
-    def is_successful(self):
-        return self.status < 400
 
 
 # server scope. Has no request specific state
@@ -696,8 +695,7 @@ class MdbClient(MdbJsonMethodApi):
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=120, giveup=_check_if_not_lock)
     async def resolve(self, res_id, headers=None, fast: bool = False) -> Optional[Union[
-        MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent, InternalTimeline,
-        GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline, GenealogyRightsTimeline]]:
+        MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent, InternalTimeline, GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline, GenealogyRightsTimeline]]:
         if not res_id:
             return
         parameters = {'resId': res_id}
@@ -709,7 +707,8 @@ class MdbClient(MdbJsonMethodApi):
             actual = await self.open_url(location + "?fast=true")
             return create_response_from_std_response(actual)
         else:
-            return create_response_from_std_response(await self._invoke_get_method_std_response("resolve", parameters, headers))
+            return create_response_from_std_response(
+                await self._invoke_get_method_std_response("resolve", parameters, headers))
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def find_media_object(self, name, headers=None) -> dict:
@@ -720,22 +719,20 @@ class MdbClient(MdbJsonMethodApi):
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def reference(self, ref_type, value, headers=None) -> List[Union[
-            MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent, InternalTimeline,
-            GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline, GenealogyRightsTimeline]]:
+        MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent, InternalTimeline, GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline, GenealogyRightsTimeline]]:
         responses = await self._invoke_get_method("references", {'type': ref_type, 'reference': value}, headers)
         return [create_response(x) for x in responses]
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
-    async def reference_single(self, ref_type, value, headers=None) ->  Union[
-            MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent, InternalTimeline,
-            GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline, GenealogyRightsTimeline, None]:
+    async def reference_single(self, ref_type, value, headers=None) -> Union[
+        MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent, InternalTimeline,
+        GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline, GenealogyRightsTimeline, None]:
         resp = await self._invoke_get_method("references", {'type': ref_type, 'reference': value}, headers)
         if resp:
             if len(resp) > 1:
                 raise Exception(f"Multiple elements found when resolving {ref_type}={value}:{resp}")
             return await self.open(resp[0], headers)
         return None
-
 
     @staticmethod
     def _timelines_of_subtype(master_eo, sub_type):
