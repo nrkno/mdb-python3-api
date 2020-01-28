@@ -367,6 +367,7 @@ class RestApiUtil(object):
     async def __unpack_response_content(response):
         if response.content_type == "application/json":
             return await response.json()
+        raise Exception(f"Response is {response.content_type}: {response.content}\n{str(response.headers)}")
         return await response.text()
 
     @staticmethod
