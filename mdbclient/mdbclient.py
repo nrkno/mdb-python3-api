@@ -315,7 +315,7 @@ class StandardResponse(object):
 
 def create_response_from_std_response(std_response: StandardResponse) -> Union[
     MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent, InternalTimeline, GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline, GenealogyRightsTimeline]:
-    if not std_response.is_successful():
+    if not std_response.is_successful() or isinstance(std_response.response, str):
         raise Exception(f"Http {std_response.status} for {std_response.requested_uri}:\n{str(std_response.response)}")
 
     return create_response(std_response.response)
