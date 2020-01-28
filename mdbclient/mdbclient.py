@@ -4,6 +4,8 @@ import backoff
 from aiohttp import ClientSession, ClientResponse
 from typing import Optional, Union, List
 
+from mdbclient.mdbclient import StandardResponse
+
 from mdbclient.relations import REL_ITEMS, REL_DOCUMENTS
 
 
@@ -296,6 +298,14 @@ class PublicationEvent(EditorialObject):
     def __init__(self, dict_=..., **kwargs) -> None:
         super().__init__(dict_, **kwargs)
 
+def create_response_from_std_response(std_response : StandardResponse) ->  Union[
+            MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent, InternalTimeline,
+            GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline, GenealogyRightsTimeline]:
+    if not std_response.is_successful():
+        raise Exception(f"Http {std_response.status} for {std_response.requested_uri}:\n{str(std_response.response)}")
+
+    return create_response(std_response.response)
+
 
 def create_response(response) -> \
         Union[
@@ -333,10 +343,11 @@ def create_response(response) -> \
 
 
 class StandardResponse(object):
-    def __init__(self, response: dict, status, location=None):
+    def __init__(self, requested_uri, response: dict, status, location=None):
         self.response = response
         self.status = status
         self.location = location
+        self.requested_uri = requested_uri
 
     def __iter__(self):
         for i in [self.response, self.status]:
@@ -344,16 +355,6 @@ class StandardResponse(object):
 
     def is_successful(self):
         return self.status < 400
-
-
-class FollowedResponse(StandardResponse):
-    def __init__(self, response, status, followed):
-        StandardResponse.__init__(self, response, status)
-        self.followed = followed
-
-    def __iter__(self):
-        for i in [self.response, self.status, self.followed]:
-            yield i
 
 
 # server scope. Has no request specific state
@@ -386,7 +387,7 @@ class RestApiUtil(object):
     @staticmethod
     async def __unpack_json_response(response, request_uri, request_payload=None) -> StandardResponse:
         await RestApiUtil.__raise_errors(response, request_uri, request_payload)
-        return StandardResponse(await RestApiUtil.__unpack_response_content(response), response.status)
+        return StandardResponse(request_uri, await RestApiUtil.__unpack_response_content(response), response.status)
 
     async def http_get(self, uri, headers=None, uri_params=None) -> StandardResponse:
         async with self.session.get(uri, params=uri_params, headers=headers) as response:
@@ -529,7 +530,7 @@ class MdbJsonApi(object):
         return replaced.geturl()
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
-    async def open_url(self, url, headers=None):
+    async def open_url(self, url, headers=None) -> StandardResponse:
         response = await self.rest_api_util.http_get(self._rewritten_link(url), self._merged_headers(headers))
         if not response.is_successful():
             raise Exception(f"Http {response.status} for {url}:\n{response}")
@@ -558,6 +559,10 @@ class MdbJsonMethodApi(MdbJsonApi):
         real_method = self.__api_method(name)
         parameters_ = await self.rest_api_util.http_get(real_method, self._merged_headers(headers), parameters)
         return parameters_.response
+
+    async def _invoke_get_method_std_response(self, name, parameters, headers=None) -> StandardResponse:
+        real_method = self.__api_method(name)
+        return await self.rest_api_util.http_get(real_method, self._merged_headers(headers), parameters)
 
     async def _invoke_create_method(self, method_name, payload, headers=None) -> {}:
         real_method = self.__api_method(method_name)
@@ -702,9 +707,9 @@ class MdbClient(MdbJsonMethodApi):
                                                                          parameters)
             location = raw_response.headers["location"]
             actual = await self.open_url(location + "?fast=true")
-            return create_response(actual.response)
+            return create_response_from_std_response(actual)
         else:
-            return create_response(await self._invoke_get_method("resolve", parameters, headers))
+            return create_response_from_std_response(await self._invoke_get_method_std_response("resolve", parameters, headers))
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def find_media_object(self, name, headers=None) -> dict:
