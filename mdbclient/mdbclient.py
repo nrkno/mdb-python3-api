@@ -365,6 +365,8 @@ class RestApiUtil(object):
 
     @staticmethod
     async def __unpack_response_content(uri, response):
+        if response.headers.get("Connection") == "close":
+            print("Remote node is signalling connection close")
         if response.content_type == "application/json":
             return await response.json()
         raise Exception(f"Response={response.status} to {uri} at {datetime.datetime.now().time()} is {response.content_type}: {response.content}\n{str(response.headers)}")
