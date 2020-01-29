@@ -1,5 +1,5 @@
 import urllib.parse
-
+import datetime
 import backoff
 from aiohttp import ClientSession, ClientResponse
 from typing import Optional, Union, List
@@ -367,8 +367,8 @@ class RestApiUtil(object):
     async def __unpack_response_content(response):
         if response.content_type == "application/json":
             return await response.json()
-        raise Exception(f"Response is {response.content_type}: {response.content}\n{str(response.headers)}")
-        return await response.text()
+        raise Exception(f"Response at {datetime.datetime.now().time()} is {response.content_type}: {response.content}\n{str(response.headers)}")
+        # return await response.text()
 
     @staticmethod
     async def __raise_errors(response, uri, request_payload):
