@@ -364,30 +364,30 @@ class RestApiUtil(object):
         self.session = session
 
     @staticmethod
-    async def __unpack_response_content(response):
+    async def __unpack_response_content(uri, response):
         if response.content_type == "application/json":
             return await response.json()
-        raise Exception(f"Response at {datetime.datetime.now().time()} is {response.content_type}: {response.content}\n{str(response.headers)}")
+        raise Exception(f"Response to {uri} at {datetime.datetime.now().time()} is {response.content_type}: {response.content}\n{str(response.headers)}")
         # return await response.text()
 
     @staticmethod
     async def __raise_errors(response, uri, request_payload):
         if response.status == 400:
-            raise BadRequest(uri, request_payload, await RestApiUtil.__unpack_response_content(response))
+            raise BadRequest(uri, request_payload, await RestApiUtil.__unpack_response_content(uri, response))
         if response.status == 409:
-            raise Conflict(uri, request_payload, await RestApiUtil.__unpack_response_content(response))
+            raise Conflict(uri, request_payload, await RestApiUtil.__unpack_response_content(uri, response))
         if response.status == 404:
             raise Http404(uri, None)
         if response.status == 410:
             raise AggregateGoneException
         if response.status >= 400:
-            raise HttpReqException(uri, request_payload, await RestApiUtil.__unpack_response_content(response),
+            raise HttpReqException(uri, request_payload, await RestApiUtil.__unpack_response_content(uri, response),
                                    response.status)
 
     @staticmethod
     async def __unpack_json_response(response, request_uri, request_payload=None) -> StandardResponse:
         await RestApiUtil.__raise_errors(response, request_uri, request_payload)
-        return StandardResponse(request_uri, await RestApiUtil.__unpack_response_content(response), response.status)
+        return StandardResponse(request_uri, await RestApiUtil.__unpack_response_content(request_uri, response), response.status)
 
     async def http_get(self, uri, headers=None, uri_params=None) -> StandardResponse:
         async with self.session.get(uri, params=uri_params, headers=headers) as response:
