@@ -712,7 +712,7 @@ class MdbClient(MdbJsonMethodApi):
                 await self._invoke_get_method_std_response("resolve", parameters, headers))
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
-    async def find_media_object(self, name, headers=None) -> dict:
+    async def find_media_object(self, name, headers=None) -> Optional[MediaObject]:
         try:
             return create_response(await self._invoke_get_method("mediaObject/by-name", {"name": name}, headers))
         except Http404:
