@@ -83,10 +83,14 @@ async def test_create_essence():
         meo = await client.create_master_eo({"title": "fozz"})
         mo = await client.create_media_object(meo, {})
         mr = await client.create_media_resource(mo, {})
-        pe = await client.create_publication_event(meo, {"subType": "http://authority.nrk.no/datadictionary/onDemand",
+        pe = await client.create_publication_event(meo, {"subType": "http://authority.nrk.no/datadictionary/broadcast",
                                                          "title": "en kald vårdag"})
         pmo = await client.create_publication_media_object(pe, mo, {})
         essence = await client.create_essence(pmo, mr, {})
+        reloaded = await client.open(meo)
+        pub = reloaded.publications()
+        assert (await client.open(pub.of_subtype("http://authority.nrk.no/datadictionary/broadcast").first()))[
+                   "title"] == "en kald vårdag"
         assert essence['type'] == 'http://id.nrk.no/2016/mdb/types/Essence'
 
 

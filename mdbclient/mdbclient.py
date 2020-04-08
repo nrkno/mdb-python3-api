@@ -224,21 +224,32 @@ class InternalTimeline(Timeline):
             return matching[0]
 
 
+class LinkReferences():
+    def __init__(self, children):
+        self.children = children
+
+    def of_type(self, main_type):
+        return LinkReferences([x for x in self.children if x.get("type") == main_type])
+
+    def of_subtype(self, sub_type):
+        return LinkReferences([x for x in self.children if x.get("subType") == sub_type])
+
+    def first(self):
+        return self.children[0] if self.children else None
+
+    def __getitem__(self, key):
+        return self.children[key]
+
+
 class EditorialObject(BasicMdbObject):
 
     def __init__(self, dict_=..., **kwargs) -> None:
         super().__init__(dict_, **kwargs)
         self.resid = self.get("resId")
 
-    def links_of_type(self, collection_name, main_type=None, sub_type=None):
+    def _link_references(self, collection_name):
         result = self.get(collection_name, [])
-        if not main_type and not sub_type:
-            raise Exception("This method requires that either type, subType or BOTH are specified")
-        if sub_type:
-            result = [x for x in result if x.get("subType") == sub_type]
-        if main_type:
-            result = [x for x in result if x.get("type") == main_type]
-        return result
+        return LinkReferences(result)
 
     def reference_values(self, ref_type):
         return _reference_values(self, ref_type)
@@ -264,8 +275,20 @@ class MasterEO(EditorialObject):
     def timeline_of_sub_type(self, sub_type):
         return self._timeline_of_sub_type(sub_type)
 
+    def publications_of_sub_type(self, sub_type):
+        return self.links_of_type("publications", sub_type=sub_type)
+
     def media_objects_of_sub_type(self, sub_type):
-        return _child_links_of_sub_type(self, "mediaObjects", sub_type)
+        return self.links_of_type("mediaObjects", sub_type=sub_type)
+
+    def media_objects(self) -> LinkReferences:
+        return self._link_references("mediaObjects")
+
+    def publications(self):
+        return self._link_references("publications")
+
+    def timelines(self):
+        return self._link_references("timelines")
 
 
 class MediaObject(BasicMdbObject):
@@ -367,7 +390,8 @@ class RestApiUtil(object):
     async def __unpack_response_content(uri, response):
         if response.content_type == "application/json":
             return await response.json()
-        raise Exception(f"Response={response.status} to {uri} at {datetime.datetime.now().time()} is {response.content_type}: {response.content}\n{str(response.headers)}")
+        raise Exception(
+            f"Response={response.status} to {uri} at {datetime.datetime.now().time()} is {response.content_type}: {response.content}\n{str(response.headers)}")
         # return await response.text()
 
     @staticmethod
@@ -387,7 +411,8 @@ class RestApiUtil(object):
     @staticmethod
     async def __unpack_json_response(response, request_uri, request_payload=None) -> StandardResponse:
         await RestApiUtil.__raise_errors(response, request_uri, request_payload)
-        return StandardResponse(request_uri, await RestApiUtil.__unpack_response_content(request_uri, response), response.status)
+        return StandardResponse(request_uri, await RestApiUtil.__unpack_response_content(request_uri, response),
+                                response.status)
 
     async def http_get(self, uri, headers=None, uri_params=None) -> StandardResponse:
         async with self.session.get(uri, params=uri_params, headers=headers) as response:
@@ -708,7 +733,7 @@ class MdbClient(MdbJsonMethodApi):
             actual = await self.open_url(location + "?fast=true")
             return create_response_from_std_response(actual)
         else:
-            return create_response_from_std_response(
+            return create_respXonse_from_std_response(
                 await self._invoke_get_method_std_response("resolve", parameters, headers))
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
