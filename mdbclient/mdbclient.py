@@ -240,6 +240,9 @@ class LinkCollection():
     def __getitem__(self, key):
         return self.children[key]
 
+    def __len__(self):
+        return len(self.children)
+
 
 class EditorialObject(BasicMdbObject):
 
