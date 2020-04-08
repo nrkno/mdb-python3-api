@@ -224,15 +224,15 @@ class InternalTimeline(Timeline):
             return matching[0]
 
 
-class LinkReferences():
+class LinkCollection():
     def __init__(self, children):
         self.children = children
 
     def of_type(self, main_type):
-        return LinkReferences([x for x in self.children if x.get("type") == main_type])
+        return LinkCollection([x for x in self.children if x.get("type") == main_type])
 
     def of_subtype(self, sub_type):
-        return LinkReferences([x for x in self.children if x.get("subType") == sub_type])
+        return LinkCollection([x for x in self.children if x.get("subType") == sub_type])
 
     def first(self):
         return self.children[0] if self.children else None
@@ -247,9 +247,9 @@ class EditorialObject(BasicMdbObject):
         super().__init__(dict_, **kwargs)
         self.resid = self.get("resId")
 
-    def _link_references(self, collection_name):
+    def _link_collection(self, collection_name) -> LinkCollection:
         result = self.get(collection_name, [])
-        return LinkReferences(result)
+        return LinkCollection(result)
 
     def reference_values(self, ref_type):
         return _reference_values(self, ref_type)
@@ -281,14 +281,14 @@ class MasterEO(EditorialObject):
     def media_objects_of_sub_type(self, sub_type):
         return self.links_of_type("mediaObjects", sub_type=sub_type)
 
-    def media_objects(self) -> LinkReferences:
-        return self._link_references("mediaObjects")
+    def media_objects(self) -> LinkCollection:
+        return self._link_collection("mediaObjects")
 
-    def publications(self):
-        return self._link_references("publications")
+    def publications(self) -> LinkCollection:
+        return self._link_collection("publications")
 
-    def timelines(self):
-        return self._link_references("timelines")
+    def timelines(self) -> LinkCollection:
+        return self._link_collection("timelines")
 
 
 class MediaObject(BasicMdbObject):
