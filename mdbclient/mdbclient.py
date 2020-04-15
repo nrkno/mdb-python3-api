@@ -1,9 +1,9 @@
-import urllib.parse
 import datetime
+import urllib.parse
+from typing import Optional, Union, List, TypeVar, Generic
 
 import backoff
 from aiohttp import ClientSession, ClientResponse
-from typing import Optional, Union, List, TypeVar, Generic
 
 from mdbclient.relations import REL_ITEMS, REL_DOCUMENTS
 
@@ -80,7 +80,7 @@ class MdbLink:
     def type(self):
         return self.link.get("type")
 
-    def href(self, main_type):
+    def href(self):
         return self.link.get("href")
 
     @staticmethod
@@ -122,6 +122,9 @@ class ResourceReference(Generic[T]):
 
     def __getitem__(self, key):
         return self.resource_reference[key]
+
+    def get(self, key):
+        return self.resource_reference.get(key)
 
     def links(self) -> MdbLinks:
         return MdbLinks.create(self.resource_reference.get("links"))
@@ -191,7 +194,6 @@ class BasicMdbObject(dict):
 
     def links(self) -> MdbLinks:
         return MdbLinks.create(self.get("links"))
-
 
 
 class Timeline(BasicMdbObject):
@@ -357,8 +359,15 @@ class EditorialObject(BasicMdbObject):
         return found[0]["reference"]
 
 
-class MasterEO(EditorialObject):
+class VersionGroup(BasicMdbObject):
+    def __init__(self, dict_=..., **kwargs) -> None:
+        super().__init__(dict_, **kwargs)
 
+    def metadata_meo(self) -> ResourceReference['MasterEO']:
+        return ResourceReference.create(self.get("metadataMeo"))
+
+
+class MasterEO(EditorialObject):
     def __init__(self, dict_=..., **kwargs) -> None:
         super().__init__(dict_, **kwargs)
 
@@ -371,7 +380,7 @@ class MasterEO(EditorialObject):
     def timelines(self) -> ResourceReferenceCollection[Timeline]:
         return self._reference_collection("timelines")
 
-    def version_group(self) -> ResourceReference:
+    def version_group(self) -> ResourceReference[VersionGroup]:
         return ResourceReference.create(self.get("versionGroup"))
 
 
@@ -442,7 +451,9 @@ class StandardResponse(object):
 
 
 def create_response_from_std_response(std_response: StandardResponse) -> Union[
-    MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent, InternalTimeline, GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline, GenealogyRightsTimeline]:
+    MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent, InternalTimeline,
+    GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline, GenealogyRightsTimeline,
+    VersionGroup]:
     if not std_response.is_successful() or isinstance(std_response.response, str):
         raise Exception(f"Http {std_response.status} for {std_response.requested_uri}:\n{str(std_response.response)}")
 
@@ -452,7 +463,8 @@ def create_response_from_std_response(std_response: StandardResponse) -> Union[
 def create_response(response) -> \
         Union[
             MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent, InternalTimeline,
-            GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline, GenealogyRightsTimeline]:
+            GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline, GenealogyRightsTimeline,
+            VersionGroup]:
     type_ = response.get("type")
     if not type_:
         return response
@@ -469,6 +481,8 @@ def create_response(response) -> \
         return Essence(response)
     if type_ == "http://id.nrk.no/2016/mdb/types/PublicationEvent":
         return PublicationEvent(response)
+    if type_ == "http://id.nrk.no/2016/mdb/types/VersionGroup":
+        return VersionGroup(response)
     if type_ == InternalTimeline.TYPE:
         return InternalTimeline(response)
     if type_ == GenealogyTimeline.TYPE:
@@ -496,7 +510,8 @@ class RestApiUtil(object):
         if response.content_type == "application/json":
             return await response.json()
         raise Exception(
-            f"Response={response.status} to {uri} at {datetime.datetime.now().time()} is {response.content_type}: {response.content}\n{str(response.headers)}")
+            f"Response={response.status} to {uri} at {datetime.datetime.now().time()} is "
+            f"{response.content_type}: {response.content}\n{str(response.headers)}")
         # return await response.text()
 
     @staticmethod
@@ -608,7 +623,6 @@ class MdbJsonApi(object):
                 raise TypeError("correlation_id is not a string: " + type(correlation_id))
             self._global_headers["X-transactionId"] = correlation_id
         if batch_id:
-            id_to_use = batch_id if batch_id != "default-batch-id" else correlation_id
             if not isinstance(batch_id, str):
                 raise TypeError("batch_id is not a string: " + str(type(batch_id)))
             self._global_headers["X-Batch-Identifier"] = batch_id
@@ -829,8 +843,10 @@ class MdbClient(MdbJsonMethodApi):
             await self._invoke_create_method("publicationMediaObject", publication_media_object, headers))
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=120, giveup=_check_if_not_lock)
-    async def resolve(self, res_id, headers=None, fast: bool = False) -> Optional[Union[
-        MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent, InternalTimeline, GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline, GenealogyRightsTimeline]]:
+    async def resolve(self, res_id, headers=None, fast: bool = False) -> \
+            Optional[Union[MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent,
+                           InternalTimeline, GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline,
+                           GenealogyRightsTimeline]]:
         if not res_id:
             return
         parameters = {'resId': res_id}
@@ -853,15 +869,18 @@ class MdbClient(MdbJsonMethodApi):
             pass
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
-    async def reference(self, ref_type, value, headers=None) -> List[Union[
-        MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent, InternalTimeline, GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline, GenealogyRightsTimeline]]:
+    async def reference(self, ref_type, value, headers=None) -> \
+            List[Union[MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent,
+                       InternalTimeline, GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline,
+                       GenealogyRightsTimeline]]:
         responses = await self._invoke_get_method("references", {'type': ref_type, 'reference': value}, headers)
         return [create_response(x) for x in responses]
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
-    async def reference_single(self, ref_type, value, headers=None) -> Union[
-        MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent, InternalTimeline,
-        GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline, GenealogyRightsTimeline, None]:
+    async def reference_single(self, ref_type, value, headers=None) -> \
+            Union[MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent,
+                  InternalTimeline, GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline,
+                  GenealogyRightsTimeline, None]:
         resp = await self._invoke_get_method("references", {'type': ref_type, 'reference': value}, headers)
         if resp:
             if len(resp) > 1:
