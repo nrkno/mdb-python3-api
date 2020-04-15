@@ -123,8 +123,8 @@ class ResourceReference(Generic[T]):
     def __getitem__(self, key):
         return self.resource_reference[key]
 
-    def get(self, key):
-        return self.resource_reference.get(key)
+    def get(self, key, default=None):
+        return self.resource_reference.get(key, default)
 
     def links(self) -> MdbLinks:
         return MdbLinks.create(self.resource_reference.get("links"))
