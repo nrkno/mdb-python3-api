@@ -846,6 +846,15 @@ class MdbClient(MdbJsonMethodApi):
         link = self._rewritten_link(_self_link(owner))
         return create_response(await self._do_get(link, headers))
 
+    GT = TypeVar('GT')
+
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
+    async def open_resource(self, owner: Optional[ResourceReference[GT]], headers=None) -> Optional[GT]:
+        if not owner:
+            return
+        link = self._rewritten_link(_self_link(owner))
+        return create_response(await self._do_get(link, headers))
+
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def update(self, owner, updates, headers=None):
         link = self._rewritten_link(_self_link(owner))
