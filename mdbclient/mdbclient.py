@@ -1,5 +1,6 @@
 import urllib.parse
 import datetime
+
 import backoff
 from aiohttp import ClientSession, ClientResponse
 from typing import Optional, Union, List, TypeVar, Generic
@@ -66,6 +67,52 @@ def _self_link(owner):
     return _link(owner, "self")
 
 
+class MdbLink:
+    def __init__(self, link_node):
+        self.link = link_node
+
+    def __getitem__(self, key):
+        return self.link[key]
+
+    def rel(self):
+        return self.link.get("rel")
+
+    def type(self):
+        return self.link.get("type")
+
+    def href(self, main_type):
+        return self.link.get("href")
+
+    @staticmethod
+    def create(link_node) -> 'MdbLink':
+        if link_node:
+            return MdbLink(link_node)
+
+
+class MdbLinks:
+    def __init__(self, links_node):
+        self.links_node = links_node
+
+    def __len__(self):
+        return len(self.links_node)
+
+    def select_single(self, rel):
+        matching = [x for x in self.links_node if x.get("rel") == rel]
+        if len(matching) > 1:
+            raise Exception(f"Multiple links match rel={rel}")
+        if len(matching) == 0:
+            raise Exception(f"No links match rel={rel}")
+        return MdbLink.create(matching[0])
+
+    def self_link(self):
+        return self.select_single(rel="self")
+
+    @staticmethod
+    def create(links_node) -> 'MdbLinks':
+        if links_node:
+            return MdbLinks(links_node)
+
+
 T = TypeVar('T')
 
 
@@ -75,6 +122,9 @@ class ResourceReference(Generic[T]):
 
     def __getitem__(self, key):
         return self.resource_reference[key]
+
+    def links(self) -> MdbLinks:
+        return MdbLinks.create(self.resource_reference.get("links"))
 
     def is_type(self, main_type):
         return self.resource_reference.get("type") == main_type
@@ -95,10 +145,10 @@ class ResourceReferenceCollection(Generic[X]):
     def __init__(self, children):
         self.children = children
 
-    def of_type(self, main_type):
+    def of_type(self, main_type) -> 'ResourceReferenceCollection[X]':
         return ResourceReferenceCollection([x for x in self.children if x.get("type") == main_type])
 
-    def of_subtype(self, sub_type):
+    def of_subtype(self, sub_type) -> 'ResourceReferenceCollection[X]':
         return ResourceReferenceCollection([x for x in self.children if x.get("subType") == sub_type])
 
     def first(self) -> ResourceReference[X]:
@@ -107,14 +157,14 @@ class ResourceReferenceCollection(Generic[X]):
     def __getitem__(self, key) -> ResourceReference[X]:
         return ResourceReference.create(self.children[key])
 
-    def single(self):
+    def single(self) -> ResourceReference[X]:
         if len(self.children) > 1:
             raise Exception("Requested single element of a linkcollection with multiple elements")
         if len(self.children) == 0:
             raise Exception("Requested single element of an empty linkcollection")
         return self.children[0]
 
-    def single_or_none(self):
+    def single_or_none(self) -> Optional[ResourceReference[X]]:
         if len(self.children) > 1:
             raise Exception("Requested single element of a linkcollection with multiple elements")
         return self.first()
@@ -135,9 +185,13 @@ class BasicMdbObject(dict):
     def link(self, rel):
         return _link(self, rel)
 
-    def _link_collection(self, collection_name) -> ResourceReferenceCollection:
+    def _reference_collection(self, collection_name) -> ResourceReferenceCollection:
         result = self.get(collection_name, [])
         return ResourceReferenceCollection(result)
+
+    def links(self) -> MdbLinks:
+        return MdbLinks.create(self.get("links"))
+
 
 
 class Timeline(BasicMdbObject):
@@ -309,13 +363,16 @@ class MasterEO(EditorialObject):
         super().__init__(dict_, **kwargs)
 
     def media_objects(self) -> ResourceReferenceCollection['MediaObject']:
-        return self._link_collection("mediaObjects")
+        return self._reference_collection("mediaObjects")
 
     def publications(self) -> ResourceReferenceCollection['PublicationEvent']:
-        return self._link_collection("publications")
+        return self._reference_collection("publications")
 
     def timelines(self) -> ResourceReferenceCollection[Timeline]:
-        return self._link_collection("timelines")
+        return self._reference_collection("timelines")
+
+    def version_group(self) -> ResourceReference:
+        return ResourceReference.create(self.get("versionGroup"))
 
 
 class Essence(BasicMdbObject):
@@ -333,7 +390,7 @@ class MediaResource(BasicMdbObject):
         return ResourceReference.create(self.get("mediaObject"))
 
     def essences(self) -> ResourceReferenceCollection[Essence]:
-        return self._link_collection("essences")
+        return self._reference_collection("essences")
 
 
 class MediaObject(BasicMdbObject):
@@ -342,10 +399,10 @@ class MediaObject(BasicMdbObject):
         super().__init__(dict_, **kwargs)
 
     def media_resources(self) -> ResourceReferenceCollection[MediaResource]:
-        return self._link_collection("resources")
+        return self._reference_collection("resources")
 
     def published_versions(self) -> ResourceReferenceCollection['PublicationMediaObject']:
-        return self._link_collection("publishedVersions")
+        return self._reference_collection("publishedVersions")
 
 
 class PublicationMediaObject(BasicMdbObject):
@@ -354,7 +411,7 @@ class PublicationMediaObject(BasicMdbObject):
         super().__init__(dict_, **kwargs)
 
     def playouts(self) -> ResourceReferenceCollection[Essence]:
-        return self._link_collection("playouts")
+        return self._reference_collection("playouts")
 
     def published_version_of(self) -> ResourceReference[MediaObject]:
         return ResourceReference.create(self.get("publishedVersionOf"))
@@ -366,7 +423,7 @@ class PublicationEvent(EditorialObject):
         super().__init__(dict_, **kwargs)
 
     def pmos(self) -> ResourceReferenceCollection:
-        return self._link_collection("pmos")
+        return self._reference_collection("pmos")
 
 
 class StandardResponse(object):
