@@ -145,14 +145,18 @@ X = TypeVar('X')
 
 
 class ResourceReferenceCollection(Generic[X]):
-    def __init__(self, children):
+    def __init__(self, children, owner, collection_name):
         self.children = children
+        self.owner = owner
+        self.collection_name = collection_name
 
     def of_type(self, main_type) -> 'ResourceReferenceCollection[X]':
-        return ResourceReferenceCollection([x for x in self.children if x.get("type") == main_type])
+        return ResourceReferenceCollection([x for x in self.children if x.get("type") == main_type], self.owner,
+                                           self.collection_name)
 
     def of_subtype(self, sub_type) -> 'ResourceReferenceCollection[X]':
-        return ResourceReferenceCollection([x for x in self.children if x.get("subType") == sub_type])
+        return ResourceReferenceCollection([x for x in self.children if x.get("subType") == sub_type],self.owner,
+                                           self.collection_name)
 
     def first(self) -> ResourceReference[X]:
         return ResourceReference.create(self.children[0]) if self.children else None
@@ -162,14 +166,16 @@ class ResourceReferenceCollection(Generic[X]):
 
     def single(self) -> ResourceReference[X]:
         if len(self.children) > 1:
-            raise Exception("Requested single element of a linkcollection with multiple elements")
+            raise Exception(f"Requested single element of {self.collection_name} from {self.owner.self_link()} "
+                            f"which has multiple elements")
         if len(self.children) == 0:
-            raise Exception("Requested single element of an empty linkcollection")
+            raise Exception(f"Requested single element of an empty linkcollection")
         return self.children[0]
 
     def single_or_none(self) -> Optional[ResourceReference[X]]:
         if len(self.children) > 1:
-            raise Exception("Requested single element of a linkcollection with multiple elements")
+            raise Exception(f"Requested single element of {self.collection_name} from {self.owner.self_link()} "
+                            f"which has multiple elements")
         return self.first()
 
     def __len__(self):
@@ -190,7 +196,7 @@ class BasicMdbObject(dict):
 
     def _reference_collection(self, collection_name) -> ResourceReferenceCollection:
         result = self.get(collection_name, [])
-        return ResourceReferenceCollection(result)
+        return ResourceReferenceCollection(result, self, collection_name)
 
     def links(self) -> MdbLinks:
         return MdbLinks.create(self.get("links"))
