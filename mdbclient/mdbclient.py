@@ -395,6 +395,12 @@ class Essence(BasicMdbObject):
     def __init__(self, dict_=..., **kwargs) -> None:
         super().__init__(dict_, **kwargs)
 
+    def composed_of(self) -> ResourceReference['MediaResource']:
+        return ResourceReference.create(self.get("composedOf"))
+
+    def playout_of(self) -> ResourceReference['PublicationMediaObject']:
+        return ResourceReference.create(self.get("playoutOf"))
+
 
 class MediaResource(BasicMdbObject):
 
