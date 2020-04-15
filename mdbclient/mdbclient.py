@@ -308,13 +308,13 @@ class MasterEO(EditorialObject):
     def __init__(self, dict_=..., **kwargs) -> None:
         super().__init__(dict_, **kwargs)
 
-    def media_objects(self) -> ResourceReferenceCollection:
+    def media_objects(self) -> ResourceReferenceCollection['MediaObject']:
         return self._link_collection("mediaObjects")
 
-    def publications(self) -> ResourceReferenceCollection:
+    def publications(self) -> ResourceReferenceCollection['PublicationEvent']:
         return self._link_collection("publications")
 
-    def timelines(self) -> ResourceReferenceCollection:
+    def timelines(self) -> ResourceReferenceCollection[Timeline]:
         return self._link_collection("timelines")
 
 
