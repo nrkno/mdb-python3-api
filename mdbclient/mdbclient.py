@@ -318,22 +318,10 @@ class MasterEO(EditorialObject):
         return self._link_collection("timelines")
 
 
-class MediaObject(BasicMdbObject):
+class Essence(BasicMdbObject):
 
     def __init__(self, dict_=..., **kwargs) -> None:
         super().__init__(dict_, **kwargs)
-
-
-class PublicationMediaObject(BasicMdbObject):
-
-    def __init__(self, dict_=..., **kwargs) -> None:
-        super().__init__(dict_, **kwargs)
-
-    def playouts(self) -> ResourceReferenceCollection:
-        return self._link_collection("playouts")
-
-    def publishedVersionOf(self) -> ResourceReference[MediaObject]:
-        return ResourceReference.create(self.get("publishedVersionOf"))
 
 
 class MediaResource(BasicMdbObject):
@@ -341,11 +329,35 @@ class MediaResource(BasicMdbObject):
     def __init__(self, dict_=..., **kwargs) -> None:
         super().__init__(dict_, **kwargs)
 
+    def media_object(self) -> ResourceReference['MediaObject']:
+        return ResourceReference.create(self.get("mediaObject"))
 
-class Essence(BasicMdbObject):
+    def essences(self) -> ResourceReferenceCollection[Essence]:
+        return self._link_collection("essences")
+
+
+class MediaObject(BasicMdbObject):
 
     def __init__(self, dict_=..., **kwargs) -> None:
         super().__init__(dict_, **kwargs)
+
+    def media_resources(self) -> ResourceReferenceCollection[MediaResource]:
+        return self._link_collection("resources")
+
+    def published_versions(self) -> ResourceReferenceCollection['PublicationMediaObject']:
+        return self._link_collection("publishedVersions")
+
+
+class PublicationMediaObject(BasicMdbObject):
+
+    def __init__(self, dict_=..., **kwargs) -> None:
+        super().__init__(dict_, **kwargs)
+
+    def playouts(self) -> ResourceReferenceCollection[Essence]:
+        return self._link_collection("playouts")
+
+    def published_version_of(self) -> ResourceReference[MediaObject]:
+        return ResourceReference.create(self.get("publishedVersionOf"))
 
 
 class PublicationEvent(EditorialObject):
