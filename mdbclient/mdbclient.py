@@ -798,6 +798,18 @@ class MdbClient(MdbJsonMethodApi):
         return await self.__add_on_rel(owner, "http://id.nrk.no/2016/mdb/relation/references", reference, headers)
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
+    async def add_category(self, owner, category, headers=None):
+        return await self.__add_on_rel(owner, "http://id.nrk.no/2016/mdb/relation/categories", category, headers)
+
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
+    async def add_contributor(self, owner, contributor, headers=None):
+        return await self.__add_on_rel(owner, "http://id.nrk.no/2016/mdb/relation/contributors", contributor, headers)
+
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
+    async def add_location(self, owner, location, headers=None):
+        return await self.__add_on_rel(owner, "http://id.nrk.no/2016/mdb/relation/locations", location, headers)
+
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def broadcast_change(self, destination, resid, headers=None):
         resolved = await self.resolve(resid)
         payload = {
