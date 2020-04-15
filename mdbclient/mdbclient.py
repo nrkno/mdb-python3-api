@@ -2,7 +2,7 @@ import urllib.parse
 import datetime
 import backoff
 from aiohttp import ClientSession, ClientResponse
-from typing import Optional, Union, List
+from typing import Optional, Union, List, TypeVar, Generic
 
 from mdbclient.relations import REL_ITEMS, REL_DOCUMENTS
 
@@ -66,6 +66,63 @@ def _self_link(owner):
     return _link(owner, "self")
 
 
+T = TypeVar('T')
+
+
+class ResourceReference(Generic[T]):
+    def __init__(self, resource_reference):
+        self.resource_reference = resource_reference
+
+    def __getitem__(self, key):
+        return self.resource_reference[key]
+
+    def is_type(self, main_type):
+        return self.resource_reference.get("type") == main_type
+
+    def is_subtype(self, sub_type):
+        return self.resource_reference.get("subType") == sub_type
+
+    @staticmethod
+    def create(node) -> 'ResourceReference[T]':
+        if node:
+            return ResourceReference(node)
+
+
+X = TypeVar('X')
+
+
+class ResourceReferenceCollection(Generic[X]):
+    def __init__(self, children):
+        self.children = children
+
+    def of_type(self, main_type):
+        return ResourceReferenceCollection([x for x in self.children if x.get("type") == main_type])
+
+    def of_subtype(self, sub_type):
+        return ResourceReferenceCollection([x for x in self.children if x.get("subType") == sub_type])
+
+    def first(self) -> ResourceReference[X]:
+        return ResourceReference.create(self.children[0]) if self.children else None
+
+    def __getitem__(self, key) -> ResourceReference[X]:
+        return ResourceReference.create(self.children[key])
+
+    def single(self):
+        if len(self.children) > 1:
+            raise Exception("Requested single element of a linkcollection with multiple elements")
+        if len(self.children) == 0:
+            raise Exception("Requested single element of an empty linkcollection")
+        return self.children[0]
+
+    def single_or_none(self):
+        if len(self.children) > 1:
+            raise Exception("Requested single element of a linkcollection with multiple elements")
+        return self.first()
+
+    def __len__(self):
+        return len(self.children)
+
+
 class BasicMdbObject(dict):
 
     def __init__(self, dict_=..., **kwargs) -> None:
@@ -77,6 +134,10 @@ class BasicMdbObject(dict):
 
     def link(self, rel):
         return _link(self, rel)
+
+    def _link_collection(self, collection_name) -> ResourceReferenceCollection:
+        result = self.get(collection_name, [])
+        return ResourceReferenceCollection(result)
 
 
 class Timeline(BasicMdbObject):
@@ -224,35 +285,11 @@ class InternalTimeline(Timeline):
             return matching[0]
 
 
-class LinkCollection():
-    def __init__(self, children):
-        self.children = children
-
-    def of_type(self, main_type):
-        return LinkCollection([x for x in self.children if x.get("type") == main_type])
-
-    def of_subtype(self, sub_type):
-        return LinkCollection([x for x in self.children if x.get("subType") == sub_type])
-
-    def first(self):
-        return self.children[0] if self.children else None
-
-    def __getitem__(self, key):
-        return self.children[key]
-
-    def __len__(self):
-        return len(self.children)
-
-
 class EditorialObject(BasicMdbObject):
 
     def __init__(self, dict_=..., **kwargs) -> None:
         super().__init__(dict_, **kwargs)
         self.resid = self.get("resId")
-
-    def _link_collection(self, collection_name) -> LinkCollection:
-        result = self.get(collection_name, [])
-        return LinkCollection(result)
 
     def reference_values(self, ref_type):
         return _reference_values(self, ref_type)
@@ -271,26 +308,13 @@ class MasterEO(EditorialObject):
     def __init__(self, dict_=..., **kwargs) -> None:
         super().__init__(dict_, **kwargs)
 
-    def _timeline_of_sub_type(self, sub_type):
-        rel_ = self.links_of_type("timelines", main_type="http://id.nrk.no/2017/mdb/types/Timeline", sub_type=sub_type)
-        return next(iter(rel_), None)
-
-    def timeline_of_sub_type(self, sub_type):
-        return self._timeline_of_sub_type(sub_type)
-
-    def publications_of_sub_type(self, sub_type):
-        return self.links_of_type("publications", sub_type=sub_type)
-
-    def media_objects_of_sub_type(self, sub_type):
-        return self.links_of_type("mediaObjects", sub_type=sub_type)
-
-    def media_objects(self) -> LinkCollection:
+    def media_objects(self) -> ResourceReferenceCollection:
         return self._link_collection("mediaObjects")
 
-    def publications(self) -> LinkCollection:
+    def publications(self) -> ResourceReferenceCollection:
         return self._link_collection("publications")
 
-    def timelines(self) -> LinkCollection:
+    def timelines(self) -> ResourceReferenceCollection:
         return self._link_collection("timelines")
 
 
@@ -304,6 +328,12 @@ class PublicationMediaObject(BasicMdbObject):
 
     def __init__(self, dict_=..., **kwargs) -> None:
         super().__init__(dict_, **kwargs)
+
+    def playouts(self) -> ResourceReferenceCollection:
+        return self._link_collection("playouts")
+
+    def publishedVersionOf(self) -> ResourceReference[MediaObject]:
+        return ResourceReference.create(self.get("publishedVersionOf"))
 
 
 class MediaResource(BasicMdbObject):
@@ -322,6 +352,9 @@ class PublicationEvent(EditorialObject):
 
     def __init__(self, dict_=..., **kwargs) -> None:
         super().__init__(dict_, **kwargs)
+
+    def pmos(self) -> ResourceReferenceCollection:
+        return self._link_collection("pmos")
 
 
 class StandardResponse(object):
@@ -736,7 +769,7 @@ class MdbClient(MdbJsonMethodApi):
             actual = await self.open_url(location + "?fast=true")
             return create_response_from_std_response(actual)
         else:
-            return create_respXonse_from_std_response(
+            return create_response_from_std_response(
                 await self._invoke_get_method_std_response("resolve", parameters, headers))
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
