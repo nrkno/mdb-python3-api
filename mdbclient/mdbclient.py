@@ -797,7 +797,8 @@ class MdbJsonMethodApi(MdbJsonApi):
         stdresponse = await self.rest_api_util.http_post_follow(real_method, payload, self._merged_headers(headers))
         response = stdresponse.response
         resId = response.get("resId") if response else None
-        self.change_listener.on_create(resId, method_name, payload)
+        type = response.get("type") if response else None
+        self.change_listener.on_create(resId, type if type else method_name, payload)
         return response
 
 
