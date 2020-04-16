@@ -413,6 +413,9 @@ class MediaResource(BasicMdbObject):
     def essences(self) -> ResourceReferenceCollection[Essence]:
         return self._reference_collection("essences")
 
+    def matching_locators(self, identifier, storageType):
+        return [x for x in self.get("locators") if x.get("identifier") == identifier and x.get("storageType", {}).get("resId") == storageType]
+
 
 class MediaObject(BasicMdbObject):
 
@@ -519,6 +522,8 @@ class RestApiUtil(object):
 
     @staticmethod
     async def __unpack_response_content(uri, response):
+        if response.status == 204:
+            return
         if response.content_type == "application/json":
             return await response.json()
         raise Exception(
