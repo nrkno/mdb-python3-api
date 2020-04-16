@@ -650,6 +650,10 @@ class Change:
         self.topic = topic
         self.payload = payload
 
+    def __str__(self) -> str:
+        topic = f" TOPIC {self.topic}" if self.topic else ""
+        return f"{self.type}{topic} {self.resId} {self.payload}"
+
 
 class RecordingChangeListener(MdbChangeListener):
 
