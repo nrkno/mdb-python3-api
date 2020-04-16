@@ -5,17 +5,19 @@ import aiohttp
 import pytest
 
 from mdbclient.headers import create_headers
-from mdbclient.mdbclient import MdbClient
+from mdbclient.mdbclient import MdbClient, RecordingChangeListener
 
 
 @pytest.mark.asyncio
 async def test_create_update_meos():
     async with aiohttp.ClientSession() as session:
         client = MdbClient.localhost("test", session, "test_correlation")
+        client.change_listener = RecordingChangeListener()
         result = await client.create_master_eo({"title": "fozz"})
         assert result['title'] == 'fozz'
         updated = await client.update(result, {"title": "fizz"})
         assert updated['title'] == 'fizz'
+        assert len(client.change_listener.changes) == 2
 
 
 @pytest.mark.asyncio

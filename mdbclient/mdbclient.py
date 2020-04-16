@@ -1,5 +1,6 @@
 import datetime
 import urllib.parse
+from abc import abstractmethod
 from typing import Optional, Union, List, TypeVar, Generic
 
 import backoff
@@ -155,7 +156,7 @@ class ResourceReferenceCollection(Generic[X]):
                                            self.collection_name)
 
     def of_subtype(self, sub_type) -> 'ResourceReferenceCollection[X]':
-        return ResourceReferenceCollection([x for x in self.children if x.get("subType") == sub_type],self.owner,
+        return ResourceReferenceCollection([x for x in self.children if x.get("subType") == sub_type], self.owner,
                                            self.collection_name)
 
     def first(self) -> ResourceReference[X]:
@@ -414,7 +415,8 @@ class MediaResource(BasicMdbObject):
         return self._reference_collection("essences")
 
     def matching_locators(self, identifier, storageType):
-        return [x for x in self.get("locators") if x.get("identifier") == identifier and x.get("storageType", {}).get("resId") == storageType]
+        return [x for x in self.get("locators") if
+                x.get("identifier") == identifier and x.get("storageType", {}).get("resId") == storageType]
 
 
 class MediaObject(BasicMdbObject):
@@ -608,6 +610,66 @@ def _check_if_not_lock(exc: HttpReqException):
     return not _check_if_lock(exc)
 
 
+class MdbChangeListener:
+    @abstractmethod
+    def on_change(self, resId, topic, changes):
+        pass
+
+    @abstractmethod
+    def on_add(self, resId, topic, add):
+        pass
+
+    @abstractmethod
+    def on_create(self, resId, topic, add):
+        pass
+
+    @abstractmethod
+    def on_delete(self, resId):
+        pass
+
+
+class VoidChangeListener(MdbChangeListener):
+
+    def on_change(self, res_id, topic, changes):
+        pass
+
+    def on_add(self, res_id, topic, add):
+        pass
+
+    def on_create(self, res_id, topic, add):
+        pass
+
+    def on_delete(self, res_id):
+        pass
+
+
+class Change:
+    def __init__(self, res_id, type, topic, payload):
+        self.resId = res_id
+        self.type = type
+        self.topic = topic
+        self.payload = payload
+
+
+class RecordingChangeListener(MdbChangeListener):
+
+    def __init__(self):
+        self.changes = []
+
+    def on_change(self, resId, topic, changes):
+        self.changes.append(Change(resId, "CHANGE", topic, changes))
+        pass
+
+    def on_add(self, resId, topic, add):
+        self.changes.append(Change(resId, "ADD", topic, add))
+
+    def on_create(self, resId, topic, add):
+        self.changes.append(Change(resId, "CREATE", topic, add))
+
+    def on_delete(self, resId):
+        self.changes.append(Change(resId, "DELETE"))
+
+
 class MdbJsonApi(object):
     """
     Knows how to work with mdb hyperlinked json objects. Calls mdbclient in a responsible manner with
@@ -646,6 +708,7 @@ class MdbJsonApi(object):
 
         self.force_host = force_host
         self.force_scheme = force_scheme
+        self.change_listener = VoidChangeListener()
         self.rest_api_util = RestApiUtil(session)
 
     @staticmethod
@@ -728,7 +791,10 @@ class MdbJsonMethodApi(MdbJsonApi):
     async def _invoke_create_method(self, method_name, payload, headers=None) -> {}:
         real_method = self.__api_method(method_name)
         stdresponse = await self.rest_api_util.http_post_follow(real_method, payload, self._merged_headers(headers))
-        return stdresponse.response
+        response = stdresponse.response
+        resId = response.get("resId") if response else None
+        self.change_listener.on_create(resId, method_name, payload)
+        return response
 
 
 class MdbClient(MdbJsonMethodApi):
@@ -758,7 +824,9 @@ class MdbClient(MdbJsonMethodApi):
 
     async def __add_on_rel(self, owner, rel, payload, headers=None):
         link = self._rewritten_link(_link(owner, rel))
-        return await self._do_post(link, payload, headers)
+        response = await self._do_post(link, payload, headers)
+        self.change_listener.on_add(owner.get("resId"), rel, payload)
+        return response
 
     async def open_rel(self, owner, rel, headers=None):
         link = self._rewritten_link(_link(owner, rel))
@@ -952,7 +1020,9 @@ class MdbClient(MdbJsonMethodApi):
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def delete(self, owner, headers=None):
         link = self._rewritten_link(_self_link(owner))
-        return await self._do_delete(link, headers)
+        result = await self._do_delete(link, headers)
+        self.change_listener.on_delete(owner.get("resId"))
+        return result
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def open(self, owner, headers=None):
@@ -971,4 +1041,5 @@ class MdbClient(MdbJsonMethodApi):
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def update(self, owner, updates, headers=None):
         link = self._rewritten_link(_self_link(owner))
+        self.change_listener.on_change(owner.get("resId"), None, updates)
         return await self._do_post_follow(link, updates, headers)
