@@ -651,7 +651,7 @@ class Change:
         self.payload = payload
 
     def __str__(self) -> str:
-        topic = f" TOPIC {self.topic}" if self.topic else ""
+        topic = f" {self.topic}" if self.topic else ""
         return f"{self.type}{topic} {self.resId} {self.payload}"
 
 
