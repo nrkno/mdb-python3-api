@@ -660,6 +660,14 @@ class RecordingChangeListener(MdbChangeListener):
     def __init__(self):
         self.changes = []
 
+    def pop_changes(self):
+        """
+        Clear the changes, returning the values before clearing
+        """
+        res = self.changes
+        self.changes = []
+        return res
+
     def on_change(self, resId, topic, changes):
         self.changes.append(Change(resId, "CHANGE", topic, changes))
         pass
