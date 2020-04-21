@@ -526,6 +526,8 @@ class RestApiUtil(object):
     async def __unpack_response_content(uri, response):
         if response.status == 204:
             return
+        if response.status == 202 and response.content_length == 0:
+            return
         if response.content_type == "application/json":
             return await response.json()
         raise Exception(
