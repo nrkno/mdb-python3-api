@@ -768,7 +768,7 @@ class MdbJsonApi(object):
         return replaced.geturl()
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
-    async def open_url(self, url, headers=None) -> StandardResponse:
+    async def _open_url(self, url, headers=None) -> StandardResponse:
         response = await self.rest_api_util.http_get(self._rewritten_link(url), self._merged_headers(headers))
         if not response.is_successful():
             raise Exception(f"Http {response.status} for {url}:\n{response}")
@@ -957,6 +957,14 @@ class MdbClient(MdbJsonMethodApi):
         publication_media_object["publishedVersionOf"] = _res_id(media_object)
         return create_response(
             await self._invoke_create_method("publicationMediaObject", publication_media_object, headers))
+
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
+    async def open_url(self, url, headers=None) -> Optional[Union[MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent,
+                           InternalTimeline, GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline,
+                           GenealogyRightsTimeline]]:
+        resp = await self._open_url(url)
+        return create_response(resp.response)
+
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=120, giveup=_check_if_not_lock)
     async def resolve(self, res_id, headers=None, fast: bool = False) -> \
