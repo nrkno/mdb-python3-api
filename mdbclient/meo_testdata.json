@@ -14,6 +14,108 @@
     ],
     "type": "http://id.nrk.no/2016/mdb/types/VersionGroup"
   },
+  "contributors": [
+    {
+      "resId": "http://id.nrk.no/2016/mdb/masterEO/rest-client/object/99d3b057-b27d-4efe-93b0-57b27d4efe9a",
+      "links": [
+        {
+          "rel": "self",
+          "type": "application/json",
+          "href": "http://mdbklipp.felles.ds.nrk.no/api/masterEO/c7f65f24-cb78-4281-b65f-24cb788281b7/contributors/http:%2F%2Fid.nrk.no%2F2016%2Fmdb%2FmasterEO%2Frest-client%2Fobject%2F99d3b057-b27d-4efe-93b0-57b27d4efe9a"
+        }
+      ],
+      "contact": {
+        "resId": "http://id.nrk.no/2016/mdb/masterEO/rest-client/object/116b2937-040a-413c-ab29-37040af13cfb",
+        "title": "deLillos"
+      },
+      "role": {
+        "resId": "http://authority.nrk.no/role/N106",
+        "title": "Hovedartist",
+        "groupId": "participants"
+      },
+      "capacity": "Band"
+    },
+    {
+      "resId": "http://id.nrk.no/2016/mdb/masterEO/rest-client/object/0339dbac-e499-4d25-b9db-ace4998d2574",
+      "links": [
+        {
+          "rel": "self",
+          "type": "application/json",
+          "href": "http://mdbklipp.felles.ds.nrk.no/api/masterEO/c7f65f24-cb78-4281-b65f-24cb788281b7/contributors/http:%2F%2Fid.nrk.no%2F2016%2Fmdb%2FmasterEO%2Frest-client%2Fobject%2F0339dbac-e499-4d25-b9db-ace4998d2574"
+        }
+      ],
+      "contact": {
+        "resId": "http://id.nrk.no/2016/mdb/masterEO/rest-client/object/49476eb6-31d3-4d5c-876e-b631d3ad5c8d",
+        "title": "Bård Skar"
+      },
+      "role": {
+        "resId": "http://authority.nrk.no/role/V490",
+        "title": "Redigerer",
+        "groupId": "crew"
+      },
+      "capacity": "Redigerer"
+    },
+    {
+      "resId": "http://id.nrk.no/2016/mdb/masterEO/rest-client/object/4547c6bc-6c42-411d-87c6-bc6c42811deb",
+      "links": [
+        {
+          "rel": "self",
+          "type": "application/json",
+          "href": "http://mdbklipp.felles.ds.nrk.no/api/masterEO/c7f65f24-cb78-4281-b65f-24cb788281b7/contributors/http:%2F%2Fid.nrk.no%2F2016%2Fmdb%2FmasterEO%2Frest-client%2Fobject%2F4547c6bc-6c42-411d-87c6-bc6c42811deb"
+        }
+      ],
+      "contact": {
+        "resId": "http://authority.nrk.no/agent/0f8a3bc5-9481-46e8-acf1-42331205e2ff",
+        "title": "Lars Lillo-Steenberg"
+      },
+      "role": {
+        "resId": "http://authority.nrk.no/role/N01",
+        "title": "Medvirkende",
+        "groupId": "participants"
+      },
+      "capacity": "Tekstforfatter"
+    },
+    {
+      "resId": "http://id.nrk.no/2016/mdb/masterEO/rest-client/object/65c1a4f8-de99-4883-81a4-f8de99c88358",
+      "links": [
+        {
+          "rel": "self",
+          "type": "application/json",
+          "href": "http://mdbklipp.felles.ds.nrk.no/api/masterEO/c7f65f24-cb78-4281-b65f-24cb788281b7/contributors/http:%2F%2Fid.nrk.no%2F2016%2Fmdb%2FmasterEO%2Frest-client%2Fobject%2F65c1a4f8-de99-4883-81a4-f8de99c88358"
+        }
+      ],
+      "contact": {
+        "resId": "http://authority.nrk.no/agent/0f8a3bc5-9481-46e8-acf1-42331205e2ff",
+        "title": "Lars Lillo-Steenberg"
+      },
+      "role": {
+        "resId": "http://authority.nrk.no/role/N01",
+        "title": "Medvirkende",
+        "groupId": "participants"
+      },
+      "capacity": "Komponist"
+    },
+    {
+      "resId": "http://id.nrk.no/2016/mdb/masterEO/rest-client/object/e1325b1c-0960-4bb0-b25b-1c09605bb07e",
+      "links": [
+        {
+          "rel": "self",
+          "type": "application/json",
+          "href": "http://mdbklipp.felles.ds.nrk.no/api/masterEO/c7f65f24-cb78-4281-b65f-24cb788281b7/contributors/http:%2F%2Fid.nrk.no%2F2016%2Fmdb%2FmasterEO%2Frest-client%2Fobject%2Fe1325b1c-0960-4bb0-b25b-1c09605bb07e"
+        }
+      ],
+      "contact": {
+        "resId": "http://id.nrk.no/2016/mdb/masterEO/rest-client/object/a1ea96bd-872d-4d4e-aa96-bd872d7d4e28",
+        "title": "OSLO"
+      },
+      "role": {
+        "resId": "http://authority.nrk.no/role/V23",
+        "title": "Utgiver",
+        "groupId": "contributors"
+      },
+      "capacity": "Kontor"
+    }
+  ],
   "isMetadataMeo": true,
   "timelines": [
     {

@@ -348,11 +348,38 @@ class InternalTimeline(Timeline):
             return matching[0]
 
 
+class Contributor():
+    def __init__(self, dict_=..., **kwargs) -> None:
+        self.resId = dict_["resId"]
+        self.contact = dict_.get("contact", {})
+        self.role = dict_.get("role", {})
+        self.characterName = dict_.get("characterName")
+        self.capacity = dict_.get("capacity")
+        self.comment = dict_.get("comment")
+
+    def key(self):
+        return f"CT={self.contact.get('title')},T={self.role.get('title')},R={self.role.get('resId')},C={self.contact.get('resId')},CAP={self.capacity}"
+
+    @staticmethod
+    def unique(contributors: List['Contributor']) -> List['Contributor']:
+        res = []
+        seen = set()
+        for x in contributors:
+            if (key := x.key()) not in seen:
+                seen.add(key)
+                res.append(x)
+        return res
+
+
 class EditorialObject(BasicMdbObject):
 
     def __init__(self, dict_=..., **kwargs) -> None:
         super().__init__(dict_, **kwargs)
         self.resid = self.get("resId")
+
+    def contributors(self) -> List[Contributor]:
+        contrs = self.get("contributors", [])
+        return [Contributor(x) for x in contrs]
 
     def reference_values(self, ref_type):
         return _reference_values(self, ref_type)
@@ -959,12 +986,12 @@ class MdbClient(MdbJsonMethodApi):
             await self._invoke_create_method("publicationMediaObject", publication_media_object, headers))
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
-    async def open_url(self, url, headers=None) -> Optional[Union[MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent,
-                           InternalTimeline, GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline,
-                           GenealogyRightsTimeline]]:
+    async def open_url(self, url, headers=None) -> Optional[
+        Union[MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent,
+              InternalTimeline, GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline,
+              GenealogyRightsTimeline]]:
         resp = await self._open_url(url)
         return create_response(resp.response)
-
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=120, giveup=_check_if_not_lock)
     async def resolve(self, res_id, headers=None, fast: bool = False) -> \
