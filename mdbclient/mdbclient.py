@@ -348,8 +348,9 @@ class InternalTimeline(Timeline):
             return matching[0]
 
 
-class Contributor():
+class Contributor(dict):
     def __init__(self, dict_=..., **kwargs) -> None:
+        super().__init__(dict_, **kwargs)
         self.resId = dict_.get("resId")
         self.contact = dict_.get("contact", {})
         self.role = dict_.get("role", {})
