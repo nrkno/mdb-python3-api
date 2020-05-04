@@ -350,7 +350,7 @@ class InternalTimeline(Timeline):
 
 class Contributor():
     def __init__(self, dict_=..., **kwargs) -> None:
-        self.resId = dict_["resId"]
+        self.resId = dict_.get("resId")
         self.contact = dict_.get("contact", {})
         self.role = dict_.get("role", {})
         self.characterName = dict_.get("characterName")
