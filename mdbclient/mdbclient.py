@@ -29,7 +29,9 @@ class HttpReqException(Exception):
 
 
 class Http404(Exception):
-    def __init__(self, uri, message):
+    def __init__(self, uri, message, headers=None, uri_params=None):
+        self.uri_params = uri_params
+        self.headers = headers
         self.uri = uri
         self.message = message
 
@@ -572,7 +574,7 @@ class RestApiUtil(object):
         if response.status == 409:
             raise Conflict(uri, request_payload, await RestApiUtil.__unpack_response_content(uri, response, headers, uri_params))
         if response.status == 404:
-            raise Http404(uri, None)
+            raise Http404(uri, None, headers, uri_params)
         if response.status == 410:
             raise AggregateGoneException
         if response.status >= 400:
