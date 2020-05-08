@@ -284,6 +284,12 @@ class RightsTimeline(Timeline):
         super().__init__(dict_, **kwargs)
         self["type"] = self.TYPE
 
+    def fulltimeline_item(self):
+        return self.select_single_item(("appliesToFullTimeline", True))
+
+    @staticmethod
+    def create(self, items) -> 'RightsTimeline':
+        return RightsTimeline({"items": items})
 
 class IndexpointTimeline(Timeline):
     TYPE = "http://id.nrk.no/2017/mdb/timelinetype/IndexPoints"
