@@ -910,6 +910,14 @@ class MdbClient(MdbJsonMethodApi):
         return create_response(await self._invoke_create_method("essence", essence, headers))
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
+    async def create_rights_timeline(self, master_eo, timeline, headers=None, shallow=False) -> RightsTimeline:
+        if type := timeline.get("TYPE"):
+            if type != RightsTimeline.TYPE:
+                raise ArgumentException()
+
+
+
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def create_timeline(self, master_eo, timeline, headers=None, shallow=False) -> Timeline:
         timeline["masterEO"] = _res_id(master_eo)
         items = None
