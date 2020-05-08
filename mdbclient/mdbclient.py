@@ -288,7 +288,7 @@ class RightsTimeline(Timeline):
         return self.select_single_item(("appliesToFullTimeline", True))
 
     @staticmethod
-    def create(self, items) -> 'RightsTimeline':
+    def create(items) -> 'RightsTimeline':
         return RightsTimeline({"items": items})
 
 class IndexpointTimeline(Timeline):
@@ -909,11 +909,14 @@ class MdbClient(MdbJsonMethodApi):
         essence["playoutOf"] = _res_id(publication_media_object)
         return create_response(await self._invoke_create_method("essence", essence, headers))
 
-    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def create_rights_timeline(self, master_eo, timeline, headers=None, shallow=False) -> RightsTimeline:
-        if type := timeline.get("TYPE"):
+        if type := timeline.get("type"):
             if type != RightsTimeline.TYPE:
-                raise ArgumentException()
+                raise ValueError(f"Attempted to create a rights timeline with a supplied type {type}")
+        else:
+            timeline["type"] = RightsTimeline.TYPE
+        # noinspection PyTypeChecker
+        return await self.create_timeline(master_eo, timeline, headers, shallow);
 
 
 
