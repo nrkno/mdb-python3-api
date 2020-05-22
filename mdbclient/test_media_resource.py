@@ -13,22 +13,22 @@ mr_src = {
         {
             "rel": "self",
             "type": "application/json",
-            "href": "http://localhost:22348/api/mediaResource/1af85163-829f-4461-b851-63829fa4613c"
+            "href": "http://localhost:22358/api/mediaResource/1af85163-829f-4461-b851-63829fa4613c"
         },
         {
             "rel": "http://id.nrk.no/2016/mdb/relation/locators",
             "type": "application/json",
-            "href": "http://localhost:22348/api/mediaResource/1af85163-829f-4461-b851-63829fa4613c/locators"
+            "href": "http://localhost:22358/api/mediaResource/1af85163-829f-4461-b851-63829fa4613c/locators"
         },
         {
             "rel": "http://id.nrk.no/2016/mdb/relation/formats",
             "type": "application/json",
-            "href": "http://localhost:22348/api/mediaResource/1af85163-829f-4461-b851-63829fa4613c/formats"
+            "href": "http://localhost:22358/api/mediaResource/1af85163-829f-4461-b851-63829fa4613c/formats"
         },
         {
             "rel": "http://id.nrk.no/2016/mdb/relation/model",
             "type": "text/turtle",
-            "href": "http://localhost:22348/api/mediaResource/1af85163-829f-4461-b851-63829fa4613c/model"
+            "href": "http://localhost:22358/api/mediaResource/1af85163-829f-4461-b851-63829fa4613c/model"
         }
     ],
     "created": "2020-04-16T07:12:04.113595Z",
@@ -40,7 +40,7 @@ mr_src = {
                 {
                     "rel": "self",
                     "type": "application/json",
-                    "href": "http://localhost:22348/api/essence/b15a36fb-d1f6-4944-9a36-fbd1f6594477"
+                    "href": "http://localhost:22358/api/essence/b15a36fb-d1f6-4944-9a36-fbd1f6594477"
                 }
             ],
             "type": "http://id.nrk.no/2016/mdb/types/Essence"
@@ -53,7 +53,7 @@ mr_src = {
                 {
                     "rel": "self",
                     "type": "application/json",
-                    "href": "http://localhost:22348/api/mediaResource/1af85163-829f-4461-b851-63829fa4613c/locators/http:%2F%2Fid.nrk.no%2F2016%2Flocator%2Frest-client%2Fobject%2F42f66cc4-2ab0-42c1-b66c-c42ab0c2c1ca"
+                    "href": "http://localhost:22358/api/mediaResource/1af85163-829f-4461-b851-63829fa4613c/locators/http:%2F%2Fid.nrk.no%2F2016%2Flocator%2Frest-client%2Fobject%2F42f66cc4-2ab0-42c1-b66c-c42ab0c2c1ca"
                 }
             ],
             "identifier": "archiveNumber.id.nrk.no:%20A%2063976",
@@ -71,7 +71,7 @@ mr_src = {
             {
                 "rel": "self",
                 "type": "application/json",
-                "href": "http://localhost:22348/api/mediaObject/c83b3ba4-0761-4a60-bb3b-a40761ba60be"
+                "href": "http://localhost:22358/api/mediaObject/c83b3ba4-0761-4a60-bb3b-a40761ba60be"
             }
         ],
         "type": "http://id.nrk.no/2016/mdb/types/MediaObject"
