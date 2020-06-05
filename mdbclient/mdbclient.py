@@ -959,6 +959,10 @@ class MdbClient(MdbJsonMethodApi):
         return await self.__add_on_rel(owner, "http://id.nrk.no/2016/mdb/relation/locations", location, headers)
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
+    async def migrate_metadata(self, version_group, headers=None):
+        return await self.__add_on_rel(version_group, "temprel:migrateMetadata", {}, headers)
+
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def broadcast_change(self, destination, resid, headers=None):
         resolved = await self.resolve(resid)
         payload = {
