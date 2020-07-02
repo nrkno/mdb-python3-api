@@ -1,11 +1,6 @@
-import random
-import string
-
-import aiohttp
 import pytest
 
-from mdbclient.headers import create_headers
-from mdbclient.mdbclient import MdbClient, Timeline, EditorialObject, MediaResource
+from mdbclient.mdbclient import MediaResource
 
 mr_src = {
     "resId": "http://id.nrk.no/2016/mdb/mediaResource/1af85163-829f-4461-b851-63829fa4613c",

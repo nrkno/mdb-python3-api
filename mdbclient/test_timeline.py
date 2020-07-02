@@ -1,9 +1,6 @@
 import pytest
 
 from mdbclient.mdbclient import Timeline
-import pytest
-
-from mdbclient.mdbclient import Timeline
 
 timeline = Timeline(
     {"items": [{"resId": "abc", "offset": 10, "title": "ABC"}, {"resId": "cde", "offset": 20, "title": "CDE"},

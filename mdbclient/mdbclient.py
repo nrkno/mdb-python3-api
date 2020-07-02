@@ -291,6 +291,7 @@ class RightsTimeline(Timeline):
     def create(items) -> 'RightsTimeline':
         return RightsTimeline({"items": items})
 
+
 class IndexpointTimeline(Timeline):
     TYPE = "http://id.nrk.no/2017/mdb/timelinetype/IndexPoints"
 
@@ -576,21 +577,26 @@ class RestApiUtil(object):
     @staticmethod
     async def __raise_errors(response, uri, request_payload, headers=None, uri_params=None):
         if response.status == 400:
-            raise BadRequest(uri, request_payload, await RestApiUtil.__unpack_response_content(uri, response, headers, uri_params))
+            raise BadRequest(uri, request_payload,
+                             await RestApiUtil.__unpack_response_content(uri, response, headers, uri_params))
         if response.status == 409:
-            raise Conflict(uri, request_payload, await RestApiUtil.__unpack_response_content(uri, response, headers, uri_params))
+            raise Conflict(uri, request_payload,
+                           await RestApiUtil.__unpack_response_content(uri, response, headers, uri_params))
         if response.status == 404:
             raise Http404(uri, None, headers, uri_params)
         if response.status == 410:
             raise AggregateGoneException
         if response.status >= 400:
-            raise HttpReqException(uri, request_payload, await RestApiUtil.__unpack_response_content(uri, response, headers, uri_params),
+            raise HttpReqException(uri, request_payload,
+                                   await RestApiUtil.__unpack_response_content(uri, response, headers, uri_params),
                                    response.status)
 
     @staticmethod
-    async def __unpack_json_response(response, request_uri, headers=None, uri_params=None, request_payload=None) -> StandardResponse:
+    async def __unpack_json_response(response, request_uri, headers=None, uri_params=None,
+                                     request_payload=None) -> StandardResponse:
         await RestApiUtil.__raise_errors(response, request_uri, request_payload, headers, uri_params)
-        return StandardResponse(request_uri, await RestApiUtil.__unpack_response_content(request_uri, response, headers, uri_params),
+        return StandardResponse(request_uri,
+                                await RestApiUtil.__unpack_response_content(request_uri, response, headers, uri_params),
                                 response.status)
 
     async def http_get(self, uri, headers=None, uri_params=None) -> StandardResponse:
@@ -617,7 +623,7 @@ class RestApiUtil(object):
     # @backoff.on_exception(backoff.expo, requests.exceptions.RequestException, max_tries=8)
     async def http_post(self, uri, json_payload, headers=None) -> StandardResponse:
         async with self.session.post(uri, json=json_payload, headers=headers) as response:
-            firstlevel_response = await RestApiUtil.__unpack_json_response(response, uri, headers, None,  json_payload)
+            firstlevel_response = await RestApiUtil.__unpack_json_response(response, uri, headers, None, json_payload)
             return firstlevel_response
 
     async def http_post_form(self, uri, dict_payload, headers=None) -> StandardResponse:
@@ -737,9 +743,9 @@ class MdbJsonApi(object):
     This class is unaware of the url of the remote system since it's all in the hyperlinked payloads.
     """
 
-    def __init__(self, user_id, correlation_id, session: ClientSession = None, source_system=None,
-                 batch_id="default-batch-id",
-                 force_host=None, force_scheme=None):
+    def __init__(self, session: ClientSession, user_id: str, correlation_id: str, source_system: str = None,
+                 batch_id: str = "default-batch-id",
+                 force_host: bool = None, force_scheme: bool = None):
         self._global_headers = {}
         if source_system:
             if not isinstance(source_system, str):
@@ -747,11 +753,11 @@ class MdbJsonApi(object):
             self._global_headers["X-Source-System"] = source_system
         if user_id:
             if not isinstance(user_id, str):
-                raise TypeError("user_id is not a string: " + type(user_id))
+                raise TypeError(f"user_id is not a string: {type(user_id)}")
             self._global_headers["X-userId"] = user_id
         if correlation_id:
             if not isinstance(correlation_id, str):
-                raise TypeError("correlation_id is not a string: " + type(correlation_id))
+                raise TypeError(f"correlation_id is not a string: {type(correlation_id)}")
             self._global_headers["X-transactionId"] = correlation_id
         if batch_id:
             if not isinstance(batch_id, str):
@@ -818,10 +824,10 @@ class MdbJsonMethodApi(MdbJsonApi):
     A jason api that knows how to invoke method calls directly by name. Requires a server addreess (api_base)
     """
 
-    def __init__(self, api_base, user_id, correlation_id, session: ClientSession = None, source_system=None,
-                 batch_id=None,
-                 force_host=None, force_scheme=None):
-        MdbJsonApi.__init__(self, user_id, correlation_id, session, source_system, batch_id, force_host, force_scheme)
+    def __init__(self, session: ClientSession, api_base: str, user_id: str, correlation_id, source_system: str = None,
+                 batch_id: str = "default-batch-id",
+                 force_host: bool = None, force_scheme: bool = None):
+        MdbJsonApi.__init__(self, session, user_id, correlation_id, source_system, batch_id, force_host, force_scheme)
         parsed = urllib.parse.urlparse(api_base)
         self.api_base = parsed.scheme + "://" + parsed.netloc + "/api"
 
@@ -851,29 +857,29 @@ class MdbJsonMethodApi(MdbJsonApi):
 
 
 class MdbClient(MdbJsonMethodApi):
-    def __init__(self, api_base, user_id, correlation_id, session: ClientSession = None, source_system=None,
-                 batch_id="default-batch-id"):
-        MdbJsonMethodApi.__init__(self, api_base, user_id, correlation_id, session, source_system, batch_id)
+    def __init__(self, session: ClientSession, api_base, user_id: str, correlation_id: str, source_system: str = None,
+                 batch_id="default-batch-id", force_host:bool=None, force_scheme:bool=None):
+        MdbJsonMethodApi.__init__(self, session, api_base, user_id, correlation_id, source_system, batch_id, force_host, force_scheme)
 
     @staticmethod
-    def localhost(user_id, session: ClientSession = None, correlation_id=None, batch_id="default-batch-id"):
-        return MdbClient("http://localhost:22338", user_id, correlation_id, session, None, batch_id)
+    def localhost(session: ClientSession, user_id: str, correlation_id=None, batch_id="default-batch-id"):
+        return MdbClient(session, "http://localhost:22338", user_id, correlation_id, None, batch_id)
 
     @staticmethod
-    def localhost_overlay(user_id, session: ClientSession = None, correlation_id=None, batch_id="default-batch-id"):
-        return MdbClient("http://localhost:22358", user_id, correlation_id, session, None, batch_id)
+    def localhost_overlay(session: ClientSession, user_id, correlation_id=None, batch_id="default-batch-id"):
+        return MdbClient(session, "http://localhost:22358", user_id, correlation_id, None, batch_id)
 
     @staticmethod
-    def dev(user_id, session: ClientSession = None, correlation_id=None, batch_id="default-batch-id"):
-        return MdbClient("http://mdbklippdev.felles.ds.nrk.no", user_id, correlation_id, session, None, batch_id)
+    def dev(session: ClientSession, user_id, correlation_id=None, batch_id="default-batch-id"):
+        return MdbClient(session, "http://mdbklippdev.felles.ds.nrk.no", user_id, correlation_id, None, batch_id)
 
     @staticmethod
-    def stage(user_id, session: ClientSession = None, correlation_id=None, batch_id="default-batch-id"):
-        return MdbClient("http://mdbklippstage.felles.ds.nrk.no", user_id, correlation_id, session, None, batch_id)
+    def stage(session: ClientSession, user_id, correlation_id=None, batch_id="default-batch-id"):
+        return MdbClient(session, "http://mdbklippstage.felles.ds.nrk.no", correlation_id, user_id, None, batch_id)
 
     @staticmethod
-    def prod(user_id, session: ClientSession = None, correlation_id=None, batch_id="default-batch-id"):
-        return MdbClient("http://mdbklipp.felles.ds.nrk.no", user_id, correlation_id, session, None, batch_id)
+    def prod(session: ClientSession, user_id, correlation_id=None, batch_id="default-batch-id"):
+        return MdbClient(session, "http://mdbklipp.felles.ds.nrk.no", correlation_id, user_id, None, batch_id)
 
     async def __add_on_rel(self, owner, rel, payload, headers=None):
         link = self._rewritten_link(_link(owner, rel))
@@ -917,8 +923,6 @@ class MdbClient(MdbJsonMethodApi):
             timeline["type"] = RightsTimeline.TYPE
         # noinspection PyTypeChecker
         return await self.create_timeline(master_eo, timeline, headers, shallow);
-
-
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def create_timeline(self, master_eo, timeline, headers=None, shallow=False) -> Timeline:
@@ -1020,23 +1024,15 @@ class MdbClient(MdbJsonMethodApi):
         return create_response(resp.response)
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=120, giveup=_check_if_not_lock)
-    async def resolve(self, res_id, headers=None, fast: bool = False) -> \
+    async def resolve(self, res_id, headers=None) -> \
             Optional[Union[MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent,
                            InternalTimeline, GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline,
                            GenealogyRightsTimeline]]:
         if not res_id:
             return
         parameters = {'resId': res_id}
-        if fast:
-            real_method = self._api_method("resolve")
-            raw_response = await self.rest_api_util.http_get_no_redirect(real_method, self._merged_headers(headers),
-                                                                         parameters)
-            location = raw_response.headers["location"]
-            actual = await self.open_url(location + "?fast=true")
-            return create_response_from_std_response(actual)
-        else:
-            return create_response_from_std_response(
-                await self._invoke_get_method_std_response("resolve", parameters, headers))
+        return create_response_from_std_response(
+            await self._invoke_get_method_std_response("resolve", parameters, headers))
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def find_media_object(self, name, headers=None) -> Optional[MediaObject]:

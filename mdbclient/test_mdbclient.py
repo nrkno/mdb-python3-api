@@ -11,7 +11,7 @@ from mdbclient.mdbclient import MdbClient, RecordingChangeListener
 @pytest.mark.asyncio
 async def test_create_update_meos():
     async with aiohttp.ClientSession() as session:
-        client = MdbClient.localhost("test", session, "test_correlation")
+        client = MdbClient.localhost(session, "test", "test_correlation")
         client.change_listener = RecordingChangeListener()
         result = await client.create_master_eo({"title": "fozz"})
         assert result['title'] == 'fozz'
@@ -21,31 +21,33 @@ async def test_create_update_meos():
 
 
 @pytest.mark.asyncio
+# noinspection DuplicatedCode
 async def test_delete_meos():
     async with aiohttp.ClientSession() as session:
-        client = MdbClient.localhost("test", session, "test_correlation")
+        client = MdbClient.localhost(session, "test", "test_correlation")
         result = await client.create_master_eo({"title": "fozz"})
         assert result['title'] == 'fozz'
         await client.delete(result)
         updated = await client.open(result)
-        assert updated['deleted'] == True
+        assert updated['deleted'] is True
 
 
 @pytest.mark.asyncio
+# noinspection DuplicatedCode
 async def test_find_mo_by_name():
     async with aiohttp.ClientSession() as session:
-        client = MdbClient.localhost("test", session, "test_correlation")
+        client = MdbClient.localhost(session, "test", "test_correlation")
         result = await client.create_master_eo({"title": "fozz"})
         assert result['title'] == 'fozz'
         await client.delete(result)
         updated = await client.open(result)
-        assert updated['deleted'] == True
-
+        assert updated['deleted'] is True
 
 @pytest.mark.asyncio
+# noinspection DuplicatedCode
 async def test_create_update_publication_event():
     async with aiohttp.ClientSession() as session:
-        client = MdbClient.localhost("test", session, "test_correlation")
+        client = MdbClient.localhost(session, "test", "test_correlation")
         meo = await client.create_master_eo({"title": "fozz"})
         pe = await client.create_publication_event(meo, {"subType": "http://authority.nrk.no/datadictionary/onDemand",
                                                          "title": "en kald vårdag"})
@@ -54,10 +56,11 @@ async def test_create_update_publication_event():
         assert updatepe['title'] == 'bruz'
 
 
+# noinspection DuplicatedCode
 @pytest.mark.asyncio
 async def test_create_update_publication_event():
     async with aiohttp.ClientSession() as session:
-        client = MdbClient.localhost("test", session, "test_correlation")
+        client = MdbClient.localhost(session, "test", "test_correlation")
         meo = await client.create_master_eo({"title": "fozz"})
         pe = await client.create_publication_event(meo, {"subType": "http://authority.nrk.no/datadictionary/onDemand",
                                                          "title": "en kald vårdag"})
@@ -69,7 +72,7 @@ async def test_create_update_publication_event():
 @pytest.mark.asyncio
 async def test_create_update_publication_media_object():
     async with aiohttp.ClientSession() as session:
-        client = MdbClient.localhost("test", session, "test_correlation")
+        client = MdbClient.localhost(session, "test", "test_correlation")
         meo = await client.create_master_eo({"title": "fozz"})
         mo = await client.create_media_object(meo, {})
         pe = await client.create_publication_event(meo, {"subType": "http://authority.nrk.no/datadictionary/onDemand",
@@ -81,7 +84,7 @@ async def test_create_update_publication_media_object():
 @pytest.mark.asyncio
 async def test_create_essence():
     async with aiohttp.ClientSession() as session:
-        client = MdbClient.localhost("test", session, "test_correlation")
+        client = MdbClient.localhost(session, "test", "test_correlation")
         meo = await client.create_master_eo({"title": "fozz"})
         mo = await client.create_media_object(meo, {})
         mr = await client.create_media_resource(mo, {})
@@ -99,7 +102,7 @@ async def test_create_essence():
 @pytest.mark.asyncio
 async def test_add_timeline_item():
     async with aiohttp.ClientSession() as session:
-        client = MdbClient.localhost("test", session, "test_correlation")
+        client = MdbClient.localhost(session, "test", "test_correlation")
         meo = await client.create_master_eo({"title": "fozz"})
         tl = await client.create_timeline(meo, {"type": 'http://id.nrk.no/2017/mdb/timelinetype/IndexPoints'})
         item_to_ad = {
@@ -113,7 +116,7 @@ async def test_add_timeline_item():
 @pytest.mark.asyncio
 async def test_replace_timeline():
     async with aiohttp.ClientSession() as session:
-        client = MdbClient.localhost("test", session, "test_correlation")
+        client = MdbClient.localhost(session, "test", "test_correlation")
         meo = await client.create_master_eo({"title": "fozz"})
         tl = await client.create_timeline(meo, {"type": 'http://id.nrk.no/2017/mdb/timelinetype/IndexPoints'})
         replacement = {"type": "http://id.nrk.no/2017/mdb/timelinetype/IndexPoints", "items": [{
@@ -128,7 +131,7 @@ async def test_replace_timeline():
 @pytest.mark.asyncio
 async def test_resolve_meo():
     async with aiohttp.ClientSession() as session:
-        client = MdbClient.localhost("test", session, "test_correlation")
+        client = MdbClient.localhost(session, "test", "test_correlation")
         result = await client.create_master_eo({"title": "fozz"})
         assert result['title'] == 'fozz'
         resolved = await client.resolve(result['resId'])
@@ -138,20 +141,9 @@ async def test_resolve_meo():
 
 
 @pytest.mark.asyncio
-async def test_resolve_meo_fast():
-    async with aiohttp.ClientSession() as session:
-        client = MdbClient.localhost("test", session, "test_correlation")
-        result = await client.create_master_eo({"title": "fozz"})
-        assert result['title'] == 'fozz'
-        resolved = await client.resolve(result['resId'], fast=True)
-        assert resolved is not None
-        assert resolved["resId"] == result["resId"]
-
-
-@pytest.mark.asyncio
 async def test_resolve_reference():
     async with aiohttp.ClientSession() as session:
-        client = MdbClient.localhost("test", session, "test_correlation")
+        client = MdbClient.localhost(session, "test", "test_correlation")
         result = await client.create_master_eo(
             {"title": "fozz", "references": [{"type": "x-test:reference-type", "reference": "123"}]})
         assert result['title'] == 'fozz'
@@ -162,7 +154,7 @@ async def test_resolve_reference():
 @pytest.mark.asyncio
 async def test_add_subjects():
     async with aiohttp.ClientSession() as session:
-        client = MdbClient.localhost("test", session, "test_correlation")
+        client = MdbClient.localhost(session, "test", "test_correlation")
         result = await client.create_master_eo({"title": "fozz"})
         subj = await client.add_subject(result, {"title": 'sub2'})
         assert subj["title"] == 'sub2'
@@ -179,7 +171,7 @@ def random_string(string_length=10):
 async def test_find_media_object():
     async with aiohttp.ClientSession() as session:
         mediaobject_name = "fozz-bizz&cz_" + random_string(10)
-        client = MdbClient.localhost("test", session, "test_correlation")
+        client = MdbClient.localhost(session, "test", "test_correlation")
         result = await client.create_master_eo({"title": "fozz"})
         mo = await client.create_media_object(result, {"name": mediaobject_name})
         found = await client.find_media_object(mediaobject_name)
