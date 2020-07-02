@@ -4,7 +4,7 @@ from abc import abstractmethod
 from typing import Optional, Union, List, TypeVar, Generic
 
 import backoff
-from aiohttp import ClientSession, ClientResponse
+from aiohttp import ClientSession, ClientResponse, ClientPayloadError
 
 from mdbclient.relations import REL_ITEMS, REL_DOCUMENTS
 
@@ -566,7 +566,10 @@ class RestApiUtil(object):
         if response.status == 202 and response.content_length == 0:
             return
         if response.content_type == "application/json":
-            return await response.json()
+            try:
+                return await response.json()
+            except ClientPayloadError as e:
+                raise ClientPayloadError(f"When resolving {uri} had status {response.status} and content_length={response.content_length} org {e}")
         params = " with params " + str(uri_params) if uri_params else " "
         headers_str = " with headers " + str(headers) if headers else " "
         raise Exception(
