@@ -427,6 +427,9 @@ class MasterEO(EditorialObject):
     def version_group(self) -> ResourceReference[VersionGroup]:
         return ResourceReference.create(self.get("versionGroup"))
 
+    def has_subject_with_title(self, subject):
+        return [sub for sub in self.get("subjects", []) if sub.get("title") == subject]
+
 
 class Essence(BasicMdbObject):
 
