@@ -1010,7 +1010,6 @@ class MdbClient(MdbJsonMethodApi):
         if not publication_event:
             raise Exception("Cannot create an empty publication event")
         publication_event["publishes"] = _res_id(master_eo)
-        publication_event["subType"] = "http://authority.nrk.no/datadictionary/broadcast"
         return create_response(await self._invoke_create_method("publicationEvent", publication_event, headers))
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
