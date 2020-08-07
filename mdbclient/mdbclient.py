@@ -986,6 +986,12 @@ class MdbClient(MdbJsonMethodApi):
         return stdresponse.response
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
+    async def like_query(self, like, headers=None):
+        real_method = self._api_method("admin/events/likeQuery")
+        stdresponse = await self.rest_api_util.http_get(real_method, headers, {"like" : like})
+        return stdresponse.response
+
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def create_or_replace_timeline(self, master_eo, timeline, headers=None) -> Timeline:
         type_of_timeline = timeline["Type"]
         existing_timeline_of_same_type = self._timelines_of_subtype(master_eo, type_of_timeline)
