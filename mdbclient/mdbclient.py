@@ -4,7 +4,7 @@ from abc import abstractmethod
 from typing import Optional, Union, List, TypeVar, Generic
 
 import backoff
-from aiohttp import ClientSession, ClientResponse, ClientPayloadError
+from aiohttp import ClientSession, ClientResponse, ClientPayloadError, ServerDisconnectedError
 
 from mdbclient.relations import REL_ITEMS, REL_DOCUMENTS
 
@@ -1035,6 +1035,7 @@ class MdbClient(MdbJsonMethodApi):
         return create_response(resp.response)
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=120, giveup=_check_if_not_lock)
+    @backoff.on_exception(backoff.expo, ServerDisconnectedError, max_time=120)
     async def resolve(self, res_id, headers=None) -> \
             Optional[Union[MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent,
                            InternalTimeline, GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline,
