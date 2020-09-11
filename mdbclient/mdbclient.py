@@ -893,6 +893,7 @@ class MdbClient(MdbJsonMethodApi):
         self.change_listener.on_add(owner.get("resId"), rel, payload)
         return response
 
+    @backoff.on_exception(backoff.expo, ServerDisconnectedError, max_time=120)
     async def open_rel(self, owner, rel, headers=None):
         link = self._rewritten_link(_link(owner, rel))
         return await self._do_get(link, headers)
