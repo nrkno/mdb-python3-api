@@ -786,7 +786,7 @@ class MdbJsonApi(object):
 
         self._global_headers[key] = value
 
-    def _merged_headers(self, request_headers):
+    def _merged_headers(self, request_headers : dict):
         return {**self._global_headers, **request_headers} if request_headers else self._global_headers
 
     async def _do_post(self, link, payload, headers=None) -> {}:
@@ -1037,18 +1037,23 @@ class MdbClient(MdbJsonMethodApi):
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=120, giveup=_check_if_not_lock)
     @backoff.on_exception(backoff.expo, ServerDisconnectedError, max_time=120)
-    async def resolve(self, res_id, headers=None) -> \
+    async def resolve(self, res_id : str, allow_missing : bool = False, headers : dict =None) -> \
             Optional[Union[MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent,
                            InternalTimeline, GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline,
                            GenealogyRightsTimeline]]:
         if not res_id:
             return
         parameters = {'resId': res_id}
-        return create_response_from_std_response(
-            await self._invoke_get_method_std_response("resolve", parameters, headers))
+        try:
+            return create_response_from_std_response(
+                await self._invoke_get_method_std_response("resolve", parameters, headers))
+        except Http404:
+            if allow_missing:
+                return None
+            raise
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
-    async def find_media_object(self, name, headers=None) -> Optional[MediaObject]:
+    async def find_media_object(self, name, headers : dict =None) -> Optional[MediaObject]:
         try:
             return create_response(await self._invoke_get_method("mediaObject/by-name", {"name": name}, headers))
         except Http404:
