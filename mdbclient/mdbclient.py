@@ -572,7 +572,8 @@ class RestApiUtil(object):
             try:
                 return await response.json()
             except ClientPayloadError as e:
-                raise ClientPayloadError(f"When resolving {uri} had status {response.status} and content_length={response.content_length} org {e}")
+                raise ClientPayloadError(
+                    f"When resolving {uri} had status {response.status} and content_length={response.content_length} org {e}")
         params = " with params " + str(uri_params) if uri_params else " "
         headers_str = " with headers " + str(headers) if headers else " "
         raise Exception(
@@ -786,7 +787,7 @@ class MdbJsonApi(object):
 
         self._global_headers[key] = value
 
-    def _merged_headers(self, request_headers : dict):
+    def _merged_headers(self, request_headers: dict):
         return {**self._global_headers, **request_headers} if request_headers else self._global_headers
 
     async def _do_post(self, link, payload, headers=None) -> {}:
@@ -864,8 +865,9 @@ class MdbJsonMethodApi(MdbJsonApi):
 
 class MdbClient(MdbJsonMethodApi):
     def __init__(self, session: ClientSession, api_base, user_id: str, correlation_id: str, source_system: str = None,
-                 batch_id="default-batch-id", force_host:bool=None, force_scheme:bool=None):
-        MdbJsonMethodApi.__init__(self, session, api_base, user_id, correlation_id, source_system, batch_id, force_host, force_scheme)
+                 batch_id="default-batch-id", force_host: bool = None, force_scheme: bool = None):
+        MdbJsonMethodApi.__init__(self, session, api_base, user_id, correlation_id, source_system, batch_id, force_host,
+                                  force_scheme)
 
     @staticmethod
     def localhost(session: ClientSession, user_id: str, correlation_id=None, batch_id="default-batch-id"):
@@ -989,7 +991,7 @@ class MdbClient(MdbJsonMethodApi):
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def like_query(self, like, headers=None):
         real_method = self._api_method("admin/events/likeQuery")
-        stdresponse = await self.rest_api_util.http_get(real_method, headers, {"like" : like})
+        stdresponse = await self.rest_api_util.http_get(real_method, headers, {"like": like})
         return stdresponse.response
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
@@ -1037,7 +1039,7 @@ class MdbClient(MdbJsonMethodApi):
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=120, giveup=_check_if_not_lock)
     @backoff.on_exception(backoff.expo, ServerDisconnectedError, max_time=120)
-    async def resolve(self, res_id : str, allow_missing : bool = False, headers : dict =None) -> \
+    async def resolve(self, res_id: str, fail_on_missing: bool = True, headers: dict = None) -> \
             Optional[Union[MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent,
                            InternalTimeline, GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline,
                            GenealogyRightsTimeline]]:
@@ -1048,12 +1050,12 @@ class MdbClient(MdbJsonMethodApi):
             return create_response_from_std_response(
                 await self._invoke_get_method_std_response("resolve", parameters, headers))
         except Http404:
-            if allow_missing:
+            if not fail_on_missing:
                 return None
             raise
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
-    async def find_media_object(self, name, headers : dict =None) -> Optional[MediaObject]:
+    async def find_media_object(self, name, headers: dict = None) -> Optional[MediaObject]:
         try:
             return create_response(await self._invoke_get_method("mediaObject/by-name", {"name": name}, headers))
         except Http404:
