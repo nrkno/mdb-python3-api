@@ -1,6 +1,7 @@
 import datetime
 import urllib.parse
 from abc import abstractmethod
+from enum import Enum
 from typing import Optional, Union, List, TypeVar, Generic
 
 import backoff
@@ -826,16 +827,25 @@ class MdbJsonApi(object):
         return response
 
 
+class MdbEnv(Enum):
+    LOCAL = "http://localhost:22338"
+    LOCAL_OVERLAY = "http://localhost:22358"
+    DEV = "http://mdbklippdev.felles.ds.nrk.no"
+    STAGE = "http://mdbklippstage.felles.ds.nrk.no"
+    PROD = "http://mdbklipp.felles.ds.nrk.no"
+
+
 class MdbJsonMethodApi(MdbJsonApi):
     """
     A jason api that knows how to invoke method calls directly by name. Requires a server addreess (api_base)
     """
 
-    def __init__(self, session: ClientSession, api_base: str, user_id: str, correlation_id, source_system: str = None,
+    def __init__(self, session: ClientSession, api_base: Union[MdbEnv, str], user_id: str, correlation_id,
+                 source_system: str = None,
                  batch_id: str = "default-batch-id",
                  force_host: bool = None, force_scheme: bool = None):
         MdbJsonApi.__init__(self, session, user_id, correlation_id, source_system, batch_id, force_host, force_scheme)
-        parsed = urllib.parse.urlparse(api_base)
+        parsed = urllib.parse.urlparse(api_base.value if isinstance(api_base, MdbEnv) else api_base)
         self.api_base = parsed.scheme + "://" + parsed.netloc + "/api"
 
     def __api_method(self, sub_path):
@@ -864,30 +874,31 @@ class MdbJsonMethodApi(MdbJsonApi):
 
 
 class MdbClient(MdbJsonMethodApi):
-    def __init__(self, session: ClientSession, api_base, user_id: str, correlation_id: str, source_system: str = None,
+    def __init__(self, session: ClientSession, api_base: Union[MdbEnv, str], user_id: str, correlation_id: str,
+                 source_system: str = None,
                  batch_id="default-batch-id", force_host: bool = None, force_scheme: bool = None):
         MdbJsonMethodApi.__init__(self, session, api_base, user_id, correlation_id, source_system, batch_id, force_host,
                                   force_scheme)
 
     @staticmethod
     def localhost(session: ClientSession, user_id: str, correlation_id=None, batch_id="default-batch-id"):
-        return MdbClient(session, "http://localhost:22338", user_id, correlation_id, None, batch_id)
+        return MdbClient(session, MdbEnv.LOCAL, user_id, correlation_id, None, batch_id)
 
     @staticmethod
     def localhost_overlay(session: ClientSession, user_id, correlation_id=None, batch_id="default-batch-id"):
-        return MdbClient(session, "http://localhost:22358", user_id, correlation_id, None, batch_id)
+        return MdbClient(session, MdbEnv.LOCAL_OVERLAY, user_id, correlation_id, None, batch_id)
 
     @staticmethod
     def dev(session: ClientSession, user_id, correlation_id=None, batch_id="default-batch-id"):
-        return MdbClient(session, "http://mdbklippdev.felles.ds.nrk.no", user_id, correlation_id, None, batch_id)
+        return MdbClient(session, MdbEnv.DEV, user_id, correlation_id, None, batch_id)
 
     @staticmethod
     def stage(session: ClientSession, user_id, correlation_id=None, batch_id="default-batch-id"):
-        return MdbClient(session, "http://mdbklippstage.felles.ds.nrk.no", correlation_id, user_id, None, batch_id)
+        return MdbClient(session, MdbEnv.STAGE, correlation_id, user_id, None, batch_id)
 
     @staticmethod
     def prod(session: ClientSession, user_id, correlation_id=None, batch_id="default-batch-id"):
-        return MdbClient(session, "http://mdbklipp.felles.ds.nrk.no", correlation_id, user_id, None, batch_id)
+        return MdbClient(session, MdbEnv.PROD, correlation_id, user_id, None, batch_id)
 
     async def __add_on_rel(self, owner, rel, payload, headers=None):
         link = self._rewritten_link(_link(owner, rel))
