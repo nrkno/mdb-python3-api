@@ -5,7 +5,7 @@ from enum import Enum
 from typing import Optional, Union, List, TypeVar, Generic
 
 import backoff
-from aiohttp import ClientSession, ClientResponse, ClientPayloadError, ServerDisconnectedError
+from aiohttp import ClientSession, ClientResponse, ClientPayloadError, ServerDisconnectedError, ClientOSError
 
 from mdbclient.relations import REL_ITEMS, REL_DOCUMENTS
 
@@ -1048,6 +1048,7 @@ class MdbClient(MdbJsonMethodApi):
         resp = await self._open_url(url)
         return create_response(resp.response)
 
+    @backoff.on_exception(backoff.expo, ClientOSError, max_time=120, giveup=_check_if_not_lock)
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=120, giveup=_check_if_not_lock)
     @backoff.on_exception(backoff.expo, ServerDisconnectedError, max_time=120)
     async def resolve(self, res_id: str, fail_on_missing: bool = True, headers: dict = None) -> \
@@ -1072,6 +1073,7 @@ class MdbClient(MdbJsonMethodApi):
         except Http404:
             pass
 
+    @backoff.on_exception(backoff.expo, ClientOSError, max_time=120, giveup=_check_if_not_lock)
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def reference(self, ref_type, value, headers=None) -> \
             List[Union[MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent,
@@ -1080,6 +1082,7 @@ class MdbClient(MdbJsonMethodApi):
         responses = await self._invoke_get_method("references", {'type': ref_type, 'reference': value}, headers)
         return [create_response(x) for x in responses]
 
+    @backoff.on_exception(backoff.expo, ClientOSError, max_time=120, giveup=_check_if_not_lock)
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def reference_single(self, ref_type, value, headers=None) -> \
             Union[MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent,
