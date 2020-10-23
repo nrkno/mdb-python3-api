@@ -277,6 +277,9 @@ class Timeline(BasicMdbObject):
         self.get("spatials", []).sort(key=lambda x: x["name"])
         self.get("contributors", []).sort(key=lambda x: x["contact"]["title"] + x["role"]["resId"])
 
+    def master_eo(self) -> ResourceReference['MasterEO']:
+        return ResourceReference.create(self.get("masterEO"))
+
 
 class RightsTimeline(Timeline):
     TYPE = "http://id.nrk.no/2017/mdb/timelinetype/Rights"
