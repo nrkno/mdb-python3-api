@@ -431,8 +431,12 @@ class MasterEO(EditorialObject):
     def version_group(self) -> ResourceReference[VersionGroup]:
         return ResourceReference.create(self.get("versionGroup"))
 
-    def has_subject_with_title(self, subject):
-        return [sub for sub in self.get("subjects", []) if sub.get("title") == subject]
+    def has_subject_with_title(self, subject: str, case_sensitive=True):
+        if case_sensitive:
+            return [sub for sub in self.get("subjects", []) if sub.get("title") == subject]
+         else:
+            subject = subject.lower()
+            return [sub for sub in self.get("subjects", []) if sub.get("title", "").lower() == subject]
 
 
 class Essence(BasicMdbObject):
