@@ -674,6 +674,8 @@ def _res_id(mdb_object):
 
 
 def _check_if_lock(exc: HttpReqException):
+    if not hasattr(exc, "message"):
+        return False
     if not isinstance(exc.message, dict):
         return False
     type_ = exc.message.get("type")
