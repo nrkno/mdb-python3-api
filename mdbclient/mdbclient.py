@@ -7,7 +7,7 @@ from typing import Optional, Union, List, TypeVar, Generic
 import backoff
 from aiohttp import ClientSession, ClientResponse, ClientPayloadError, ServerDisconnectedError, ClientOSError
 
-from mdbclient.relations import REL_ITEMS, REL_DOCUMENTS
+from mdbclient.relations import REL_ITEMS, REL_DOCUMENTS, REL_FORMATS
 
 
 class AggregateGoneException(Exception):
@@ -1030,6 +1030,10 @@ class MdbClient(MdbJsonMethodApi):
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def add_timeline_item(self, timeline, item, headers=None):
         return await self.__add_on_rel(timeline, REL_ITEMS, item, headers)
+
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
+    async def add_mediaresource_format(self, media_resource : MediaResource, format_, headers=None):
+        return await self.__add_on_rel(media_resource, REL_FORMATS, format_, headers)
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def add_stored_document(self, master_eo, stored_document, headers=None):
