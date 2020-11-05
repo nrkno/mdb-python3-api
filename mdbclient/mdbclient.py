@@ -478,6 +478,10 @@ class MediaObject(BasicMdbObject):
     def published_versions(self) -> ResourceReferenceCollection['PublicationMediaObject']:
         return self._reference_collection("publishedVersions")
 
+    def master_eo(self) -> ResourceReference['MasterEO']:
+        return ResourceReference.create(self.get("masterEO"))
+
+
 
 class PublicationMediaObject(BasicMdbObject):
 
