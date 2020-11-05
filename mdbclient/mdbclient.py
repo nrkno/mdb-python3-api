@@ -189,8 +189,10 @@ class ResourceReferenceCollection(Generic[X]):
 
 def clone_for_create(item):
     copy_ = copy.copy(item)
-    del copy_["resid"]
-    del copy_["links"]
+    if "resId" in copy_:
+        del copy_["resId"]
+    if "links" in copy_:
+        del copy_["links"]
     return copy_
 
 
