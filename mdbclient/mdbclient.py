@@ -1,3 +1,4 @@
+import copy
 import datetime
 import urllib.parse
 from abc import abstractmethod
@@ -204,6 +205,13 @@ class BasicMdbObject(dict):
 
     def links(self) -> MdbLinks:
         return MdbLinks.create(self.get("links"))
+
+    def clone_for_create(self):
+        copy_ = copy.copy(self)
+        del copy_["resid"]
+        del copy_["links"]
+        return copy_
+
 
 
 class Timeline(BasicMdbObject):
