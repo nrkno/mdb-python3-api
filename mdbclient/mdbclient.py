@@ -187,6 +187,13 @@ class ResourceReferenceCollection(Generic[X]):
         return len(self.children)
 
 
+def clone_for_create(item):
+    copy_ = copy.copy(item)
+    del copy_["resid"]
+    del copy_["links"]
+    return copy_
+
+
 class BasicMdbObject(dict):
 
     def __init__(self, dict_=..., **kwargs) -> None:
@@ -205,13 +212,6 @@ class BasicMdbObject(dict):
 
     def links(self) -> MdbLinks:
         return MdbLinks.create(self.get("links"))
-
-    def clone_for_create(self):
-        copy_ = copy.copy(self)
-        del copy_["resid"]
-        del copy_["links"]
-        return copy_
-
 
 
 class Timeline(BasicMdbObject):
@@ -488,7 +488,6 @@ class MediaObject(BasicMdbObject):
 
     def master_eo(self) -> ResourceReference['MasterEO']:
         return ResourceReference.create(self.get("masterEO"))
-
 
 
 class PublicationMediaObject(BasicMdbObject):
@@ -1040,7 +1039,7 @@ class MdbClient(MdbJsonMethodApi):
         return await self.__add_on_rel(timeline, REL_ITEMS, item, headers)
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
-    async def add_mediaresource_format(self, media_resource : MediaResource, format_, headers=None):
+    async def add_mediaresource_format(self, media_resource: MediaResource, format_, headers=None):
         return await self.__add_on_rel(media_resource, REL_FORMATS, format_, headers)
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
