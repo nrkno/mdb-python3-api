@@ -1158,6 +1158,9 @@ class MdbClient(MdbJsonMethodApi):
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def open(self, owner, headers=None):
+        if not isinstance(owner, str):
+            raise ValueError(f"Open does not expect a string, maybe you want resolve or open_url ?")
+
         link = self._rewritten_link(_self_link(owner))
         return create_response(await self._do_get(link, headers))
 
