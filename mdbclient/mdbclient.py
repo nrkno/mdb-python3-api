@@ -45,9 +45,17 @@ class Conflict(Exception):
         self.message = message
 
 
-def _reference_values(meo, ref_type):
+class Reference(dict):
+
+    def __init__(self, dict_=..., **kwargs) -> None:
+        super().__init__(dict_, **kwargs)
+        self.type: str = self.get("type")
+        self.reference: str = self.get("reference")
+
+
+def _reference_values(meo, ref_type) -> List[Reference]:
     references = meo.get("references", [])
-    return [x for x in references if x.get("type") == ref_type]
+    return [Reference(x) for x in references if x.get("type") == ref_type]
 
 
 def _links_of_sub_type(links_list, sub_type):
@@ -405,16 +413,22 @@ class EditorialObject(BasicMdbObject):
         contrs = self.get("contributors", [])
         return [Contributor(x) for x in contrs]
 
-    def reference_values(self, ref_type):
+    def references(self, ref_type) -> List[Reference]:
         return _reference_values(self, ref_type)
 
-    def reference_value(self, ref_type):
-        found = self.reference_values(ref_type)
+    def reference(self, ref_type) -> Optional[Reference]:
+        found = self.references(ref_type)
         if not found:
             return
         if len(found) > 1:
             raise Exception(f"Multiple refs of type {ref_type} in {_self_link(self)}")
-        return found[0]["reference"]
+        return found[0]
+
+    def reference_value(self, ref_type) -> Optional[str]:
+        found = self.reference(ref_type)
+        if not found:
+            return
+        return found.reference
 
 
 class VersionGroup(BasicMdbObject):
