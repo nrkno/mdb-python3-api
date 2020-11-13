@@ -645,6 +645,15 @@ class RestApiUtil(object):
         async with self.session.get(uri, params=uri_params, headers=headers) as response:
             return await RestApiUtil.__unpack_json_response(response, uri, headers, uri_params)
 
+    async def raw_http_get(self, uri, headers=None, uri_params=None) -> str:
+        async with self.session.get(uri, params=uri_params, headers=headers) as response:
+            return await response.text()
+
+
+    async def http_get_text(self, uri, headers=None, uri_params=None) -> StandardResponse:
+        async with self.session.get(uri, params=uri_params, headers=headers) as response:
+            return await RestApiUtil.__unpack_json_response(response, uri, headers, uri_params)
+
     async def http_get_no_redirect(self, uri, headers=None, uri_params=None) -> ClientResponse:
         async with self.session.get(uri, params=uri_params, headers=headers, allow_redirects=False) as response:
             return response
@@ -895,6 +904,10 @@ class MdbJsonMethodApi(MdbJsonApi):
         parameters_ = await self.rest_api_util.http_get(real_method, self._merged_headers(headers), parameters)
         return parameters_.response
 
+    async def _invoke_raw_get_method(self, name, parameters, headers=None) -> str:
+        real_method = self.__api_method(name)
+        return await self.rest_api_util.raw_http_get(real_method, headers=headers, uri_params=parameters)
+
     async def _invoke_get_method_std_response(self, name, parameters, headers=None) -> StandardResponse:
         real_method = self.__api_method(name)
         return await self.rest_api_util.http_get(real_method, self._merged_headers(headers), parameters)
@@ -1114,9 +1127,9 @@ class MdbClient(MdbJsonMethodApi):
             pass
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
-    async def export_publication_event(self, aggregate_identifier, headers: dict = None) -> dict:
+    async def export_publication_event(self, aggregate_identifier, headers: dict = None) -> str:
         try:
-            return await self._invoke_get_method("admin/mdbExport/publicationEvents/" + aggregate_identifier, {},
+            return await self._invoke_raw_get_method("admin/mdbExport/publicationEvents/" + aggregate_identifier, {},
                                                  headers)
         except Http404:
             pass
@@ -1124,7 +1137,7 @@ class MdbClient(MdbJsonMethodApi):
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def export_master_eo(self, aggregate_identifier, headers: dict = None) -> dict:
         try:
-            return await self._invoke_get_method("admin/mdbExport/masterEOs/" + aggregate_identifier, {},
+            return await self._invoke_raw_get_method("admin/mdbExport/masterEOs/" + aggregate_identifier, {},
                                                  headers)
         except Http404:
             pass
