@@ -1116,7 +1116,7 @@ class MdbClient(MdbJsonMethodApi):
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def export_publication_event(self, aggregate_identifier, headers: dict = None) -> dict:
         try:
-            return await self._invoke_get_method("/api/admin/mdbExport/publicationEvents/" + aggregate_identifier, {},
+            return await self._invoke_get_method("admin/mdbExport/publicationEvents/" + aggregate_identifier, {},
                                                  headers)
         except Http404:
             pass
@@ -1124,7 +1124,7 @@ class MdbClient(MdbJsonMethodApi):
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def export_master_eo(self, aggregate_identifier, headers: dict = None) -> dict:
         try:
-            return await self._invoke_get_method("/api/admin/mdbExport/masterEOs/" + aggregate_identifier, {},
+            return await self._invoke_get_method("admin/mdbExport/masterEOs/" + aggregate_identifier, {},
                                                  headers)
         except Http404:
             pass
