@@ -1088,7 +1088,7 @@ class MdbClient(MdbJsonMethodApi):
         resp = await self._open_url(url)
         return create_response(resp.response)
 
-    @backoff.on_exception(backoff.expo, ClientOSError, max_time=120, giveup=_check_if_not_lock)
+    @backoff.on_exception(backoff.expo, ClientOSError, max_time=120)
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=120, giveup=_check_if_not_lock)
     @backoff.on_exception(backoff.expo, ServerDisconnectedError, max_time=120)
     async def resolve(self, res_id: str, fail_on_missing: bool = True, headers: dict = None) -> \
@@ -1172,7 +1172,7 @@ class MdbClient(MdbJsonMethodApi):
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def open(self, owner, headers=None):
-        if not isinstance(owner, str):
+        if isinstance(owner, str):
             raise ValueError(f"Open does not expect a string, maybe you want resolve or open_url ?")
 
         link = self._rewritten_link(_self_link(owner))
