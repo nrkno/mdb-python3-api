@@ -260,7 +260,7 @@ class Timeline(BasicMdbObject):
             return items[0]
         if len(items) > 1:
             msg = ",".join([f"{x[0]}={x[1]}]" for x in keyvalue_tuples])
-            raise Exception(f"Multiple elements found for {msg}")
+            raise Exception(f"Multiple elements found for {msg} in {self.resid}")
 
     def find_item(self, res_id):
         return self.select_single_item(("resId", res_id))
