@@ -307,7 +307,7 @@ class RightsTimeline(Timeline):
         self["type"] = self.TYPE
 
     def fulltimeline_item(self, type_):
-        return self.select_single_item(("appliesToFullTimeline", True), "type", type_)
+        return self.select_single_item(("appliesToFullTimeline", True), ("type", type_))
 
     @staticmethod
     def create(items) -> 'RightsTimeline':
