@@ -1049,6 +1049,18 @@ class MdbClient(MdbJsonMethodApi):
         return stdresponse.response
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
+    async def broadcast_change_2(self, destination, resid, headers=None):
+        resolved = await self.resolve(resid)
+        payload = {
+            "destination": destination,
+            "resId": resid,
+            "type": resolved["type"]
+        }
+        real_method = self._api_method("changes/by-resid")
+        stdresponse = await self.rest_api_util.http_post_form(real_method, payload)
+        return stdresponse.response
+
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def like_query(self, like, headers=None):
         real_method = self._api_method("admin/events/likeQuery")
         stdresponse = await self.rest_api_util.http_get(real_method, headers, {"like": like})
