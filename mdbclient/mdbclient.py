@@ -1050,7 +1050,7 @@ class MdbClient(MdbJsonMethodApi):
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def full_reindex_single(self, type_, guid, headers=None):
-        real_method = self._api_method(f"mdbIndex/fullreindexsingle/{type_}/{guid}")
+        real_method = self._api_method(f"admin/mdbIndex/fullreindexsingle/{type_}/{guid}")
         headers = {**{"content-type": "application/x-www-form-urlencoded"}, **self._merged_headers(headers)}
         stdresponse = await self.rest_api_util.http_post_form(real_method, {}, headers)
         return stdresponse.response
