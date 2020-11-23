@@ -1056,11 +1056,11 @@ class MdbClient(MdbJsonMethodApi):
         return stdresponse.response
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
-    async def __reindex_item(self, uri_part, guid, headers=None):
+    async def __reindex_item(self, uri_part, guid, headers=None) -> str:
         real_method = self._api_method(f"admin/mdbIndex/{uri_part}/{guid}")
         headers = {**{"content-type": "application/x-www-form-urlencoded"}, **self._merged_headers(headers)}
-        stdresponse = await self.rest_api_util.http_get(real_method, headers=headers)
-        return stdresponse.response
+        stdresponse = await self.rest_api_util.raw_http_get(real_method, headers=headers)
+        return stdresponse
 
     async def reindex_meo(self, guid, headers=None):
         return await self.__reindex_item("masterEOs", guid, headers=headers)
