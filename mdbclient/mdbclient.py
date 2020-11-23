@@ -1055,6 +1055,34 @@ class MdbClient(MdbJsonMethodApi):
         stdresponse = await self.rest_api_util.http_post_form(real_method, {}, headers)
         return stdresponse.response
 
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
+    async def __reindex_item(self, uri_part, guid, headers=None):
+        real_method = self._api_method(f"admin/mdbIndex/{uri_part}/{guid}")
+        headers = {**{"content-type": "application/x-www-form-urlencoded"}, **self._merged_headers(headers)}
+        stdresponse = await self.rest_api_util.http_get(real_method, headers=headers)
+        return stdresponse.response
+
+    async def reindex_meo(self, guid, headers=None):
+        return await self.__reindex_item("masterEOs", guid, headers=headers)
+
+    async def reindex_mo(self, guid, headers=None):
+        return await self.__reindex_item("mediaObjects", guid, headers=headers)
+
+    async def reindex_media_resource(self, guid, headers=None):
+        return await self.__reindex_item("mediaResources", guid, headers=headers)
+
+    async def reindex_pmo(self, guid, headers=None):
+        return await self.__reindex_item("publicationMediaObjects", guid, headers=headers)
+
+    async def reindex_essence(self, guid, headers=None):
+        return await self.__reindex_item("essences", guid, headers=headers)
+
+    async def reindex_version_group_group(self, guid, headers=None):
+        return await self.__reindex_item("versionGroups", guid, headers=headers)
+
+    async def reindex_publication_event(self, guid, headers=None):
+        return await self.__reindex_item("publicationEvents", guid, headers=headers)
+
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def like_query(self, like, headers=None):
