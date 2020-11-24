@@ -16,6 +16,14 @@ def as_resid(id_: TypedId) -> str:
     return str(id_)
 
 
+def try_uuid(val):
+    try:
+        return UUID(val)
+    except ValueError:
+        print(f"{val} is not a uuid, using string")
+        return val
+
+
 class MdbId:
     def __init__(self, guid: Union[str, UUID]):
         self.guid = guid
@@ -68,7 +76,7 @@ class BagResId(ResId):
     def parse(res_id_string, strict: bool = True) -> "BagResId":
         head, tail = os.path.split(res_id_string)
         if BagResId.BASE == head:
-            guid = BagId(UUID(tail))
+            guid = BagId(try_uuid(tail))
             return BagResId(guid)
         if strict:
             raise ValueError(f"{res_id_string} is not a Bag resid")
@@ -89,7 +97,7 @@ class SerieResId(ResId):
     def parse(res_id_string, strict: bool = True) -> "SerieResId":
         head, tail = os.path.split(res_id_string)
         if SerieResId.BASE == head:
-            guid = SerieId(UUID(tail))
+            guid = SerieId(try_uuid(tail))
             return SerieResId(guid)
         if strict:
             raise ValueError(f"{res_id_string} is not a serie resid")
@@ -109,7 +117,7 @@ class SeasonResId(ResId):
     def parse(res_id_string, strict: bool = True) -> "SeasonResId":
         head, tail = os.path.split(res_id_string)
         if SeasonResId.BASE == head:
-            guid = SeasonId(UUID(tail))
+            guid = SeasonId(try_uuid(tail))
             return SeasonResId(guid)
         if strict:
             raise ValueError(f"{res_id_string} is not a season resid")
@@ -129,7 +137,7 @@ class MasterEOResourceResId(ResId):
     def parse(res_id_string, strict: bool = True) -> "MasterEOResourceResId":
         head, tail = os.path.split(res_id_string)
         if MasterEOResourceResId.BASE == head:
-            guid = MasterEOResourceId(UUID(tail))
+            guid = MasterEOResourceId(try_uuid(tail))
             return MasterEOResourceResId(guid)
         if strict:
             raise ValueError(f"{res_id_string} is not a MasterEOResource resid")
@@ -149,7 +157,7 @@ class MasterEOResId(ResId):
     def parse(res_id_string, strict: bool = True) -> "MasterEOResId":
         head, tail = os.path.split(res_id_string)
         if MasterEOResId.BASE == head:
-            guid = MasterEOId(UUID(tail))
+            guid = MasterEOId(try_uuid(tail))
             return MasterEOResId(guid)
         if strict:
             raise ValueError(f"{res_id_string} is not a MasterEO resid")
@@ -169,7 +177,7 @@ class PublicationEventResId(ResId):
     def parse(res_id_string, strict: bool = True) -> "PublicationEventResId":
         head, tail = os.path.split(res_id_string)
         if PublicationEventResId.BASE == head:
-            guid = PublicationEventId(UUID(tail))
+            guid = PublicationEventId(try_uuid(tail))
             return PublicationEventResId(guid)
         if strict:
             raise ValueError(f"{res_id_string} is not a PublicationEvent resid")
@@ -189,7 +197,7 @@ class PublicationMediaObjectResId(ResId):
     def parse(res_id_string, strict: bool = True) -> "PublicationMediaObjectResId":
         head, tail = os.path.split(res_id_string)
         if PublicationMediaObjectResId.BASE == head:
-            guid = PublicationMediaObjectId(UUID(tail))
+            guid = PublicationMediaObjectId(try_uuid(tail))
             return PublicationMediaObjectResId(guid)
         if strict:
             raise ValueError(f"{res_id_string} is not a PublicationMediaObject resid")
@@ -209,7 +217,7 @@ class MediaObjectResId(ResId):
     def parse(res_id_string, strict: bool = True) -> "MediaObjectResId":
         head, tail = os.path.split(res_id_string)
         if MediaObjectResId.BASE == head:
-            guid = MediaObjectId(UUID(tail))
+            guid = MediaObjectId(try_uuid(tail))
             return MediaObjectResId(guid)
         if strict:
             raise ValueError(f"{res_id_string} is not a MediaObject resid")
@@ -229,7 +237,7 @@ class MediaResourceResId(ResId):
     def parse(res_id_string, strict: bool = True) -> "MediaResourceResId":
         head, tail = os.path.split(res_id_string)
         if MediaResourceResId.BASE == head:
-            guid = MediaResourceId(UUID(tail))
+            guid = MediaResourceId(try_uuid(tail))
             return MediaResourceResId(guid)
         if strict:
             raise ValueError(f"{res_id_string} is not a resid")
@@ -249,7 +257,7 @@ class EssenceResId(ResId):
     def parse(res_id_string, strict: bool = True) -> "EssenceResId":
         head, tail = os.path.split(res_id_string)
         if EssenceResId.BASE == head:
-            guid = EssenceId(UUID(tail))
+            guid = EssenceId(try_uuid(tail))
             return EssenceResId(guid)
         if strict:
             raise ValueError(f"{res_id_string} is not a resid")
@@ -269,7 +277,7 @@ class VersionGroupResId(ResId):
     def parse(res_id_string, strict: bool = True) -> "VersionGroupResId":
         head, tail = os.path.split(res_id_string)
         if VersionGroupResId.BASE == head:
-            guid = VersionGroupId(UUID(tail))
+            guid = VersionGroupId(try_uuid(tail))
             return VersionGroupResId(guid)
         if strict:
             raise ValueError(f"{res_id_string} is not a VersionGroup resid")
@@ -289,7 +297,7 @@ class TimelineResId(ResId):
     def parse(res_id_string, strict: bool = True) -> "TimelineResId":
         head, tail = os.path.split(res_id_string)
         if TimelineResId.BASE == head:
-            guid = TimelineId(UUID(tail))
+            guid = TimelineId(try_uuid(tail))
             return TimelineResId(guid)
         if strict:
             raise ValueError(f"{res_id_string} is not a Timeline resid")
