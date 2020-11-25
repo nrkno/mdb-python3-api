@@ -29,7 +29,7 @@ def try_uuid(val):
 
 class MdbId:
     def __init__(self, guid: Union[str, UUID]):
-        self.guid = guid
+        self.guid = try_uuid(guid) if isinstance(guid, str) else guid
 
     def __str__(self):
         return str(self.guid)
@@ -69,8 +69,11 @@ class ResId:
         self.base = base
         self.mdb_id: TypedMdbId = mdb_id
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.base + "/" + str(self.mdb_id)
+
+    def id(self) -> str:
+        return str(self.mdb_id)
 
 
 class BagResId(ResId):
@@ -87,6 +90,10 @@ class BagResId(ResId):
             return BagResId(guid)
         if strict:
             raise ValueError(f"{res_id_string} is not a Bag resid")
+
+    @staticmethod
+    def of_id(id_string) -> "BagResId":
+        return BagResId(BagId(id_string))
 
     @staticmethod
     def matches(resid: str):
@@ -110,6 +117,10 @@ class SerieResId(ResId):
             raise ValueError(f"{res_id_string} is not a serie resid")
 
     @staticmethod
+    def of_id(id_string) -> "SerieResId":
+        return SerieResId(SerieId(id_string))
+
+    @staticmethod
     def matches(resid: str):
         return resid.startswith(SerieResId.BASE)
 
@@ -128,6 +139,10 @@ class SeasonResId(ResId):
             return SeasonResId(guid)
         if strict:
             raise ValueError(f"{res_id_string} is not a season resid")
+
+    @staticmethod
+    def of_id(id_string) -> "SeasonResId":
+        return SeasonResId(SeasonId(id_string))
 
     @staticmethod
     def matches(resid: str):
@@ -150,6 +165,10 @@ class MasterEOResourceResId(ResId):
             raise ValueError(f"{res_id_string} is not a MasterEOResource resid")
 
     @staticmethod
+    def of_id(id_string) -> "MasterEOResourceResId":
+        return MasterEOResourceResId(MasterEOResourceId(id_string))
+
+    @staticmethod
     def matches(resid: str):
         return resid.startswith(MasterEOResourceResId.BASE)
 
@@ -170,6 +189,10 @@ class MasterEOResId(ResId):
             raise ValueError(f"{res_id_string} is not a MasterEO resid")
 
     @staticmethod
+    def of_id(id_string) -> "MasterEOResId":
+        return MasterEOResId(MasterEOId(id_string))
+
+    @staticmethod
     def matches(resid: str):
         return resid.startswith(MasterEOResId.BASE)
 
@@ -184,10 +207,14 @@ class PublicationEventResId(ResId):
     def parse(res_id_string, strict: bool = True) -> "PublicationEventResId":
         head, tail = os.path.split(res_id_string)
         if PublicationEventResId.BASE == head:
-            guid = PublicationEventId(try_uuid(tail))
+            guid = PublicationEventId(tail)
             return PublicationEventResId(guid)
         if strict:
             raise ValueError(f"{res_id_string} is not a PublicationEvent resid")
+
+    @staticmethod
+    def of_id(id_string) -> "PublicationEventResId":
+        return PublicationEventResId(PublicationEventId(id_string))
 
     @staticmethod
     def matches(resid: str):
@@ -210,6 +237,11 @@ class PublicationMediaObjectResId(ResId):
             raise ValueError(f"{res_id_string} is not a PublicationMediaObject resid")
 
     @staticmethod
+    def of_id(id_string) -> "PublicationMediaObjectResId":
+        return PublicationMediaObjectResId(PublicationMediaObjectId(id_string))
+
+
+    @staticmethod
     def matches(resid: str):
         return resid.startswith(PublicationMediaObjectResId.BASE)
 
@@ -228,6 +260,10 @@ class MediaObjectResId(ResId):
             return MediaObjectResId(guid)
         if strict:
             raise ValueError(f"{res_id_string} is not a MediaObject resid")
+
+    @staticmethod
+    def of_id(id_string) -> "MediaObjectResId":
+        return MediaObjectResId(MediaObjectId(id_string))
 
     @staticmethod
     def matches(resid: str):
@@ -250,6 +286,10 @@ class MediaResourceResId(ResId):
             raise ValueError(f"{res_id_string} is not a resid")
 
     @staticmethod
+    def of_id(id_string) -> "MediaResourceResId":
+        return MediaResourceResId(MediaResourceId(id_string))
+
+    @staticmethod
     def matches(resid: str):
         return resid.startswith(MediaResourceResId.BASE)
 
@@ -268,6 +308,10 @@ class EssenceResId(ResId):
             return EssenceResId(guid)
         if strict:
             raise ValueError(f"{res_id_string} is not a resid")
+
+    @staticmethod
+    def of_id(id_string) -> "EssenceResId":
+        return EssenceResId(EssenceId(id_string))
 
     @staticmethod
     def matches(resid: str):
@@ -290,6 +334,10 @@ class VersionGroupResId(ResId):
             raise ValueError(f"{res_id_string} is not a VersionGroup resid")
 
     @staticmethod
+    def of_id(id_string) -> "VersionGroupResId":
+        return VersionGroupResId(VersionGroupId(id_string))
+
+    @staticmethod
     def matches(resid: str):
         return resid.startswith(VersionGroupResId.BASE)
 
@@ -308,6 +356,10 @@ class TimelineResId(ResId):
             return TimelineResId(guid)
         if strict:
             raise ValueError(f"{res_id_string} is not a Timeline resid")
+
+    @staticmethod
+    def of_id(id_string) -> "TimelineResId":
+        return TimelineResId(TimelineId(id_string))
 
     @staticmethod
     def matches(resid: str):
@@ -509,30 +561,30 @@ class TimelineId(TypedMdbId):
 bases[type(PublicationEventResId)] = "http://id.nrk.no/2016/mdb/publicationEvent"
 
 
-def parse_res_id(resid: str) -> TypedMdbId:
+def parse_res_id(resid: str) -> ResId:
     if BagResId.matches(resid):
-        return BagId.parse(resid)
+        return BagResId.parse(resid)
     if SerieResId.matches(resid):
-        return SerieId.parse(resid)
+        return SerieResId.parse(resid)
     if SeasonResId.matches(resid):
-        return SeasonId.parse(resid)
+        return SeasonResId.parse(resid)
     if MasterEOResourceResId.matches(resid):
-        return MasterEOResourceId.parse(resid)
+        return MasterEOResourceResId.parse(resid)
     if MasterEOResId.matches(resid):
-        return MasterEOId.parse(resid)
+        return MasterEOResId.parse(resid)
     if PublicationEventResId.matches(resid):
-        return PublicationEventId.parse(resid)
+        return PublicationEventResId.parse(resid)
     if PublicationMediaObjectResId.matches(resid):
-        return PublicationMediaObjectId.parse(resid)
+        return PublicationMediaObjectResId.parse(resid)
     if MediaObjectResId.matches(resid):
-        return MediaObjectId.parse(resid)
+        return MediaObjectResId.parse(resid)
     if MediaResourceResId.matches(resid):
-        return MediaResourceId.parse(resid)
+        return MediaResourceResId.parse(resid)
     if EssenceResId.matches(resid):
-        return EssenceId.parse(resid)
+        return EssenceResId.parse(resid)
     if VersionGroupResId.matches(resid):
-        return VersionGroupId.parse(resid)
+        return VersionGroupResId.parse(resid)
     if TimelineResId.matches(resid):
-        return TimelineId.parse(resid)
+        return TimelineResId.parse(resid)
     raise ValueError(f"Unknown type {resid}")
 
