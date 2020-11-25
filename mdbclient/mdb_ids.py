@@ -65,15 +65,20 @@ class TypedMdbId(MdbId):
 
 
 class ResId:
-    def __init__(self, base, mdb_id: TypedMdbId):
+    def __init__(self, base, mdb_id: MdbId):
         self.base = base
-        self.mdb_id: TypedMdbId = mdb_id
+        self.mdb_id: MdbId = mdb_id
 
     def __str__(self) -> str:
-        return self.base + "/" + str(self.mdb_id)
+        infix = "/" if self.base else ""
+        return self.base + infix + str(self.mdb_id)
 
     def id(self) -> str:
         return str(self.mdb_id)
+
+    @staticmethod
+    def of_id(id_string) -> "ResId":
+        return ResId("", MdbId(id_string))
 
 
 class BagResId(ResId):
@@ -366,9 +371,9 @@ class TimelineResId(ResId):
         return resid.startswith(TimelineResId.BASE)
 
 
-class MasterEOId(TypedMdbId):
+class MasterEOId(MdbId):
     def __init__(self, guid):
-        super().__init__("MasterEO", guid)
+        super().__init__(guid)
 
     def as_resid(self) -> str:
         return str(MasterEOResId(self))
@@ -382,9 +387,9 @@ class MasterEOId(TypedMdbId):
         return MasterEOId(resid_or_id)
 
 
-class VersionGroupId(TypedMdbId):
+class VersionGroupId(MdbId):
     def __init__(self, guid):
-        super().__init__("VersionGroup", guid)
+        super().__init__(guid)
 
     def as_resid(self) -> str:
         return str(VersionGroupResId(self))
@@ -398,9 +403,9 @@ class VersionGroupId(TypedMdbId):
         return VersionGroupId(resid_or_id)
 
 
-class PublicationEventId(TypedMdbId):
+class PublicationEventId(MdbId):
     def __init__(self, guid):
-        super().__init__("PublicationEvent", guid)
+        super().__init__(guid)
 
     def as_resid(self) -> str:
         return str(PublicationEventResId(self))
@@ -414,9 +419,9 @@ class PublicationEventId(TypedMdbId):
         return PublicationEventId(resid_or_id)
 
 
-class MediaObjectId(TypedMdbId):
+class MediaObjectId(MdbId):
     def __init__(self, guid):
-        super().__init__("MediaObject", guid)
+        super().__init__(guid)
 
     def as_resid(self) -> str:
         return str(MediaObjectResId(self))
@@ -430,9 +435,9 @@ class MediaObjectId(TypedMdbId):
         return MediaObjectId(resid_or_id)
 
 
-class PublicationMediaObjectId(TypedMdbId):
+class PublicationMediaObjectId(MdbId):
     def __init__(self, guid):
-        super().__init__("PublicationMediaObject", guid)
+        super().__init__(guid)
 
     def as_resid(self) -> str:
         return str(PublicationMediaObjectResId(self))
@@ -446,9 +451,9 @@ class PublicationMediaObjectId(TypedMdbId):
         return PublicationMediaObjectId(resid_or_id)
 
 
-class EssenceId(TypedMdbId):
+class EssenceId(MdbId):
     def __init__(self, guid):
-        super().__init__("Essence", guid)
+        super().__init__(guid)
 
     def as_resid(self) -> str:
         return str(EssenceResId(self))
@@ -462,9 +467,9 @@ class EssenceId(TypedMdbId):
         return EssenceId(resid_or_id)
 
 
-class MediaResourceId(TypedMdbId):
+class MediaResourceId(MdbId):
     def __init__(self, guid):
-        super().__init__("MediaResource", guid)
+        super().__init__(guid)
 
     def as_resid(self) -> str:
         return str(MediaResourceResId(self))
@@ -478,9 +483,9 @@ class MediaResourceId(TypedMdbId):
         return MediaResourceId(resid_or_id)
 
 
-class BagId(TypedMdbId):
+class BagId(MdbId):
     def __init__(self, guid):
-        super().__init__("Bag", guid)
+        super().__init__(guid)
 
     def as_resid(self) -> str:
         return str(BagResId(self))
@@ -494,9 +499,9 @@ class BagId(TypedMdbId):
         return BagId(resid_or_id)
 
 
-class MasterEOResourceId(TypedMdbId):
+class MasterEOResourceId(MdbId):
     def __init__(self, guid):
-        super().__init__("MasterEOResource", guid)
+        super().__init__(guid)
 
     def as_resid(self) -> str:
         return str(MasterEOResourceResId(self))
@@ -510,9 +515,9 @@ class MasterEOResourceId(TypedMdbId):
         return MasterEOResourceId(resid_or_id)
 
 
-class SeasonId(TypedMdbId):
+class SeasonId(MdbId):
     def __init__(self, guid):
-        super().__init__("Season", guid)
+        super().__init__(guid)
 
     def as_resid(self) -> str:
         return str(SeasonResId(self))
@@ -526,9 +531,9 @@ class SeasonId(TypedMdbId):
         return SeasonId(resid_or_id)
 
 
-class SerieId(TypedMdbId):
+class SerieId(MdbId):
     def __init__(self, guid):
-        super().__init__("Serie", guid)
+        super().__init__(guid)
 
     def as_resid(self) -> str:
         return str(SerieResId(self))
@@ -542,9 +547,9 @@ class SerieId(TypedMdbId):
         return SerieId(resid_or_id)
 
 
-class TimelineId(TypedMdbId):
+class TimelineId(MdbId):
     def __init__(self, guid):
-        super().__init__("Timeline", guid)
+        super().__init__(guid)
 
     def as_resid(self) -> str:
         return str(TimelineResId(self))
