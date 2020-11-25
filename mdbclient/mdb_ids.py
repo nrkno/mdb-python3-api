@@ -1,25 +1,9 @@
 import os
-from abc import abstractmethod
 from typing import Union
 from uuid import UUID
 
-TypedId = Union["TypedMdbId", "ResId", str]
-UntypedId = Union["ResId", "MdbId", str, UUID]
 
-
-def as_id(id_: UntypedId) -> str:
-    if isinstance(id_, ResId):
-        return str(id_.mdb_id)
-    return str(id_)
-
-
-def as_resid(id_: TypedId) -> str:
-    if isinstance(id_, TypedMdbId):
-        return id_.as_resid()
-    return str(id_)
-
-
-def try_uuid(val):
+def _try_uuid(val):
     try:
         return UUID(val)
     except ValueError:
@@ -29,7 +13,7 @@ def try_uuid(val):
 
 class MdbId:
     def __init__(self, guid: Union[str, UUID]):
-        self.guid = try_uuid(guid) if isinstance(guid, str) else guid
+        self.guid = _try_uuid(guid) if isinstance(guid, str) else guid
 
     def __str__(self):
         return str(self.guid)
@@ -52,16 +36,6 @@ bases = {
     "SerieResId": "http://id.nrk.no/2016/mdb/serie",
     "MasterEOResId": "http://id.nrk.no/2016/mdb/masterEO"
 }
-
-
-class TypedMdbId(MdbId):
-    def __init__(self, type_, guid: Union[str, UUID]):
-        super().__init__(guid)
-        self.mdb_type = type_
-
-    @abstractmethod
-    def as_resid(self) -> str:
-        raise NotImplementedError()
 
 
 class ResId:
@@ -91,14 +65,13 @@ class BagResId(ResId):
     def parse(res_id_string, strict: bool = True) -> "BagResId":
         head, tail = os.path.split(res_id_string)
         if BagResId.BASE == head:
-            guid = BagId(try_uuid(tail))
-            return BagResId(guid)
+            return BagResId(MdbId(tail))
         if strict:
             raise ValueError(f"{res_id_string} is not a Bag resid")
 
     @staticmethod
     def of_id(id_string) -> "BagResId":
-        return BagResId(BagId(id_string))
+        return BagResId(MdbId(id_string))
 
     @staticmethod
     def matches(resid: str):
@@ -116,14 +89,13 @@ class SerieResId(ResId):
     def parse(res_id_string, strict: bool = True) -> "SerieResId":
         head, tail = os.path.split(res_id_string)
         if SerieResId.BASE == head:
-            guid = SerieId(try_uuid(tail))
-            return SerieResId(guid)
+            return SerieResId(MdbId(tail))
         if strict:
             raise ValueError(f"{res_id_string} is not a serie resid")
 
     @staticmethod
     def of_id(id_string) -> "SerieResId":
-        return SerieResId(SerieId(id_string))
+        return SerieResId(MdbId(id_string))
 
     @staticmethod
     def matches(resid: str):
@@ -133,21 +105,20 @@ class SerieResId(ResId):
 class SeasonResId(ResId):
     BASE = "http://id.nrk.no/2016/mdb/season"
 
-    def __init__(self, mdb_id):
+    def __init__(self, mdb_id: MdbId):
         super().__init__(SeasonResId.BASE, mdb_id)
 
     @staticmethod
     def parse(res_id_string, strict: bool = True) -> "SeasonResId":
         head, tail = os.path.split(res_id_string)
         if SeasonResId.BASE == head:
-            guid = SeasonId(try_uuid(tail))
-            return SeasonResId(guid)
+            return SeasonResId(MdbId(tail))
         if strict:
             raise ValueError(f"{res_id_string} is not a season resid")
 
     @staticmethod
     def of_id(id_string) -> "SeasonResId":
-        return SeasonResId(SeasonId(id_string))
+        return SeasonResId(MdbId(id_string))
 
     @staticmethod
     def matches(resid: str):
@@ -157,21 +128,20 @@ class SeasonResId(ResId):
 class MasterEOResourceResId(ResId):
     BASE = "http://id.nrk.no/2016/mdb/masterEOResource"
 
-    def __init__(self, mdb_id):
+    def __init__(self, mdb_id: MdbId):
         super().__init__(MasterEOResourceResId.BASE, mdb_id)
 
     @staticmethod
     def parse(res_id_string, strict: bool = True) -> "MasterEOResourceResId":
         head, tail = os.path.split(res_id_string)
         if MasterEOResourceResId.BASE == head:
-            guid = MasterEOResourceId(try_uuid(tail))
-            return MasterEOResourceResId(guid)
+            return MasterEOResourceResId(MdbId(tail))
         if strict:
             raise ValueError(f"{res_id_string} is not a MasterEOResource resid")
 
     @staticmethod
     def of_id(id_string) -> "MasterEOResourceResId":
-        return MasterEOResourceResId(MasterEOResourceId(id_string))
+        return MasterEOResourceResId(MdbId(id_string))
 
     @staticmethod
     def matches(resid: str):
@@ -181,21 +151,21 @@ class MasterEOResourceResId(ResId):
 class MasterEOResId(ResId):
     BASE = bases.get("MasterEOResId")
 
-    def __init__(self, mdb_id: "MasterEOId"):
+    def __init__(self, mdb_id: MdbId):
         super().__init__(MasterEOResId.BASE, mdb_id)
 
     @staticmethod
     def parse(res_id_string, strict: bool = True) -> "MasterEOResId":
         head, tail = os.path.split(res_id_string)
         if MasterEOResId.BASE == head:
-            guid = MasterEOId(try_uuid(tail))
+            guid = MdbId(tail)
             return MasterEOResId(guid)
         if strict:
             raise ValueError(f"{res_id_string} is not a MasterEO resid")
 
     @staticmethod
     def of_id(id_string) -> "MasterEOResId":
-        return MasterEOResId(MasterEOId(id_string))
+        return MasterEOResId(MdbId(id_string))
 
     @staticmethod
     def matches(resid: str):
@@ -205,21 +175,20 @@ class MasterEOResId(ResId):
 class PublicationEventResId(ResId):
     BASE = "http://id.nrk.no/2016/mdb/publicationEvent"
 
-    def __init__(self, mdb_id: "PublicationEventId"):
+    def __init__(self, mdb_id: MdbId):
         super().__init__(PublicationEventResId.BASE, mdb_id)
 
     @staticmethod
     def parse(res_id_string, strict: bool = True) -> "PublicationEventResId":
         head, tail = os.path.split(res_id_string)
         if PublicationEventResId.BASE == head:
-            guid = PublicationEventId(tail)
-            return PublicationEventResId(guid)
+            return PublicationEventResId(MdbId(tail))
         if strict:
             raise ValueError(f"{res_id_string} is not a PublicationEvent resid")
 
     @staticmethod
     def of_id(id_string) -> "PublicationEventResId":
-        return PublicationEventResId(PublicationEventId(id_string))
+        return PublicationEventResId(MdbId(id_string))
 
     @staticmethod
     def matches(resid: str):
@@ -229,22 +198,20 @@ class PublicationEventResId(ResId):
 class PublicationMediaObjectResId(ResId):
     BASE = "http://id.nrk.no/2016/mdb/publicationMediaObject"
 
-    def __init__(self, mdb_id: "PublicationMediaObjectId"):
+    def __init__(self, mdb_id: MdbId):
         super().__init__(PublicationMediaObjectResId.BASE, mdb_id)
 
     @staticmethod
     def parse(res_id_string, strict: bool = True) -> "PublicationMediaObjectResId":
         head, tail = os.path.split(res_id_string)
         if PublicationMediaObjectResId.BASE == head:
-            guid = PublicationMediaObjectId(try_uuid(tail))
-            return PublicationMediaObjectResId(guid)
+            return PublicationMediaObjectResId(MdbId(tail))
         if strict:
             raise ValueError(f"{res_id_string} is not a PublicationMediaObject resid")
 
     @staticmethod
     def of_id(id_string) -> "PublicationMediaObjectResId":
-        return PublicationMediaObjectResId(PublicationMediaObjectId(id_string))
-
+        return PublicationMediaObjectResId(MdbId(id_string))
 
     @staticmethod
     def matches(resid: str):
@@ -254,21 +221,21 @@ class PublicationMediaObjectResId(ResId):
 class MediaObjectResId(ResId):
     BASE = "http://id.nrk.no/2016/mdb/mediaObject"
 
-    def __init__(self, mdb_id: "MediaObjectId"):
+    def __init__(self, mdb_id: MdbId):
         super().__init__(MediaObjectResId.BASE, mdb_id)
 
     @staticmethod
     def parse(res_id_string, strict: bool = True) -> "MediaObjectResId":
         head, tail = os.path.split(res_id_string)
         if MediaObjectResId.BASE == head:
-            guid = MediaObjectId(try_uuid(tail))
+            guid = MdbId(tail)
             return MediaObjectResId(guid)
         if strict:
             raise ValueError(f"{res_id_string} is not a MediaObject resid")
 
     @staticmethod
     def of_id(id_string) -> "MediaObjectResId":
-        return MediaObjectResId(MediaObjectId(id_string))
+        return MediaObjectResId(MdbId(id_string))
 
     @staticmethod
     def matches(resid: str):
@@ -278,21 +245,20 @@ class MediaObjectResId(ResId):
 class MediaResourceResId(ResId):
     BASE = "http://id.nrk.no/2016/mdb/mediaResource"
 
-    def __init__(self, mdb_id):
+    def __init__(self, mdb_id: MdbId):
         super().__init__(MediaResourceResId.BASE, mdb_id)
 
     @staticmethod
     def parse(res_id_string, strict: bool = True) -> "MediaResourceResId":
         head, tail = os.path.split(res_id_string)
         if MediaResourceResId.BASE == head:
-            guid = MediaResourceId(try_uuid(tail))
-            return MediaResourceResId(guid)
+            return MediaResourceResId(MdbId(tail))
         if strict:
             raise ValueError(f"{res_id_string} is not a resid")
 
     @staticmethod
     def of_id(id_string) -> "MediaResourceResId":
-        return MediaResourceResId(MediaResourceId(id_string))
+        return MediaResourceResId(MdbId(id_string))
 
     @staticmethod
     def matches(resid: str):
@@ -302,21 +268,20 @@ class MediaResourceResId(ResId):
 class EssenceResId(ResId):
     BASE = "http://id.nrk.no/2016/mdb/essence"
 
-    def __init__(self, mdb_id):
+    def __init__(self, mdb_id: MdbId):
         super().__init__(EssenceResId.BASE, mdb_id)
 
     @staticmethod
     def parse(res_id_string, strict: bool = True) -> "EssenceResId":
         head, tail = os.path.split(res_id_string)
         if EssenceResId.BASE == head:
-            guid = EssenceId(try_uuid(tail))
-            return EssenceResId(guid)
+            return EssenceResId(MdbId(tail))
         if strict:
             raise ValueError(f"{res_id_string} is not a resid")
 
     @staticmethod
     def of_id(id_string) -> "EssenceResId":
-        return EssenceResId(EssenceId(id_string))
+        return EssenceResId(MdbId(id_string))
 
     @staticmethod
     def matches(resid: str):
@@ -326,21 +291,20 @@ class EssenceResId(ResId):
 class VersionGroupResId(ResId):
     BASE = "http://id.nrk.no/2016/mdb/versionGroup"
 
-    def __init__(self, mdb_id):
+    def __init__(self, mdb_id: MdbId):
         super().__init__(VersionGroupResId.BASE, mdb_id)
 
     @staticmethod
     def parse(res_id_string, strict: bool = True) -> "VersionGroupResId":
         head, tail = os.path.split(res_id_string)
         if VersionGroupResId.BASE == head:
-            guid = VersionGroupId(try_uuid(tail))
-            return VersionGroupResId(guid)
+            return VersionGroupResId(MdbId(tail))
         if strict:
             raise ValueError(f"{res_id_string} is not a VersionGroup resid")
 
     @staticmethod
     def of_id(id_string) -> "VersionGroupResId":
-        return VersionGroupResId(VersionGroupId(id_string))
+        return VersionGroupResId(MdbId(id_string))
 
     @staticmethod
     def matches(resid: str):
@@ -350,217 +314,25 @@ class VersionGroupResId(ResId):
 class TimelineResId(ResId):
     BASE = "http://id.nrk.no/2017/mdb/timeline"
 
-    def __init__(self, mdb_id):
+    def __init__(self, mdb_id: MdbId):
         super().__init__(TimelineResId.BASE, mdb_id)
 
     @staticmethod
     def parse(res_id_string, strict: bool = True) -> "TimelineResId":
         head, tail = os.path.split(res_id_string)
         if TimelineResId.BASE == head:
-            guid = TimelineId(try_uuid(tail))
+            guid = MdbId(tail)
             return TimelineResId(guid)
         if strict:
             raise ValueError(f"{res_id_string} is not a Timeline resid")
 
     @staticmethod
     def of_id(id_string) -> "TimelineResId":
-        return TimelineResId(TimelineId(id_string))
+        return TimelineResId(MdbId(id_string))
 
     @staticmethod
     def matches(resid: str):
         return resid.startswith(TimelineResId.BASE)
-
-
-class MasterEOId(MdbId):
-    def __init__(self, guid):
-        super().__init__(guid)
-
-    def as_resid(self) -> str:
-        return str(MasterEOResId(self))
-
-    @staticmethod
-    def parse(resid_or_id) -> "MasterEOId":
-        if MasterEOResId.matches(resid_or_id):
-            resid = MasterEOResId.parse(resid_or_id)
-            # noinspection PyTypeChecker
-            return resid.mdb_id
-        return MasterEOId(resid_or_id)
-
-
-class VersionGroupId(MdbId):
-    def __init__(self, guid):
-        super().__init__(guid)
-
-    def as_resid(self) -> str:
-        return str(VersionGroupResId(self))
-
-    @staticmethod
-    def parse(resid_or_id) -> "VersionGroupId":
-        if VersionGroupResId.matches(resid_or_id):
-            resid = VersionGroupResId.parse(resid_or_id)
-            # noinspection PyTypeChecker
-            return resid.mdb_id
-        return VersionGroupId(resid_or_id)
-
-
-class PublicationEventId(MdbId):
-    def __init__(self, guid):
-        super().__init__(guid)
-
-    def as_resid(self) -> str:
-        return str(PublicationEventResId(self))
-
-    @staticmethod
-    def parse(resid_or_id) -> "PublicationEventId":
-        if PublicationEventResId.matches(resid_or_id):
-            resid = PublicationEventResId.parse(resid_or_id)
-            # noinspection PyTypeChecker
-            return resid.mdb_id
-        return PublicationEventId(resid_or_id)
-
-
-class MediaObjectId(MdbId):
-    def __init__(self, guid):
-        super().__init__(guid)
-
-    def as_resid(self) -> str:
-        return str(MediaObjectResId(self))
-
-    @staticmethod
-    def parse(resid_or_id) -> "MediaObjectId":
-        if MediaObjectResId.matches(resid_or_id):
-            resid = MediaObjectResId.parse(resid_or_id)
-            # noinspection PyTypeChecker
-            return resid.mdb_id
-        return MediaObjectId(resid_or_id)
-
-
-class PublicationMediaObjectId(MdbId):
-    def __init__(self, guid):
-        super().__init__(guid)
-
-    def as_resid(self) -> str:
-        return str(PublicationMediaObjectResId(self))
-
-    @staticmethod
-    def parse(resid_or_id) -> "PublicationMediaObjectId":
-        if PublicationMediaObjectResId.matches(resid_or_id):
-            resid = PublicationMediaObjectResId.parse(resid_or_id)
-            # noinspection PyTypeChecker
-            return resid.mdb_id
-        return PublicationMediaObjectId(resid_or_id)
-
-
-class EssenceId(MdbId):
-    def __init__(self, guid):
-        super().__init__(guid)
-
-    def as_resid(self) -> str:
-        return str(EssenceResId(self))
-
-    @staticmethod
-    def parse(resid_or_id) -> "EssenceId":
-        if EssenceResId.matches(resid_or_id):
-            resid = EssenceResId.parse(resid_or_id)
-            # noinspection PyTypeChecker
-            return resid.mdb_id
-        return EssenceId(resid_or_id)
-
-
-class MediaResourceId(MdbId):
-    def __init__(self, guid):
-        super().__init__(guid)
-
-    def as_resid(self) -> str:
-        return str(MediaResourceResId(self))
-
-    @staticmethod
-    def parse(resid_or_id) -> "MediaResourceId":
-        if MediaResourceResId.matches(resid_or_id):
-            resid = MediaResourceResId.parse(resid_or_id)
-            # noinspection PyTypeChecker
-            return resid.mdb_id
-        return MediaResourceId(resid_or_id)
-
-
-class BagId(MdbId):
-    def __init__(self, guid):
-        super().__init__(guid)
-
-    def as_resid(self) -> str:
-        return str(BagResId(self))
-
-    @staticmethod
-    def parse(resid_or_id) -> "BagId":
-        if BagResId.matches(resid_or_id):
-            resid = BagResId.parse(resid_or_id)
-            # noinspection PyTypeChecker
-            return resid.mdb_id
-        return BagId(resid_or_id)
-
-
-class MasterEOResourceId(MdbId):
-    def __init__(self, guid):
-        super().__init__(guid)
-
-    def as_resid(self) -> str:
-        return str(MasterEOResourceResId(self))
-
-    @staticmethod
-    def parse(resid_or_id) -> "MasterEOResourceId":
-        if MasterEOResourceResId.matches(resid_or_id):
-            resid = MasterEOResourceResId.parse(resid_or_id)
-            # noinspection PyTypeChecker
-            return resid.mdb_id
-        return MasterEOResourceId(resid_or_id)
-
-
-class SeasonId(MdbId):
-    def __init__(self, guid):
-        super().__init__(guid)
-
-    def as_resid(self) -> str:
-        return str(SeasonResId(self))
-
-    @staticmethod
-    def parse(resid_or_id) -> "SeasonId":
-        if SeasonResId.matches(resid_or_id):
-            resid = SeasonResId.parse(resid_or_id)
-            # noinspection PyTypeChecker
-            return resid.mdb_id
-        return SeasonId(resid_or_id)
-
-
-class SerieId(MdbId):
-    def __init__(self, guid):
-        super().__init__(guid)
-
-    def as_resid(self) -> str:
-        return str(SerieResId(self))
-
-    @staticmethod
-    def parse(resid_or_id) -> "SerieId":
-        if SerieResId.matches(resid_or_id):
-            resid = SerieResId.parse(resid_or_id)
-            # noinspection PyTypeChecker
-            return resid.mdb_id
-        return SerieId(resid_or_id)
-
-
-class TimelineId(MdbId):
-    def __init__(self, guid):
-        super().__init__(guid)
-
-    def as_resid(self) -> str:
-        return str(TimelineResId(self))
-
-    @staticmethod
-    def parse(resid_or_id) -> "TimelineId":
-        if TimelineResId.matches(resid_or_id):
-            resid = TimelineResId.parse(resid_or_id)
-            # noinspection PyTypeChecker
-            return resid.mdb_id
-        return TimelineId(resid_or_id)
 
 
 bases[type(PublicationEventResId)] = "http://id.nrk.no/2016/mdb/publicationEvent"
@@ -592,4 +364,3 @@ def parse_res_id(resid: str) -> ResId:
     if TimelineResId.matches(resid):
         return TimelineResId.parse(resid)
     raise ValueError(f"Unknown type {resid}")
-
