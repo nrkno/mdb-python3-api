@@ -45,19 +45,6 @@ class Conflict(Exception):
         self.message = message
 
 
-class Reference(dict):
-
-    def __init__(self, dict_=..., **kwargs) -> None:
-        super().__init__(dict_, **kwargs)
-        self.type: str = self.get("type")
-        self.reference: str = self.get("reference")
-
-
-def _reference_values(meo, ref_type) -> List[Reference]:
-    references = meo.get("references", [])
-    return [Reference(x) for x in references if x.get("type") == ref_type]
-
-
 def _links_of_sub_type(links_list, sub_type):
     return [x for x in links_list if x.get("subType") == sub_type]
 
@@ -216,10 +203,6 @@ class BasicMdbObject(dict):
     def link(self, rel):
         return _link(self, rel)
 
-    def _reference_collection(self, collection_name) -> ResourceReferenceCollection:
-        result = self.get(collection_name, [])
-        return ResourceReferenceCollection(result, self, collection_name)
-
     def links(self) -> MdbLinks:
         return MdbLinks.create(self.get("links"))
 
@@ -228,6 +211,19 @@ class BasicMdbObject(dict):
 
     def sub_type(self) -> str:
         return self.get("subType")
+
+
+class Reference(BasicMdbObject):
+
+    def __init__(self, dict_=..., **kwargs) -> None:
+        super().__init__(dict_, **kwargs)
+        self.type: str = self.get("type")
+        self.reference: str = self.get("reference")
+
+
+def _reference_values(meo, ref_type) -> List[Reference]:
+    references = meo.get("references", [])
+    return [Reference(x) for x in references if x.get("type") == ref_type]
 
 
 class Timeline(BasicMdbObject):
@@ -435,6 +431,10 @@ class EditorialObject(BasicMdbObject):
         if not found:
             return
         return found.reference
+
+    def _reference_collection(self, collection_name) -> ResourceReferenceCollection:
+        result = self.get(collection_name, [])
+        return ResourceReferenceCollection(result, self, collection_name)
 
 
 class VersionGroup(BasicMdbObject):
@@ -654,7 +654,6 @@ class RestApiUtil(object):
     async def raw_http_get(self, uri, headers=None, uri_params=None) -> str:
         async with self.session.get(uri, params=uri_params, headers=headers) as response:
             return await response.text()
-
 
     async def http_get_text(self, uri, headers=None, uri_params=None) -> StandardResponse:
         async with self.session.get(uri, params=uri_params, headers=headers) as response:
@@ -1089,7 +1088,6 @@ class MdbClient(MdbJsonMethodApi):
     async def reindex_publication_event(self, guid, headers=None):
         return await self.__reindex_item("publicationEvents", guid, headers=headers)
 
-
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def like_query(self, like, headers=None):
         real_method = self._api_method("admin/events/likeQuery")
@@ -1172,7 +1170,6 @@ class MdbClient(MdbJsonMethodApi):
             vg = await self.open(meo.version_group(), headers)
             return await self.open(vg.metadata_meo(), headers)
 
-
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def find_media_object(self, name, headers: dict = None) -> Optional[MediaObject]:
         try:
@@ -1184,7 +1181,7 @@ class MdbClient(MdbJsonMethodApi):
     async def export_publication_event(self, aggregate_identifier, headers: dict = None) -> str:
         try:
             return await self._invoke_raw_get_method("admin/mdbExport/publicationEvents/" + aggregate_identifier, {},
-                                                 headers)
+                                                     headers)
         except Http404:
             pass
 
@@ -1192,7 +1189,7 @@ class MdbClient(MdbJsonMethodApi):
     async def export_master_eo(self, aggregate_identifier, headers: dict = None) -> dict:
         try:
             return await self._invoke_raw_get_method("admin/mdbExport/masterEOs/" + aggregate_identifier, {},
-                                                 headers)
+                                                     headers)
         except Http404:
             pass
 
