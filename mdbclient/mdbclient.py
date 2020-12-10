@@ -223,6 +223,12 @@ class BasicMdbObject(dict):
     def links(self) -> MdbLinks:
         return MdbLinks.create(self.get("links"))
 
+    def type(self) -> str:
+        return self.get("type")
+
+    def sub_type(self) -> str:
+        return self.get("subType")
+
 
 class Timeline(BasicMdbObject):
     TIMELINE_ITEMTYPE_EXTRACTEDVERSIONTIMELINEITEM = \
@@ -1154,6 +1160,18 @@ class MdbClient(MdbJsonMethodApi):
             if not fail_on_missing:
                 return None
             raise
+
+    @backoff.on_exception(backoff.expo, ClientOSError, max_time=120)
+    @backoff.on_exception(backoff.expo, HttpReqException, max_time=120, giveup=_check_if_not_lock)
+    @backoff.on_exception(backoff.expo, ServerDisconnectedError, max_time=120)
+    async def resolve_mmeo(self, res_id: str, headers: dict = None) -> Optional[MasterEO]:
+        meo = await self.resolve(res_id, headers=headers)
+        if not isinstance(meo, MasterEO):
+            raise Exception(f"{res_id} resolves to a {meo.type()}, which we dont know how to meo")
+        if not meo.get("isMetadataMeo"):
+            vg = await self.open(meo.version_group(), headers)
+            return await self.open(vg.metadata_meo(), headers)
+
 
     @backoff.on_exception(backoff.expo, HttpReqException, max_time=60, giveup=_check_if_not_lock)
     async def find_media_object(self, name, headers: dict = None) -> Optional[MediaObject]:
