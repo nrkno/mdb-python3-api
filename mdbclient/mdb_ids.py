@@ -364,3 +364,22 @@ def parse_res_id(resid: str) -> ResId:
     if TimelineResId.matches(resid):
         return TimelineResId.parse(resid)
     raise ValueError(f"Unknown type {resid}")
+
+typemappings = {
+    "EssenceAggregate": EssenceResId,
+    "MasterEOAggregate": MasterEOResId,
+    "MasterEOResourceAggregate": MasterEOResourceResId,
+    "MediaObjectAggregate": MediaObjectResId,
+    "MediaResourceAggregate": MediaResourceResId,
+    "PublicationEventAggregate": PublicationEventResId,
+    "PublicationMediaObjectAggregate": PublicationMediaObjectResId,
+    "SeasonAggregate": SeasonResId,
+    "SerieAggregate": SerieResId,
+    "TimelineAggregate": TimelineResId,
+    "VersionGroupAggregate": VersionGroupResId
+}
+
+
+def from_aggregate_type(aggregate_type, guid):
+    type_ = typemappings.get(aggregate_type)
+    return type_.of_id(guid) if type_ else None

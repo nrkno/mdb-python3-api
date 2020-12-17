@@ -2,7 +2,7 @@ from uuid import UUID
 
 from mdbclient.mdb_ids import parse_res_id, MasterEOResId, PublicationEventResId, VersionGroupResId, MediaObjectResId, \
     PublicationMediaObjectResId, EssenceResId, MediaResourceResId, BagResId, MasterEOResourceResId, SerieResId, \
-    SeasonResId, ResId
+    SeasonResId, ResId, from_aggregate_type
 
 master_eo_guid = "796d659f-a805-4c96-ad65-9fa805ac96cb"
 master_eo_sut = f"http://id.nrk.no/2016/mdb/masterEO/{master_eo_guid}"
@@ -233,3 +233,8 @@ def test_res_id():
     res_id= ResId.of_id(unknown1)
     assert res_id.id() == unknown1
     assert str(res_id) == unknown1
+
+
+def test_from_aggregate_type():
+    res_id = from_aggregate_type("MasterEOAggregate", "796d659f-a805-4c96-ad65-9fa805ac96cc")
+    assert str(res_id) == "http://id.nrk.no/2016/mdb/masterEO/796d659f-a805-4c96-ad65-9fa805ac96cc"
