@@ -888,6 +888,19 @@ class MdbEnv(Enum):
     PROD_K8S_INGRESS = "http://klipp-api.mdb-prod.svc.int.nrk.cloud"
     PROD_VMWARE_NODE_1 = "http://malxmdbklipp01.felles.ds.nrk.no:22338"
 
+    @property
+    def is_stage(self):
+        return self in (MdbEnv.STAGE, MdbEnv.STAGE_K8S_INGRESS, MdbEnv.STAGE_VMWARE_NODE_1)
+
+    @property
+    def is_prod(self):
+        return self in (MdbEnv.PROD, MdbEnv.PROD_K8S_INGRESS, MdbEnv.PROD_VMWARE_NODE_1)
+
+    @property
+    def is_dev(self):
+        return self in (MdbEnv.DEV)
+
+
 
 class MdbJsonMethodApi(MdbJsonApi):
     """
