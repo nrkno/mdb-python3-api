@@ -898,7 +898,7 @@ class MdbEnv(Enum):
 
     @property
     def is_dev(self):
-        return self in (MdbEnv.DEV)
+        return self == MdbEnv.DEV
 
 
 
