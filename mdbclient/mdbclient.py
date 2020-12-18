@@ -882,7 +882,11 @@ class MdbEnv(Enum):
     LOCAL_OVERLAY = "http://localhost:22358"
     DEV = "http://mdbklippdev.felles.ds.nrk.no"
     STAGE = "http://mdbklippstage.felles.ds.nrk.no"
+    STAGE_K8S_INGRESS = "https://klipp-api-stage.kubeint.nrk.no"
+    STAGE_VMWARE_NODE_1 = "http://drlxmdbklippstage01.felles.ds.nrk.no:22338"
     PROD = "http://mdbklipp.felles.ds.nrk.no"
+    PROD_K8S_INGRESS = "http://klipp-api.mdb-prod.svc.int.nrk.cloud"
+    PROD_VMWARE_NODE_1 = "http://malxmdbklipp01.felles.ds.nrk.no:22338"
 
 
 class MdbJsonMethodApi(MdbJsonApi):
