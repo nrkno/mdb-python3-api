@@ -469,6 +469,11 @@ class MasterEO(EditorialObject):
             return [sub for sub in self.get("subjects", []) if sub.get("title", "").lower() == subject]
 
 
+class MasterEOResource(EditorialObject):
+    def __init__(self, dict_=..., **kwargs) -> None:
+        super().__init__(dict_, **kwargs)
+
+
 class Essence(BasicMdbObject):
 
     def __init__(self, dict_=..., **kwargs) -> None:
@@ -551,7 +556,7 @@ class StandardResponse(object):
 def create_response_from_std_response(std_response: StandardResponse) -> Union[
     MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent, InternalTimeline,
     GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline, GenealogyRightsTimeline,
-    VersionGroup]:
+    VersionGroup, MasterEOResource]:
     if not std_response.is_successful() or isinstance(std_response.response, str):
         raise Exception(f"Http {std_response.status} for {std_response.requested_uri}:\n{str(std_response.response)}")
 
@@ -562,7 +567,7 @@ def create_response(response) -> \
         Union[
             MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent, InternalTimeline,
             GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline, GenealogyRightsTimeline,
-            VersionGroup]:
+            VersionGroup,MasterEOResource]:
     type_ = response.get("type")
     if not type_:
         return response
@@ -581,6 +586,8 @@ def create_response(response) -> \
         return PublicationEvent(response)
     if type_ == "http://id.nrk.no/2016/mdb/types/VersionGroup":
         return VersionGroup(response)
+    if type_ == "http://id.nrk.no/2016/mdb/types/MasterEOResource":
+        return MasterEOResource(response)
     if type_ == InternalTimeline.TYPE:
         return InternalTimeline(response)
     if type_ == GenealogyTimeline.TYPE:
@@ -901,7 +908,6 @@ class MdbEnv(Enum):
         return self == MdbEnv.DEV
 
 
-
 class MdbJsonMethodApi(MdbJsonApi):
     """
     A jason api that knows how to invoke method calls directly by name. Requires a server addreess (api_base)
@@ -1154,7 +1160,7 @@ class MdbClient(MdbJsonMethodApi):
     async def open_url(self, url, headers=None) -> Optional[
         Union[MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent,
               InternalTimeline, GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline,
-              GenealogyRightsTimeline]]:
+              GenealogyRightsTimeline, MasterEOResource]]:
         resp = await self._open_url(url)
         return create_response(resp.response)
 
@@ -1215,7 +1221,7 @@ class MdbClient(MdbJsonMethodApi):
     async def reference(self, ref_type, value, headers=None) -> \
             List[Union[MasterEO, PublicationMediaObject, MediaObject, MediaResource, Essence, PublicationEvent,
                        InternalTimeline, GenealogyTimeline, IndexpointTimeline, TechnicalTimeline, RightsTimeline,
-                       GenealogyRightsTimeline]]:
+                       GenealogyRightsTimeline,MasterEOResource]]:
         responses = await self._invoke_get_method("references", {'type': ref_type, 'reference': value}, headers)
         return [create_response(x) for x in responses]
 
