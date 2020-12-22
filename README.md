@@ -7,9 +7,10 @@ This project contains an api for accessing mdb. The api exists at two different 
 Simple usage of the object api:
 
     async def create_publication():
-        async with MdbClient("http://mdbklippdev.felles.ds.nrk.no/api", "my-user-id", "my-correlation-id") as client:
-            meo = await client.create_master_eo({"title": "myMeo"})
-            pe = await client.create_publication_event(meo, {"title": "min publisering"})
+        async with aiohttp.ClientSession() as session:
+            async with MdbClient(session, MdbEnv.STAGE, "my-user-id", "my-correlation-id") as client:
+                meo = await client.create_master_eo({"title": "myMeo"})
+                pe = await client.create_publication_event(meo, {"title": "min publisering"})
 
 
     
