@@ -338,7 +338,21 @@ class TimelineResId(ResId):
 bases[type(PublicationEventResId)] = "http://id.nrk.no/2016/mdb/publicationEvent"
 
 
+def lenient_parse_res_id(resid: str) -> ResId:
+    result = try_parse_res_id(resid)
+    if not result:
+        return ResId.of_id(resid)
+    return result
+
+
 def parse_res_id(resid: str) -> ResId:
+    result = try_parse_res_id(resid)
+    if not result:
+        raise ValueError(f"Unknown type {resid}")
+    return result
+
+
+def try_parse_res_id(resid: str) -> ResId:
     if BagResId.matches(resid):
         return BagResId.parse(resid)
     if SerieResId.matches(resid):
@@ -363,7 +377,7 @@ def parse_res_id(resid: str) -> ResId:
         return VersionGroupResId.parse(resid)
     if TimelineResId.matches(resid):
         return TimelineResId.parse(resid)
-    raise ValueError(f"Unknown type {resid}")
+
 
 typemappings = {
     "EssenceAggregate": EssenceResId,
