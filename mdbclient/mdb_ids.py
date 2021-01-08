@@ -75,7 +75,7 @@ class BagResId(ResId):
 
     @staticmethod
     def matches(resid: str):
-        return resid.startswith(BagResId.BASE)
+        return resid.startswith(BagResId.BASE) and not "rest-client" in resid
 
 
 # noinspection SpellCheckingInspection

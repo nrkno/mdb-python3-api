@@ -238,3 +238,9 @@ def test_res_id():
 def test_from_aggregate_type():
     res_id = from_aggregate_type("MasterEOAggregate", "796d659f-a805-4c96-ad65-9fa805ac96cc")
     assert str(res_id) == "http://id.nrk.no/2016/mdb/masterEO/796d659f-a805-4c96-ad65-9fa805ac96cc"
+
+def test_bag_from_res_id_incorrect():
+    assert not BagResId.matches("http://id.nrk.no/2016/mdb/bag/rest-client/object/01f005de-3ca7-4c6b-b005-de3ca72c6b12")
+
+def test_bag_from_res_id_correct():
+    assert BagResId.matches("http://id.nrk.no/2016/mdb/bag/01f005de-3ca7-4c6b-b005-de3ca72c6b12")
