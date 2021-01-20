@@ -436,6 +436,12 @@ class EditorialObject(BasicMdbObject):
             return
         return found.reference
 
+    def reference_int_value(self, ref_type) -> Optional[int]:
+        found = self.reference(ref_type)
+        if not found:
+            return
+        return int(found.reference)
+
     def _reference_collection(self, collection_name) -> ResourceReferenceCollection:
         result = self.get(collection_name, [])
         return ResourceReferenceCollection(result, self, collection_name)
