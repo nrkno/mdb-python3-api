@@ -220,6 +220,10 @@ class Reference(BasicMdbObject):
         self.type: str = self.get("type")
         self.reference: str = self.get("reference")
 
+    def int_value(self) -> Optional[int]:
+        if self.reference:
+            return int(self.reference)
+
 
 def _reference_values(meo, ref_type) -> List[Reference]:
     references = meo.get("references", [])
