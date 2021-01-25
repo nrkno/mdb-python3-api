@@ -152,6 +152,43 @@ async def test_resolve_reference():
 
 
 @pytest.mark.asyncio
+async def test_get_reference_collection():
+    async with aiohttp.ClientSession() as session:
+        client = MdbClient.localhost(session, "test", "test_correlation")
+        meo = await client.create_master_eo(
+            {"title": "fonzie"})
+        mo = await client.create_media_object(
+            meo,
+            {"comment": "pow pow"})
+        mr = await client.create_media_resource(
+            mo,
+            {"locators": [
+                {"title": "MR1", "identifier": "I1", "storageType": {"resId": "http://id.nrk.no/2021/imaginarium/crystal"}},
+                {"title": "MR2", "identifier": "I2", "storageType": {"resId": "http://id.nrk.no/2021/imaginarium/crystal"}}
+            ]}
+        )
+
+        reloaded = await client.open(meo)
+        rmo = await client.open(reloaded.media_objects().of_type('http://id.nrk.no/2016/mdb/types/MediaObject').first())
+        assert await client.open(rmo.media_resources().of_type('http://id.nrk.no/2016/mdb/types/MediaResource').first())
+
+
+@pytest.mark.asyncio
+async def test_get_reference_collection_returns_none_on_empty():
+    async with aiohttp.ClientSession() as session:
+        client = MdbClient.localhost(session, "test", "test_correlation")
+        meo = await client.create_master_eo(
+            {"title": "fonzie"})
+        mo = await client.create_media_object(
+            meo,
+            {"comment": "pow pow"})
+
+        reloaded = await client.open(meo)
+        rmo = await client.open(reloaded.media_objects().of_type('http://id.nrk.no/2016/mdb/types/MediaObject').first())
+        assert not rmo.media_resources().first()
+
+
+@pytest.mark.asyncio
 async def test_add_subjects():
     async with aiohttp.ClientSession() as session:
         client = MdbClient.localhost(session, "test", "test_correlation")

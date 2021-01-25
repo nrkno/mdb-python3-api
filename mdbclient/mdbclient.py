@@ -182,6 +182,13 @@ class ResourceReferenceCollection(Generic[X]):
         return len(self.children)
 
 
+class ReferenceCollectionMixin:
+
+    def _reference_collection(self, collection_name) -> ResourceReferenceCollection:
+        result = self.get(collection_name, [])
+        return ResourceReferenceCollection(result, self, collection_name)
+
+
 def clone_for_create(item):
     copy_ = copy.copy(item)
     if "resId" in copy_:
@@ -409,7 +416,7 @@ class Contributor(dict):
         return res
 
 
-class EditorialObject(BasicMdbObject):
+class EditorialObject(ReferenceCollectionMixin, BasicMdbObject):
 
     def __init__(self, dict_=..., **kwargs) -> None:
         super().__init__(dict_, **kwargs)
@@ -441,10 +448,6 @@ class EditorialObject(BasicMdbObject):
         if not found:
             return
         return int(found.reference)
-
-    def _reference_collection(self, collection_name) -> ResourceReferenceCollection:
-        result = self.get(collection_name, [])
-        return ResourceReferenceCollection(result, self, collection_name)
 
 
 class VersionGroup(BasicMdbObject):
@@ -496,7 +499,7 @@ class Essence(BasicMdbObject):
         return ResourceReference.create(self.get("playoutOf"))
 
 
-class MediaResource(BasicMdbObject):
+class MediaResource(ReferenceCollectionMixin, BasicMdbObject):
 
     def __init__(self, dict_=..., **kwargs) -> None:
         super().__init__(dict_, **kwargs)
@@ -512,7 +515,7 @@ class MediaResource(BasicMdbObject):
                 x.get("identifier") == identifier and x.get("storageType", {}).get("resId") == storageType]
 
 
-class MediaObject(BasicMdbObject):
+class MediaObject(ReferenceCollectionMixin, BasicMdbObject):
 
     def __init__(self, dict_=..., **kwargs) -> None:
         super().__init__(dict_, **kwargs)
@@ -527,7 +530,7 @@ class MediaObject(BasicMdbObject):
         return ResourceReference.create(self.get("masterEO"))
 
 
-class PublicationMediaObject(BasicMdbObject):
+class PublicationMediaObject(ReferenceCollectionMixin, BasicMdbObject):
 
     def __init__(self, dict_=..., **kwargs) -> None:
         super().__init__(dict_, **kwargs)
